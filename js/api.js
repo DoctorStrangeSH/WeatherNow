@@ -2,33 +2,38 @@
 // WeatherNow — API-сервис
 // ============================================
 
-const API_BASE = 'https://api.openweathermap.org/data/2.5';
-const GEO_BASE = 'https://api.openweathermap.org/geo/1.0';
-
 async function fetchWeather(city) {
-  const url = `${API_BASE}/weather?q=${encodeURIComponent(city)}&appid=${CONFIG.API_KEY}&units=${CONFIG.UNITS}&lang=${CONFIG.LANG}`;
+  const url = buildUrl('/weather', { q: city });
+  console.log('🌤️ Запрос погоды:', url);
+  
   const response = await fetch(url);
   if (!response.ok) throw new Error('Город не найден');
   return await response.json();
 }
 
 async function fetchForecast(city) {
-  const url = `${API_BASE}/forecast?q=${encodeURIComponent(city)}&appid=${CONFIG.API_KEY}&units=${CONFIG.UNITS}&lang=${CONFIG.LANG}`;
+  const url = buildUrl('/forecast', { q: city });
+  console.log('📅 Запрос прогноза:', url);
+  
   const response = await fetch(url);
   if (!response.ok) throw new Error('Прогноз не найден');
   return await response.json();
 }
 
 async function getCityByCoords(lat, lon) {
-  const url = `${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${CONFIG.API_KEY}&units=${CONFIG.UNITS}&lang=${CONFIG.LANG}`;
+  const url = buildUrl('/weather', { lat, lon });
+  console.log('📍 Запрос по координатам:', url);
+  
   const response = await fetch(url);
+  if (!response.ok) throw new Error('Не удалось определить город');
   return await response.json();
 }
 
 async function searchCities(query) {
   if (query.length < 2) return [];
   
-  const url = `${GEO_BASE}/direct?q=${encodeURIComponent(query)}&limit=5&appid=${CONFIG.API_KEY}`;
+  const url = buildUrl('/direct', { q: query, limit: 5 });
+  console.log('🔍 Поиск городов:', url);
   
   try {
     const response = await fetch(url);
@@ -36,6 +41,30 @@ async function searchCities(query) {
     return await response.json();
   } catch {
     return [];
+  }
+}
+
+function buildUrl(path, params) {
+  const baseParams = {
+    appid: CONFIG.API_KEY,
+    units: CONFIG.UNITS,
+    lang: CONFIG.LANG
+  };
+  
+  const allParams = { ...baseParams, ...params };
+  const queryString = Object.entries(allParams)
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join('&');
+  
+  if (CONFIG.USE_PROXY && CONFIG.PROXY_URL) {
+    // Используем прокси (Cloudflare Worker)
+    return `${CONFIG.PROXY_URL}${path}?${queryString}`;
+  } else {
+    // Прямой доступ
+    const baseUrl = path.includes('/direct') 
+      ? 'https://api.openweathermap.org/geo/1.0'
+      : 'https://api.openweathermap.org/data/2.5';
+    return `${baseUrl}${path}?${queryString}`;
   }
 }
 

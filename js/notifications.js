@@ -46,8 +46,8 @@ function sendNotification(title, body) {
   
   new Notification(title, {
     body: body,
-    icon: 'assets/icon-192.png',
-    badge: 'assets/icon-192.png',
+    icon: 'assets/favicon.svg',
+    badge: 'assets/favicon.svg',
     tag: 'weather-alert'
   });
 }

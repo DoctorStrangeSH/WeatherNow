@@ -1,28 +1,35 @@
 <div align="center">
-  <img src="assets/favicon.svg" alt="SoundWave Logo" width="80" height="80">
+  <img src="assets/favicon.svg" alt="WeatherNow Logo" width="80" height="80">
   
-  # 🎵 SoundWave
+  # 🌤️ WeatherNow
   
-  **Музыкальный плеер с живой визуализацией звука**
+  **Красивый прогноз погоды с живой визуализацией**
   
-  [![GitHub Pages](https://img.shields.io/badge/Демо-GitHub%20Pages-a855f7?style=for-the-badge&logo=github)](https://github.com/DoctorStrangeSH/WeatherNow.git)
+  [![GitHub Pages](https://img.shields.io/badge/Демо-GitHub%20Pages-FF8C42?style=for-the-badge&logo=github)](https://doctorstrangesh.github.io/WeatherNow)
   [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/ru/docs/Web/JavaScript)
-  [![Web Audio API](https://img.shields.io/badge/Web_Audio-API-a855f7?style=for-the-badge)](https://developer.mozilla.org/ru/docs/Web/API/Web_Audio_API)
-  [![Canvas](https://img.shields.io/badge/Canvas-API-3b82f6?style=for-the-badge)](https://developer.mozilla.org/ru/docs/Web/API/Canvas_API)
+  [![OpenWeatherMap](https://img.shields.io/badge/OpenWeather-API-FF8C42?style=for-the-badge)](https://openweathermap.org/api)
+  [![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?style=for-the-badge)](https://www.chartjs.org/)
+  [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap)](https://getbootstrap.com/)
 </div>
 
 ---
 
 ## 📋 О проекте
 
-**SoundWave** — современный музыкальный плеер с живой визуализацией звука на Canvas, загрузкой аудио через Drag & Drop, режимом микрофона и PWA-поддержкой. Проект демонстрирует работу с Web Audio API, Canvas API, IndexedDB и Media Session API.
+**WeatherNow** — современное погодное приложение с анимированным небом, детальными графиками и красивым glassmorphism-дизайном. Показывает текущую погоду, прогноз на 5 дней, почасовой прогноз, карту осадков и позволяет сравнивать погоду в разных городах.
 
-### 🎯 Что показывает проект
-- Работу с низкоуровневым Web Audio API (AudioContext, AnalyserNode)
-- Визуализацию данных в реальном времени на Canvas (60 FPS)
-- Drag & Drop загрузку файлов
-- Хранение аудио в IndexedDB
-- PWA с офлайн-режимом и фоновым воспроизведением
+### 🎯 Возможности
+- Текущая погода по геолокации или поиску города
+- Прогноз на 5 дней с группировкой по дням
+- Почасовой прогноз с графиком температуры и осадков
+- Интерактивные графики (Chart.js)
+- Карта осадков (OpenWeatherMap)
+- Сравнение погоды двух городов
+- Избранные города (LocalStorage)
+- Push-уведомления о дожде, снеге, грозе
+- Тёмная и светлая тема
+- Анимированное небо с облаками и звёздами
+- Полная адаптивность (mobile-first)
 
 ---
 
@@ -30,37 +37,37 @@
 
 <table>
   <tr>
-    <td><strong>Аудио</strong></td>
+    <td><strong>Погода</strong></td>
     <td>
-      <img src="https://img.shields.io/badge/Web_Audio_API-AudioContext,_AnalyserNode-a855f7?style=flat-square">
-      <img src="https://img.shields.io/badge/Media_Session-API-3b82f6?style=flat-square">
+      <img src="https://img.shields.io/badge/OpenWeatherMap-API-FF8C42?style=flat-square">
+      <img src="https://img.shields.io/badge/Geolocation-API-3b82f6?style=flat-square">
     </td>
   </tr>
   <tr>
-    <td><strong>Визуализация</strong></td>
+    <td><strong>Графики</strong></td>
     <td>
-      <img src="https://img.shields.io/badge/Canvas_API-60_FPS,_Градиенты-3b82f6?style=flat-square">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Хранение</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/IndexedDB-Аудиофайлы-FFCA28?style=flat-square">
-      <img src="https://img.shields.io/badge/FileReader-API-00C853?style=flat-square">
+      <img src="https://img.shields.io/badge/Chart.js-4.4-FF6384?style=flat-square">
+      <img src="https://img.shields.io/badge/Canvas-API-3b82f6?style=flat-square">
     </td>
   </tr>
   <tr>
     <td><strong>Интерфейс</strong></td>
     <td>
-      <img src="https://img.shields.io/badge/Drag_&_Drop-API-7952B3?style=flat-square">
       <img src="https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=flat-square&logo=bootstrap">
+      <img src="https://img.shields.io/badge/Glassmorphism-CSS-00C853?style=flat-square">
+      <img src="https://img.shields.io/badge/CSS_Animations-Облака,_Звёзды-00C853?style=flat-square">
     </td>
   </tr>
   <tr>
-    <td><strong>PWA</strong></td>
+    <td><strong>Хранение</strong></td>
     <td>
-      <img src="https://img.shields.io/badge/Service_Worker-Офлайн-222222?style=flat-square">
-      <img src="https://img.shields.io/badge/Web_Manifest-Установка-222222?style=flat-square">
+      <img src="https://img.shields.io/badge/LocalStorage-Избранное-FFCA28?style=flat-square">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Уведомления</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Notifications-API-222222?style=flat-square">
     </td>
   </tr>
 </table>
@@ -71,24 +78,27 @@
 
 | Фича | Описание | Технология |
 |------|----------|------------|
-| 🎵 **Загрузка аудио** | MP3, WAV, OGG, FLAC через Drag & Drop | FileReader + Web Audio API |
-| 📊 **3 режима визуализации** | Бары, волна, круг — переключение на лету | Canvas API |
-| 🌈 **4 цветовые темы** | Неон, огонь, океан, радуга | HSL + Canvas |
-| 🎤 **Режим микрофона** | Визуализация голоса в реальном времени | getUserMedia + AnalyserNode |
-| 💾 **Автосохранение** | Треки и плейлисты сохраняются в браузере | IndexedDB |
-| 📱 **PWA** | Установка на телефон, офлайн-режим | Service Worker + Manifest |
-| 🎵 **Media Session** | Управление с экрана блокировки телефона | Media Session API |
-| ⌨️ **Горячие клавиши** | Пробел, стрелки для управления | Keyboard Events |
-| 🔀 **Shuffle/Repeat** | Все режимы воспроизведения | Алгоритмы |
-| 📋 **Экспорт/импорт** | Плейлисты в JSON для обмена | Blob + FileReader |
+| 🌍 **Геолокация** | Автоопределение города | Geolocation API |
+| 🔍 **Поиск городов** | С автодополнением и русскими названиями | OpenWeatherMap Geo API |
+| 📊 **Графики температуры** | Макс/мин на 5 дней, почасовой с осадками | Chart.js |
+| 🗺️ **Карта осадков** | Встроенная карта OpenWeatherMap | iframe |
+| ⭐ **Избранное** | До 10 городов, быстрый доступ | LocalStorage |
+| 🌓 **Тёмная тема** | Автосохранение выбора, звёзды ночью | CSS Variables |
+| 🔔 **Уведомления** | О дожде, снеге, грозе | Notification API |
+| 📱 **PWA-готовность** | Адаптивный дизайн, mobile-first | Bootstrap 5 |
+| 🎨 **Glassmorphism** | Стеклянные карточки с блюром | CSS backdrop-filter |
+| ☁️ **Живое небо** | Анимированные облака и звёзды | CSS Animations |
+| 🆚 **Сравнение** | Погода двух городов рядом | Promise.all |
 
 ---
 
-### 🧩 Принципы проектирования
-- **Разделение ответственности** — аудио-движок, визуализатор, плеер, плейлист — независимые модули
-- **Реактивная визуализация** — Canvas обновляется 60 раз в секунду через requestAnimationFrame
-- **Progressive Web App** — работает офлайн, устанавливается на телефон
-- **Graceful degradation** — при отсутствии IndexedDB треки хранятся в памяти
+text
+
+### 🧠 Принципы
+- **Модульность** — каждый файл отвечает за свою зону
+- **Mobile-first** — сначала мобильная вёрстка, потом десктоп
+- **Graceful degradation** — если геолокация отклонена, грузится Москва по умолчанию
+- **Русские названия** — используется `local_names.ru` из API
 
 ---
 
@@ -97,8 +107,30 @@
 ```bash
 # 1. Клонируй репозиторий
 git clone https://github.com/DoctorStrangeSH/WeatherNow.git
-cd soundwave
+cd weathernow
 
-# 2. Запусти через Live Server
+# 2. Открой index.html через Live Server (или любой сервер)
 
-# 3. Перетащи MP3-файл в зону загрузки
+# 3. Разреши геолокацию или введи город в поиске
+⚠️ Для работы нужен API-ключ OpenWeatherMap. Текущий ключ в js/config.js — демонстрационный.
+Получи бесплатный ключ на openweathermap.org
+
+📱 PWA-возможности (в разработке)
+Адаптивный дизайн
+
+Офлайн-иконка
+
+Service Worker для кеширования
+
+Web Manifest для установки
+
+🎨 Цветовая схема
+Элемент	Светлая тема	Тёмная тема
+Небо	#87CEEB → #E0F0FF	#0a0a2e → #2a2a5e
+Акцент	#FF8C42	#FF8C42
+Карточки	Белые полупрозрачные	Тёмные полупрозрачные
+Текст	#1a1a2e	#ffffff
+📄 Лицензия
+MIT — делай что хочешь, только указывай автора 😊
+
+<div align="center"> <p>Сделано с ❤️ и ☕</p> <p> <a href="https://github.com/DoctorStrangeSH">GitHub</a> • <a href="https://openweathermap.org">OpenWeatherMap</a> • <a href="https://www.chartjs.org">Chart.js</a> </p> </div> ```
