@@ -123,6 +123,7 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
   if (!sky) return;
 
   sky.dataset.weather = getWeatherSceneKey(weatherCode);
+  updateCloudAtmosphere(weatherCode, windSpeed);
   clearWeatherEffects();
 
   const clouds = sky.querySelectorAll('.cloud');
@@ -332,6 +333,51 @@ function createSkyElements() {
   }
   
   createStars();
+  createCloudLayers();
+}
+
+
+
+function createCloudLayers() {
+  const sky = document.getElementById('sky');
+  if (!sky || sky.querySelector('.weather-cloud-layers')) return;
+
+  const layers = document.createElement('div');
+  layers.className = 'weather-cloud-layers';
+  layers.setAttribute('aria-hidden', 'true');
+
+  ['back', 'middle', 'front'].forEach((depth, index) => {
+    const layer = document.createElement('div');
+    layer.className = `weather-cloud-layer weather-cloud-layer--${depth}`;
+    layer.dataset.depth = String(index);
+    layers.appendChild(layer);
+  });
+
+  sky.appendChild(layers);
+}
+
+function updateCloudAtmosphere(weatherCode, windSpeed = 0) {
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+
+  createCloudLayers();
+  const layers = sky.querySelectorAll('.weather-cloud-layer');
+  const code = Number(weatherCode);
+  const wind = Math.max(0, Number(windSpeed) || 0);
+  const cloudy = code >= 801 && code < 900;
+  const storm = code >= 200 && code < 300;
+  const rain = code >= 300 && code < 600;
+  const snow = code >= 600 && code < 700;
+  const fog = code >= 700 && code < 800;
+  const coverage = code === 801 ? 0.28 : code === 802 ? 0.48 : code === 803 ? 0.7 : code === 804 ? 0.9 : storm ? 1 : rain ? 0.82 : snow ? 0.76 : fog ? 0.58 : 0;
+
+  layers.forEach((layer, index) => {
+    const depth = index + 1;
+    layer.style.opacity = String(coverage * (0.42 + depth * 0.19));
+    layer.style.setProperty('--cloud-speed', `${Math.max(22, 76 - wind * 2 + index * 15)}s`);
+    layer.style.setProperty('--cloud-drift', `${wind >= 10 ? 34 : wind >= 5 ? 22 : 12}px`);
+    layer.dataset.weather = storm ? 'storm' : rain ? 'rain' : snow ? 'snow' : fog ? 'fog' : cloudy ? 'cloudy' : 'clear';
+  });
 }
 
 function createStars() {
