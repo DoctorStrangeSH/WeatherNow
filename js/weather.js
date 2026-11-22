@@ -20,6 +20,18 @@ function getWeatherIconMarkup(code) {
   return `<svg class="weather-icon-svg" viewBox="0 0 120 100" role="img" aria-label="${getWeatherDescription(code)}" xmlns="http://www.w3.org/2000/svg">${symbol}</svg>`;
 }
 
+
+function getWeatherEmoji(code) {
+  if (code >= 200 && code < 300) return '⛈️';
+  if (code >= 300 && code < 600) return '🌧️';
+  if (code >= 600 && code < 700) return '🌨️';
+  if (code >= 700 && code < 800) return '🌫️';
+  if (code === 800) return '☀️';
+  if (code === 801) return '🌤️';
+  if (code === 802) return '⛅';
+  return '☁️';
+}
+
 function getWeatherDescription(code) {
   if (code >= 200 && code < 300) return 'Гроза';
   if (code >= 300 && code < 600) return 'Дождь';
