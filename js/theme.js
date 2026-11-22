@@ -84,10 +84,12 @@ function applyWeatherEffects(weatherCode, timeOfDay) {
   const sky = document.getElementById('sky');
   if (!sky) return;
 
+  sky.dataset.weather = getWeatherSceneKey(weatherCode);
   clearWeatherEffects();
 
   const clouds = sky.querySelectorAll('.cloud');
   if (prefersReducedMotion()) {
+    sky.dataset.motion = 'reduced';
     clouds.forEach(cloud => {
       cloud.style.animation = 'none';
       cloud.style.opacity = weatherCode >= 801 ? '0.45' : '0';
@@ -95,6 +97,7 @@ function applyWeatherEffects(weatherCode, timeOfDay) {
     return;
   }
   
+  sky.dataset.motion = 'full';
   const effectScale = getWeatherEffectScale();
 
   if (weatherCode >= 200 && weatherCode < 300) {
