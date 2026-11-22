@@ -67,17 +67,36 @@ function shouldShowSun(weatherCode, timeOfDay) {
   return (weatherCode === 800 || weatherCode === 801) && timeOfDay !== 'night';
 }
 
+function getSkyArcPosition(hour, startHour, endHour) {
+  const progress = Math.max(0, Math.min(1, (hour - startHour) / (endHour - startHour)));
+  const x = 8 + progress * 84;
+  const y = 14 + Math.sin(progress * Math.PI) * 42;
+  return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+}
+
 function updateSkyElements(timeOfDay) {
   const sun = document.getElementById('sun');
   const moon = document.getElementById('moon');
   
   if (!sun || !moon) return;
   
+  const localNow = new Date(Date.now() + (new Date().getTimezoneOffset() * 60000) + (currentTimezone * 1000));
+  const hour = localNow.getHours() + localNow.getMinutes() / 60;
   const sunVisible = shouldShowSun(currentWeatherCode, timeOfDay);
+  const sunPosition = getSkyArcPosition(hour, 5, 20);
+  const moonHour = hour < 5 ? hour + 24 : hour;
+  const moonPosition = getSkyArcPosition(moonHour, 20, 29);
+
+  sun.style.left = `${sunPosition.x}%`;
+  sun.style.right = 'auto';
+  sun.style.top = `${sunPosition.y}%`;
   sun.style.opacity = sunVisible ? (timeOfDay === 'evening' ? '0.68' : '0.92') : '0';
-  sun.style.transform = timeOfDay === 'morning' ? 'scale(0.88)' : 'scale(1)';
+  sun.style.transform = 'translate(-50%, -50%)';
+  moon.style.left = `${moonPosition.x}%`;
+  moon.style.right = 'auto';
+  moon.style.top = `${moonPosition.y}%`;
   moon.style.opacity = timeOfDay === 'night' ? '0.88' : '0';
-  moon.style.transform = 'scale(1)';
+  moon.style.transform = 'translate(-50%, -50%)';
   
   updateStarsVisibility(timeOfDay === 'night');
 }
