@@ -545,3 +545,19 @@ test('weather icon renderer returns accessible SVG artwork for all weather famil
     assert.match(markup, new RegExp(label));
   }
 });
+
+
+test('weather motion profile scales rain, snow and wind to condition severity', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const context = vm.createContext({
+    document: { addEventListener() {} },
+    window: { matchMedia: () => ({ matches: false }) }
+  });
+  vm.runInContext(source, context);
+
+  assert.ok(context.getWeatherMotionProfile(502, 13).rainCount > context.getWeatherMotionProfile(500, 2).rainCount);
+  assert.ok(context.getWeatherMotionProfile(602, 2).snowCount > context.getWeatherMotionProfile(600, 2).snowCount);
+  assert.ok(context.getWeatherMotionProfile(800, 14).windCount > context.getWeatherMotionProfile(800, 1).windCount);
+  assert.equal(context.getWeatherMotionProfile(800, 1).rainCount, 0);
+  assert.equal(context.getWeatherMotionProfile(800, 1).snowCount, 0);
+});
