@@ -100,7 +100,7 @@ function renderCurrentWeather(data) {
   document.getElementById('main-icon').innerHTML = getWeatherIconMarkup(data.weather[0].id);
 
   if (typeof updateWeatherTheme === 'function') {
-    updateWeatherTheme(data.weather[0].id, data.timezone);
+    updateWeatherTheme(data.weather[0].id, data.timezone, data.wind?.speed);
   }
 
   loadForecast(data.name);
