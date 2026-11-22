@@ -1,13 +1,33 @@
-function getWeatherEmoji(code) {
-  if (code >= 200 && code < 300) return '⛈️';
-  if (code >= 300 && code < 400) return '🌦️';
-  if (code >= 500 && code < 600) return '🌧️';
-  if (code >= 600 && code < 700) return '🌨️';
-  if (code >= 700 && code < 800) return '🌫️';
-  if (code === 800) return '☀️';
-  if (code === 801) return '🌤️';
-  if (code === 802) return '⛅';
-  return '☁️';
+function getWeatherIconMarkup(code) {
+  let symbol;
+
+  if (code >= 200 && code < 300) {
+    symbol = '<path class="weather-icon-cloud weather-icon-cloud--storm" d="M25 62h53a17 17 0 0 0 0-34 25 25 0 0 0-47-3A19 19 0 0 0 25 62Z"/><path class="weather-icon-bolt" d="m57 58-10 18h11l-5 16 19-24H60l7-10Z"/>';
+  } else if ((code >= 300 && code < 600)) {
+    symbol = '<path class="weather-icon-cloud" d="M23 54h57a18 18 0 0 0 0-36 26 26 0 0 0-49-3A20 20 0 0 0 23 54Z"/><path class="weather-icon-rain" d="m36 65-5 13m25-13-5 13m25-13-5 13"/>';
+  } else if (code >= 600 && code < 700) {
+    symbol = '<path class="weather-icon-cloud" d="M23 51h57a18 18 0 0 0 0-36 26 26 0 0 0-49-3A20 20 0 0 0 23 51Z"/><path class="weather-icon-snow" d="M35 66v15m-7-7 14 0m-12-5 10 10m0-10-10 10m31-13v15m-7-7h14m-12-5 10 10m0-10-10 10m25-13v15m-7-7h14m-12-5 10 10m0-10-10 10"/>';
+  } else if (code >= 700 && code < 800) {
+    symbol = '<path class="weather-icon-fog" d="M28 38h58M18 53h70M30 68h52"/>';
+  } else if (code === 800) {
+    symbol = '<circle class="weather-icon-sun" cx="60" cy="44" r="19"/><path class="weather-icon-rays" d="M60 8v10m0 52v10M24 44h10m52 0h10M34 18l8 8m36 36 8 8m0-52-8 8m-36 36-8 8"/>';
+  } else if (code === 801) {
+    symbol = '<circle class="weather-icon-sun" cx="43" cy="33" r="16"/><path class="weather-icon-rays" d="M43 7v7m0 38v7M17 33h7m45 0h7M25 15l5 5m26 26 5 5"/><path class="weather-icon-cloud" d="M30 72h54a17 17 0 0 0 0-34 25 25 0 0 0-46-3A19 19 0 0 0 30 72Z"/>';
+  } else {
+    symbol = '<path class="weather-icon-cloud" d="M23 63h57a18 18 0 0 0 0-36 26 26 0 0 0-49-3A20 20 0 0 0 23 63Z"/>';
+  }
+
+  return `<svg class="weather-icon-svg" viewBox="0 0 120 100" role="img" aria-label="${getWeatherDescription(code)}" xmlns="http://www.w3.org/2000/svg">${symbol}</svg>`;
+}
+
+function getWeatherDescription(code) {
+  if (code >= 200 && code < 300) return 'Гроза';
+  if (code >= 300 && code < 600) return 'Дождь';
+  if (code >= 600 && code < 700) return 'Снег';
+  if (code >= 700 && code < 800) return 'Туман';
+  if (code === 800) return 'Ясно';
+  if (code === 801) return 'Небольшая облачность';
+  return 'Облачно';
 }
 
 function capitalize(str) {
