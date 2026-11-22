@@ -1,8 +1,29 @@
-// ============================================
-// WeatherNow — Избранные города
-// ============================================
+function parseFavoriteCities(rawValue) {
+  if (!rawValue) return [];
 
-let favoriteCities = JSON.parse(localStorage.getItem('weathernow-favorites') || '[]');
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter(city => city && typeof city.name === 'string' && city.name.trim())
+      .slice(0, 10)
+      .map(city => ({
+        name: city.name.trim(),
+        country: typeof city.country === 'string' ? city.country.trim() : '',
+        addedAt: typeof city.addedAt === 'string' ? city.addedAt : ''
+      }));
+  } catch {
+    return [];
+  }
+}
+
+let favoriteCities = [];
+try {
+  favoriteCities = parseFavoriteCities(localStorage.getItem('weathernow-favorites'));
+} catch {
+  favoriteCities = [];
+}
 
 function addToFavorites(cityName, country) {
   if (favoriteCities.some(c => c.name.toLowerCase() === cityName.toLowerCase())) {
@@ -55,64 +76,121 @@ function updateFavoriteButton(cityName, isFav) {
   if (!btn) return;
   
   if (isFav || isFavorite(cityName)) {
-    btn.innerHTML = '<i class="bi bi-heart-fill text-danger fs-4"></i>';
+    btn.innerHTML = '<i class="bi bi-heart-fill text-danger fs-4" aria-hidden="true"></i>';
     btn.title = 'Удалить из избранного';
+    btn.setAttribute('aria-label', 'Удалить город из избранного');
   } else {
-    btn.innerHTML = '<i class="bi bi-heart fs-4"></i>';
+    btn.innerHTML = '<i class="bi bi-heart fs-4" aria-hidden="true"></i>';
     btn.title = 'Добавить в избранное';
+    btn.setAttribute('aria-label', 'Добавить город в избранное');
   }
 }
 
 function renderFavorites() {
   const container = document.getElementById('screen-favorites');
   if (!container) return;
-  
+
+  container.replaceChildren();
+
+  const page = document.createElement('section');
+  page.className = 'favorites-page';
+
+  const heading = document.createElement('div');
+  heading.className = 'favorites-heading';
+
+  const title = document.createElement('h2');
+  title.className = 'favorites-title';
+  title.textContent = 'Избранные города';
+
+  const count = document.createElement('span');
+  count.className = 'favorites-count';
+  count.textContent = `${favoriteCities.length} из 10`;
+
+  heading.append(title, count);
+  page.appendChild(heading);
+
   if (favoriteCities.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-5">
-        <i class="bi bi-heartbreak fs-1 text-muted d-block mb-3"></i>
-        <h3 class="fw-bold">Пока пусто</h3>
-        <p class="text-muted mb-4">Добавляй города в избранное, чтобы быстро переключаться между ними</p>
-        <button class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
-          <i class="bi bi-search me-2"></i>Найти город
-        </button>
-      </div>
-    `;
+    const empty = document.createElement('div');
+    empty.className = 'favorites-empty';
+
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-heartbreak';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const emptyTitle = document.createElement('h3');
+    emptyTitle.textContent = 'Пока здесь тихо';
+
+    const description = document.createElement('p');
+    description.textContent = 'Добавляйте любимые города, чтобы быстро узнавать погоду в них';
+
+    const findButton = document.createElement('button');
+    findButton.type = 'button';
+    findButton.className = 'btn btn-accent rounded-pill px-4';
+    findButton.textContent = 'Найти город';
+    findButton.addEventListener('click', () => showScreen('home'));
+
+    empty.append(icon, emptyTitle, description, findButton);
+    page.appendChild(empty);
+    container.appendChild(page);
     return;
   }
-  
-  container.innerHTML = `
-    <div class="row justify-content-center">
-      <div class="col-lg-6">
-        
-        <h3 class="fw-bold mb-4 text-center">
-          <i class="bi bi-heart-fill text-danger me-2"></i>Избранные города
-        </h3>
-        
-        <div class="d-grid gap-2">
-          ${favoriteCities.map((city, index) => `
-            <div class="glass-card rounded-4 p-3 d-flex align-items-center justify-content-between favorite-item">
-              <div class="d-flex align-items-center gap-3" onclick="loadCityWeather('${city.name}'); showScreen('home');" style="cursor: pointer; flex: 1;">
-                <span class="fs-4">🏙️</span>
-                <div>
-                  <p class="fw-bold mb-0">${city.name}</p>
-                  <small class="text-muted">${city.country}</small>
-                </div>
-              </div>
-              <button class="btn btn-sm text-danger" onclick="removeFromFavorites('${city.name}'); renderFavorites(); event.stopPropagation();" title="Удалить">
-                <i class="bi bi-trash3"></i>
-              </button>
-            </div>
-          `).join('')}
-        </div>
-        
-        <div class="text-center mt-4">
-          <small class="text-muted">${favoriteCities.length} из 10 городов</small>
-        </div>
-        
-      </div>
-    </div>
-  `;
+
+  const list = document.createElement('div');
+  list.className = 'favorites-grid';
+  list.setAttribute('aria-label', 'Список избранных городов');
+
+  favoriteCities.forEach(city => {
+    const card = document.createElement('article');
+    card.className = 'favorite-city-card';
+
+    const openButton = document.createElement('button');
+    openButton.type = 'button';
+    openButton.className = 'favorite-city-open';
+    openButton.addEventListener('click', () => {
+      loadCityWeather(city.name);
+      showScreen('home');
+    });
+
+    const icon = document.createElement('span');
+    icon.className = 'favorite-city-icon';
+    icon.textContent = '🏙️';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const details = document.createElement('span');
+    details.className = 'favorite-city-details';
+
+    const name = document.createElement('span');
+    name.className = 'favorite-city-name';
+    name.textContent = String(city.name || 'Без названия');
+
+    const country = document.createElement('span');
+    country.className = 'favorite-city-country';
+    country.textContent = String(city.country || 'Страна не указана');
+
+    details.append(name, country);
+    openButton.append(icon, details);
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'favorite-city-remove';
+    removeButton.title = 'Удалить из избранного';
+    removeButton.setAttribute('aria-label', `Удалить ${String(city.name || 'город')} из избранного`);
+
+    const removeIcon = document.createElement('i');
+    removeIcon.className = 'bi bi-trash3';
+    removeIcon.setAttribute('aria-hidden', 'true');
+    removeButton.appendChild(removeIcon);
+    removeButton.addEventListener('click', () => {
+      removeFromFavorites(city.name);
+      renderFavorites();
+    });
+
+    card.append(openButton, removeButton);
+    list.appendChild(card);
+  });
+
+  page.appendChild(list);
+  container.appendChild(page);
 }
 
 document.addEventListener('screenChanged', (e) => {

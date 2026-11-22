@@ -1,7 +1,3 @@
-// ============================================
-// WeatherNow — Динамическая тема и погодные эффекты
-// ============================================
-
 let currentWeatherCode = 800;
 let currentTimezone = 0;
 
@@ -43,13 +39,30 @@ function applyTimeTheme(timezoneOffset = currentTimezone) {
     updateChartTheme();
   }
   
-  console.log('Тема обновлена:', timeOfDay, 'часы:', hours);
+}
+
+function getWeatherSceneKey(weatherCode) {
+  if (weatherCode >= 200 && weatherCode < 300) return 'thunder';
+  if (weatherCode >= 300 && weatherCode < 600) return 'rain';
+  if (weatherCode >= 600 && weatherCode < 700) return 'snow';
+  if (weatherCode >= 700 && weatherCode < 800) return 'fog';
+  if (weatherCode === 800) return 'clear';
+  if (weatherCode <= 802) return 'partly-cloudy';
+  return 'cloudy';
 }
 
 function updateWeatherTheme(weatherCode, timezoneOffset) {
   currentWeatherCode = weatherCode;
   if (timezoneOffset !== undefined) currentTimezone = timezoneOffset;
+
+  const hero = document.querySelector('.weather-hero');
+  if (hero) hero.dataset.weather = getWeatherSceneKey(weatherCode);
+
   applyTimeTheme(currentTimezone);
+}
+
+function shouldShowSun(weatherCode, timeOfDay) {
+  return (weatherCode === 800 || weatherCode === 801) && timeOfDay !== 'night';
 }
 
 function updateSkyElements(timeOfDay) {
@@ -58,24 +71,11 @@ function updateSkyElements(timeOfDay) {
   
   if (!sun || !moon) return;
   
-  switch(timeOfDay) {
-    case 'morning':
-      sun.style.cssText = 'opacity: 0.9; top: 25%; right: 15%; transform: scale(1);';
-      moon.style.cssText = 'opacity: 0.2; top: 20%; right: 25%; transform: scale(0.8);';
-      break;
-    case 'day':
-      sun.style.cssText = 'opacity: 1; top: 5%; right: 15%; transform: scale(1.1);';
-      moon.style.cssText = 'opacity: 0; top: 20%; right: 25%;';
-      break;
-    case 'evening':
-      sun.style.cssText = 'opacity: 0.7; top: 60%; right: 15%; transform: scale(1);';
-      moon.style.cssText = 'opacity: 0.6; top: 12%; right: 18%; transform: scale(0.95);';
-      break;
-    case 'night':
-      sun.style.cssText = 'opacity: 0; top: 100%; right: 15%;';
-      moon.style.cssText = 'opacity: 1; top: 8%; right: 16%; transform: scale(1);';
-      break;
-  }
+  const sunVisible = shouldShowSun(currentWeatherCode, timeOfDay);
+  sun.style.opacity = sunVisible ? (timeOfDay === 'evening' ? '0.68' : '0.92') : '0';
+  sun.style.transform = timeOfDay === 'morning' ? 'scale(0.88)' : 'scale(1)';
+  moon.style.opacity = timeOfDay === 'night' ? '0.88' : '0';
+  moon.style.transform = 'scale(1)';
   
   updateStarsVisibility(timeOfDay === 'night');
 }
@@ -83,40 +83,49 @@ function updateSkyElements(timeOfDay) {
 function applyWeatherEffects(weatherCode, timeOfDay) {
   const sky = document.getElementById('sky');
   if (!sky) return;
-  
+
   clearWeatherEffects();
-  
+
   const clouds = sky.querySelectorAll('.cloud');
+  if (prefersReducedMotion()) {
+    clouds.forEach(cloud => {
+      cloud.style.animation = 'none';
+      cloud.style.opacity = weatherCode >= 801 ? '0.45' : '0';
+    });
+    return;
+  }
   
+  const effectScale = getWeatherEffectScale();
+
   if (weatherCode >= 200 && weatherCode < 300) {
     clouds.forEach((c, i) => {
       c.style.background = '#455A64';
       c.style.opacity = '0.9';
       c.style.animationDuration = (20 + i * 5) + 's';
     });
-    createRain(50, true);
+    createRain(Math.round(50 * effectScale), true);
     createLightning();
-    createWindLines(15);
+    createWindLines(Math.round(15 * effectScale));
   } else if (weatherCode >= 300 && weatherCode < 400) {
     clouds.forEach((c, i) => {
       c.style.opacity = '0.7';
       c.style.background = '#90A4AE';
     });
-    createRain(20, false);
+    createRain(Math.round(20 * effectScale), false);
   } else if (weatherCode >= 500 && weatherCode < 600) {
     clouds.forEach((c, i) => {
       c.style.background = '#78909C';
       c.style.opacity = '0.85';
       c.style.animationDuration = (22 + i * 5) + 's';
     });
-    createRain(40, true);
-    createWindLines(10);
+    createRain(Math.round(40 * effectScale), true);
+    createWindLines(Math.round(10 * effectScale));
   } else if (weatherCode >= 600 && weatherCode < 700) {
     clouds.forEach((c, i) => {
       c.style.background = '#B0BEC5';
       c.style.opacity = '0.8';
     });
-    createSnow(40);
+    createSnow(Math.round(40 * effectScale));
   } else if (weatherCode >= 700 && weatherCode < 800) {
     clouds.forEach(c => c.style.opacity = '0.3');
     createFog();
@@ -227,6 +236,22 @@ function createFog() {
   const fog = document.createElement('div');
   fog.id = 'fog';
   sky.appendChild(fog);
+}
+
+function getWeatherEffectScale() {
+  if (typeof navigator === 'undefined') return 1;
+  const memory = Number(navigator.deviceMemory) || 4;
+  const cores = Number(navigator.hardwareConcurrency) || 4;
+  const saveData = Boolean(navigator.connection?.saveData);
+  if (saveData || memory <= 2 || cores <= 2) return 0.35;
+  if (memory <= 4 || cores <= 4) return 0.65;
+  return 1;
+}
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function clearWeatherEffects() {

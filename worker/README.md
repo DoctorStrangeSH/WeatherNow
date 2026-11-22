@@ -1,0 +1,69 @@
+# WeatherNow API Worker
+
+Cloudflare Worker for the public WeatherNow frontend. The OpenWeatherMap API key is stored as a Cloudflare secret and is never sent to the browser.
+
+## Prerequisites
+
+- A Cloudflare account with Workers enabled.
+- Node.js 20+ and npm.
+- An active OpenWeatherMap API key.
+
+## One-time setup
+
+From this directory:
+
+```bash
+npx wrangler@latest login
+npx wrangler@latest secret put OPENWEATHER_API_KEY
+```
+
+Paste the new OpenWeatherMap key only into the Wrangler secret prompt. Do not put it in source files, command arguments, shell history, GitHub Actions logs, or commits.
+
+## Deploy
+
+```bash
+npx wrangler@latest deploy
+```
+
+The Worker name is intentionally kept as `openweathermap-6310` so the existing `PROXY_URL` remains stable when deployed to the same Cloudflare account and workers.dev subdomain. Verify the deployment URL in the Wrangler output. If Cloudflare assigns a different hostname, update `PROXY_URL` in `js/config.js` to that public Worker URL (it is not a secret).
+
+## Allowed origins
+
+The default list in `wrangler.toml` includes the production GitHub Pages origin and common local development origins. Edit `ALLOWED_ORIGINS` before deployment if the app is hosted elsewhere. Use exact origins only: scheme + hostname + optional port, without a path.
+
+## Supported endpoints
+
+- `GET /weather?q=Berlin`
+- `GET /weather?lat=52.52&lon=13.405`
+- `GET /forecast?q=Berlin`
+- `GET /direct?q=Berlin&limit=5`
+
+Only the required parameters are accepted. The Worker injects `appid`, `units=metric`, and `lang=ru` server-side. Other routes, methods, and unexpected parameters are rejected.
+
+## Cache policy
+
+- Current weather: 60 seconds.
+- Forecast: 5 minutes.
+- Geocoding: 24 hours.
+
+The edge cache is an optimization; requests still work if the Cache API is unavailable.
+
+## Security checklist
+
+1. Revoke the old key that was previously committed to the public repository.
+2. Create a replacement key in OpenWeatherMap.
+3. Store the replacement using `npx wrangler secret put OPENWEATHER_API_KEY`.
+4. Deploy the Worker.
+5. Confirm the browser network requests contain no `appid` parameter.
+6. Check that an unapproved Origin receives HTTP 403.
+7. Never commit a real API key or paste it into an issue or pull request.
+
+## Local tests
+
+From the repository root:
+
+```bash
+node --test tests/*.test.js worker/test/*.test.mjs
+```
+
+The tests mock the upstream API and do not need a real key or Cloudflare account.

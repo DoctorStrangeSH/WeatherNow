@@ -1,7 +1,3 @@
-// ============================================
-// WeatherNow — Push-уведомления о погоде
-// ============================================
-
 let notificationsEnabled = false;
 
 function requestNotificationPermission() {
@@ -37,7 +33,6 @@ async function checkWeatherForAlerts() {
       sendNotification('🌨️ Снегопад!', `В городе ${data.name} идёт снег. Одевайся теплее!`);
     }
   } catch (error) {
-    console.log('Ошибка проверки погоды для уведомлений');
   }
 }
 

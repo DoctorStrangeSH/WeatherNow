@@ -1,10 +1,6 @@
-// ============================================
-// WeatherNow — Поиск городов (только на русском)
-// ============================================
-
 let searchTimeout;
+const searchRequestIds = Object.create(null);
 
-// Словарь штатов США и их столиц
 const US_STATES = {
   'колорадо': 'Denver',
   'калифорния': 'Sacramento',
@@ -25,10 +21,9 @@ const US_STATES = {
   'невада': 'Carson City',
   'гавайи': 'Honolulu',
   'аляска': 'Juneau',
-  'монтана': 'Helena',
+  'монтана': 'Helena'
 };
 
-// Крупные города США (русское написание → английское для API)
 const US_CITIES = {
   'нью-йорк': 'New York',
   'лос-анджелес': 'Los Angeles',
@@ -61,58 +56,72 @@ const US_CITIES = {
   'роли': 'Raleigh',
   'лансинг': 'Lansing',
   'олимпия': 'Olympia',
-  'финикс': 'Phoenix',
   'ричмонд': 'Richmond',
   'сейлем': 'Salem',
   'карсон-сити': 'Carson City',
   'гонолулу': 'Honolulu',
   'джуно': 'Juneau',
-  'хелена': 'Helena',
+  'хелена': 'Helena'
 };
 
 function setupSearch() {
-  const headerSearch = document.getElementById('header-search');
-  const mobileSearch = document.getElementById('mobile-search');
-  
-  const setupInput = (input, resultsId) => {
+  const inputs = [
+    { input: document.getElementById('header-search'), resultsId: 'search-results' },
+    { input: document.getElementById('mobile-search'), resultsId: 'search-results-mobile' }
+  ];
+
+  inputs.forEach(({ input, resultsId }) => {
     if (!input) return;
-    
+
     input.setAttribute('autocomplete', 'off');
     input.setAttribute('autocorrect', 'off');
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('spellcheck', 'false');
-    input.setAttribute('role', 'presentation');
-    input.setAttribute('aria-autocomplete', 'none');
-    
-    input.addEventListener('input', function() {
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-haspopup', 'listbox');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-autocomplete', 'list');
+
+    input.addEventListener('input', () => {
       clearTimeout(searchTimeout);
-      const query = this.value.trim();
-      if (query.length < 2) { 
-        closeSearchResults(); 
-        return; 
+      const query = input.value.trim();
+
+      if (query.length < 2) {
+        searchRequestIds[resultsId] = (searchRequestIds[resultsId] || 0) + 1;
+        closeSearchResults();
+        return;
       }
+
       searchTimeout = setTimeout(() => searchCitiesAndShow(query, resultsId), 300);
     });
-    
-    input.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && this.value.trim()) {
-        loadCityWeather(this.value.trim());
-        this.value = '';
-        closeSearchResults();
+
+    input.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        document.getElementById(resultsId)?.querySelector('[role="option"]')?.focus();
+        return;
       }
+
+      if (event.key === 'Escape') {
+        closeSearchResults();
+        return;
+      }
+
+      if (event.key !== 'Enter' || !input.value.trim()) return;
+      event.preventDefault();
+      loadCityWeather(input.value.trim());
+      input.value = '';
+      closeSearchResults();
     });
-    
-    input.addEventListener('focus', function() {
-      const query = this.value.trim();
+
+    input.addEventListener('focus', () => {
+      const query = input.value.trim();
       if (query.length >= 2) searchCitiesAndShow(query, resultsId);
     });
-  };
-  
-  setupInput(headerSearch, 'search-results');
-  setupInput(mobileSearch, 'search-results-mobile');
-  
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-results') && !e.target.closest('input[type="text"]')) {
+  });
+
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.search-results') && !event.target.closest('#header-search, #mobile-search')) {
       closeSearchResults();
     }
   });
@@ -121,151 +130,181 @@ function setupSearch() {
 async function searchCitiesAndShow(query, resultsId = 'search-results') {
   const resultsEl = document.getElementById(resultsId);
   if (!resultsEl) return;
-  
-  const queryLower = query.toLowerCase().trim();
-  
-  // Сначала проверяем локальный словарь (штаты и города США)
-  const localResults = searchLocalDictionary(queryLower);
-  
-  // Затем ищем через API
+
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const requestId = (searchRequestIds[resultsId] || 0) + 1;
+  searchRequestIds[resultsId] = requestId;
+
+  const localResults = searchLocalDictionary(normalizedQuery);
   const apiCities = await searchCities(query);
-  
-  // Объединяем результаты
-  let allResults = [];
-  
-  // Добавляем локальные результаты
-  localResults.forEach(item => {
-    allResults.push({
-      name: item.apiName,
-      localName: item.displayName,
-      country: item.country,
-      flag: item.flag,
-      isLocal: true
-    });
-  });
-  
-  // Фильтруем API-результаты — ТОЛЬКО русские города
-  const seen = new Set();
-  
+
+  if (searchRequestIds[resultsId] !== requestId) return;
+
+  const results = [...localResults];
+  const seen = new Set(results.map(city => `${city.localName.toLocaleLowerCase()}:${city.country}`));
+
   apiCities.forEach(city => {
-    const localName = city.local_names?.ru;
+    const localName = city.local_names?.ru || city.name;
+    const englishName = city.name || '';
     const country = city.country || '';
-    const key = (localName || city.name).toLowerCase() + '_' + country.toLowerCase();
-    
-    // Пропускаем, если уже есть
+    const matchesQuery =
+      localName.toLocaleLowerCase().includes(normalizedQuery) ||
+      englishName.toLocaleLowerCase().includes(normalizedQuery);
+
+    if (!matchesQuery) return;
+
+    const key = `${localName.toLocaleLowerCase()}:${country}`;
     if (seen.has(key)) return;
-    
-    // Показываем только если есть русское название
-    if (!localName) return;
-    
-    // Проверяем совпадение с запросом
-    if (!localName.toLowerCase().includes(queryLower)) return;
-    
+
     seen.add(key);
-    
-    allResults.push({
-      name: city.name,
-      localName: localName,
-      country: country,
-      flag: getCountryFlag(country),
-      isLocal: false
+    results.push({
+      name: englishName,
+      localName,
+      country,
+      flag: getCountryFlag(country)
     });
   });
-  
-  // Убираем дубликаты по названию
-  const uniqueResults = [];
-  const nameSeen = new Set();
-  allResults.forEach(item => {
-    const nameKey = item.localName.toLowerCase();
-    if (!nameSeen.has(nameKey)) {
-      nameSeen.add(nameKey);
-      uniqueResults.push(item);
-    }
-  });
-  
-  if (uniqueResults.length === 0) {
-    resultsEl.innerHTML = `
-      <div class="p-3 text-center text-muted">
-        <i class="bi bi-search me-2"></i>Город не найден
-      </div>
-    `;
-    resultsEl.style.display = 'block';
+
+  renderSearchResults(resultsEl, results.slice(0, 8), query, resultsId);
+}
+
+function renderSearchResults(container, cities, query, resultsId) {
+  container.replaceChildren();
+
+  if (cities.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'p-3 text-center text-muted';
+    empty.textContent = 'Город не найден';
+    container.appendChild(empty);
+    container.style.display = 'block';
+    setSearchExpanded(container.id, true);
     return;
   }
-  
-  // Показываем не больше 8 результатов
-  const displayResults = uniqueResults.slice(0, 8);
-  
-  resultsEl.innerHTML = displayResults.map(city => {
-    const highlightedName = highlightMatch(city.localName, query);
-    
-    return `
-      <div class="search-item d-flex align-items-center gap-3 p-3 rounded-3" 
-           onclick="handleSearchClick('${city.name.replace(/'/g, "\\'")}', '${resultsId}')" 
-           style="cursor: pointer;">
-        <span class="fs-5">${city.flag || '🏙️'}</span>
-        <div class="flex-grow-1">
-          <p class="fw-bold mb-0">${highlightedName}</p>
-          <small class="text-muted">${city.country}</small>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  resultsEl.style.display = 'block';
+
+  cities.forEach(city => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'search-item d-flex align-items-center gap-3 p-3 rounded-3 w-100 text-start border-0';
+    button.setAttribute('role', 'option');
+    button.setAttribute('aria-selected', 'false');
+    button.addEventListener('click', () => handleSearchClick(city.name, resultsId));
+    button.addEventListener('keydown', event => {
+      const options = [...container.querySelectorAll('[role="option"]')];
+      const index = options.indexOf(button);
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        options[Math.min(index + 1, options.length - 1)]?.focus();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (index === 0) {
+          document.getElementById(resultsId === 'search-results' ? 'header-search' : 'mobile-search')?.focus();
+        } else {
+          options[index - 1]?.focus();
+        }
+      } else if (event.key === 'Escape') {
+        closeSearchResults();
+        document.getElementById(resultsId === 'search-results' ? 'header-search' : 'mobile-search')?.focus();
+      }
+    });
+
+    const flag = document.createElement('span');
+    flag.className = 'fs-5';
+    flag.textContent = city.flag || '🏙️';
+
+    const details = document.createElement('span');
+    details.className = 'flex-grow-1';
+
+    const name = document.createElement('span');
+    name.className = 'd-block fw-bold';
+    appendHighlightedText(name, city.localName, query);
+
+    const country = document.createElement('small');
+    country.className = 'd-block text-muted';
+    country.textContent = city.country;
+
+    details.append(name, country);
+    button.append(flag, details);
+    container.appendChild(button);
+  });
+
+  container.style.display = 'block';
+  setSearchExpanded(container.id, true);
+}
+
+function setSearchExpanded(resultsId, expanded) {
+  const inputId = resultsId === 'search-results' ? 'header-search' : 'mobile-search';
+  document.getElementById(inputId)?.setAttribute('aria-expanded', String(expanded));
+}
+
+function appendHighlightedText(container, value, query) {
+  const text = String(value || '');
+  const index = text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
+
+  if (!query || index < 0) {
+    container.textContent = text;
+    return;
+  }
+
+  container.append(
+    document.createTextNode(text.slice(0, index))
+  );
+
+  const mark = document.createElement('span');
+  mark.className = 'text-accent';
+  mark.textContent = text.slice(index, index + query.length);
+
+  container.append(
+    mark,
+    document.createTextNode(text.slice(index + query.length))
+  );
 }
 
 function searchLocalDictionary(query) {
   const results = [];
-  const queryLower = query.toLowerCase();
-  
-  // Ищем штаты
-  Object.entries(US_STATES).forEach(([state, capital]) => {
-    if (state.includes(queryLower)) {
-      const stateName = state.charAt(0).toUpperCase() + state.slice(1);
-      results.push({
-        apiName: capital,
-        displayName: `${stateName} (столица)`,
-        country: 'US',
-        flag: '🇺🇸'
-      });
-    }
-  });
-  
-  // Ищем крупные города
-  Object.entries(US_CITIES).forEach(([ruName, enName]) => {
-    if (ruName.includes(queryLower)) {
-      results.push({
-        apiName: enName,
-        displayName: ruName.charAt(0).toUpperCase() + ruName.slice(1),
-        country: 'US',
-        flag: '🇺🇸'
-      });
-    }
-  });
-  
-  return results;
-}
 
-function highlightMatch(text, query) {
-  if (!query || !text) return text;
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(${escapedQuery})`, 'gi');
-  return text.replace(regex, '<span class="text-accent fw-bold">$1</span>');
+  Object.entries(US_STATES).forEach(([state, capital]) => {
+    if (!state.includes(query)) return;
+
+    const stateName = state.charAt(0).toLocaleUpperCase() + state.slice(1);
+    results.push({
+      name: capital,
+      localName: `${stateName} (столица)`,
+      country: 'US',
+      flag: '🇺🇸'
+    });
+  });
+
+  Object.entries(US_CITIES).forEach(([localName, englishName]) => {
+    if (!localName.includes(query)) return;
+
+    results.push({
+      name: englishName,
+      localName: localName.charAt(0).toLocaleUpperCase() + localName.slice(1),
+      country: 'US',
+      flag: '🇺🇸'
+    });
+  });
+
+  return results;
 }
 
 function handleSearchClick(cityName, resultsId) {
   loadCityWeather(cityName);
-  const input = resultsId === 'search-results' 
-    ? document.getElementById('header-search')
-    : document.getElementById('mobile-search');
+
+  const inputId = resultsId === 'search-results' ? 'header-search' : 'mobile-search';
+  const input = document.getElementById(inputId);
+
   if (input) input.value = '';
   closeSearchResults();
 }
 
 function closeSearchResults() {
   ['search-results', 'search-results-mobile'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
+    const element = document.getElementById(id);
+    if (element) {
+      element.style.display = 'none';
+      setSearchExpanded(id, false);
+    }
   });
 }

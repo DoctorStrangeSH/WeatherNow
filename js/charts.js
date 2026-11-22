@@ -1,7 +1,3 @@
-// ============================================
-// WeatherNow — Графики (Chart.js)
-// ============================================
-
 let tempChartInstance = null;
 let hourlyChartInstance = null;
 
@@ -15,7 +11,7 @@ function renderTempChart(days) {
   const labels = days.map((day, i) => {
     if (i === 0) return 'Сегодня';
     if (i === 1) return 'Завтра';
-    const date = new Date(day.date);
+    const date = parseForecastDate(day.date);
     return dayNames[date.getDay()];
   });
 
@@ -63,7 +59,7 @@ function renderTempChart(days) {
 
 function renderHourlyChart(hourlyData) {
   const canvas = document.getElementById('hourlyChart');
-  if (!canvas) return;
+  if (!canvas || !Array.isArray(hourlyData) || hourlyData.length === 0) return;
   const ctx = canvas.getContext('2d');
   if (hourlyChartInstance) hourlyChartInstance.destroy();
 
@@ -108,6 +104,11 @@ function renderHourlyChart(hourlyData) {
             usePointStyle: true,
             color: isDark ? '#fff' : '#1a1a2e'
           }
+        },
+        tooltip: {
+          callbacks: {
+            label: context => formatChartTooltip(context.dataset.label, context.parsed.y)
+          }
         }
       },
       scales: {
@@ -119,6 +120,7 @@ function renderHourlyChart(hourlyData) {
         },
         y1: {
           position: 'right',
+          min: 0,
           max: 100,
           grid: { display: false },
           ticks: { callback: v => v + '%', color: isDark ? '#aaa' : '#666' }
@@ -126,6 +128,12 @@ function renderHourlyChart(hourlyData) {
       }
     }
   });
+}
+
+function formatChartTooltip(label, value) {
+  if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return label + ': нет данных';
+  const unit = label.includes('Осадки') ? '%' : '°C';
+  return `${label}: ${value}${unit}`;
 }
 
 function createGradient(ctx, color1, color2) {
@@ -148,7 +156,7 @@ function getChartOptions(isDark) {
         padding: 12,
         cornerRadius: 8,
         callbacks: {
-          label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y + '°C'
+          label: (ctx) => formatChartTooltip(ctx.dataset.label, ctx.parsed.y)
         }
       }
     },
@@ -171,18 +179,19 @@ function updateChartTheme() {
 
   [tempChartInstance, hourlyChartInstance].forEach(chart => {
     if (chart) {
-      // Обновляем цвета сетки
       chart.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
 
-      // Обновляем цвет текста на осях
       if (chart.options.scales.x) {
         chart.options.scales.x.ticks.color = isDark ? '#ccc' : '#666';
       }
       if (chart.options.scales.y) {
         chart.options.scales.y.ticks.color = isDark ? '#ccc' : '#666';
       }
+      if (chart.options.scales.y1) {
+        chart.options.scales.y1.ticks.color = isDark ? '#ccc' : '#666';
+        chart.options.scales.y1.grid.color = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
+      }
 
-      // Обновляем цвет легенды
       if (chart.options.plugins && chart.options.plugins.legend) {
         chart.options.plugins.legend.labels.color = isDark ? '#fff' : '#1a1a2e';
       }

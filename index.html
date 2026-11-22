@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeatherNow — Погода всегда под рукой</title>
+    <meta name="description" content="WeatherNow — текущая погода, прогноз на неделю, почасовые графики и погодные сцены для выбранного города.">
+    <meta name="theme-color" content="#4facfe">
+    <title>WeatherNow — Погода, которую хочется открыть</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -42,9 +44,7 @@
                 <div class="d-flex justify-content-between align-items-center py-2 py-md-3">
                     <!-- Логотип -->
                     <a href="#" class="logo" onclick="showScreen('home'); return false;">
-                        <div class="logo-icon">
-                            <i class="bi bi-cloud-sun-fill"></i>
-                        </div>
+                        <span class="logo-icon" aria-hidden="true"><span class="brand-sun"></span><span class="brand-cloud"></span></span>
                         <span class="logo-text">
                             <span class="logo-weather">Weather</span><span class="logo-now text-accent">Now</span>
                         </span>
@@ -56,11 +56,11 @@
                         <div class="search-wrapper position-relative">
                             <div class="input-group input-group-sm" style="width: 220px;">
                                 <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control glass-search" id="header-search"
-                                    placeholder="Поиск города..." autocomplete="off">
+                                <input type="text" class="form-control glass-search" id="header-search" role="combobox" aria-haspopup="listbox" aria-expanded="false"
+                                    placeholder="Поиск города..." aria-label="Поиск города" aria-controls="search-results" autocomplete="off">
                             </div>
-                            <div id="search-results" class="search-results glass-card rounded-3 p-2"
-                                style="display: none;"></div>
+                            <div id="search-results" class="search-results glass-card rounded-3 p-2" role="listbox"
+                                aria-label="Результаты поиска" style="display: none;"></div>
                         </div>
                         <!-- Кнопки навигации -->
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('rainmap')"
@@ -109,10 +109,11 @@
             <div class="search-wrapper-mobile position-relative">
                 <div class="input-group">
                     <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control glass-search" id="mobile-search"
-                        placeholder="Поиск города..." autocomplete="off">
+                    <input type="text" class="form-control glass-search" id="mobile-search" role="combobox" aria-haspopup="listbox" aria-expanded="false"
+                        placeholder="Поиск города..." aria-label="Поиск города" aria-controls="search-results-mobile" autocomplete="off">
                 </div>
-                <div id="search-results-mobile" class="search-results glass-card rounded-3 p-2" style="display: none;">
+                <div id="search-results-mobile" class="search-results glass-card rounded-3 p-2" role="listbox"
+                    aria-label="Результаты поиска" style="display: none;">
                 </div>
             </div>
         </div>
@@ -124,48 +125,51 @@
                 <!-- ЭКРАН 1: ГЛАВНАЯ -->
                 <div class="screen active" id="screen-home">
                     <div class="row justify-content-center">
-                        <div class="col-12 col-lg-8 text-center">
+                        <div class="col-12 col-lg-10 text-center">
 
-                            <!-- Иконка погоды -->
-                            <div class="weather-icon-large mb-3" id="main-icon">
-                                <i class="bi bi-cloud-sun-fill"></i>
-                            </div>
+                            <section class="weather-hero" aria-labelledby="main-city">
+                                <div class="weather-hero__eyebrow">
+                                    <span class="weather-live-dot" aria-hidden="true"></span>
+                                    ТЕКУЩАЯ ПОГОДА
+                                </div>
 
-                            <!-- Кнопка избранного -->
-                            <button class="btn btn-link p-0 mb-3" id="favorite-btn"
-                                style="font-size: 1.5rem; text-decoration: none;" title="Добавить в избранное">
-                                <i class="bi bi-heart fs-4"></i>
-                            </button>
+                                <button class="weather-favorite" id="favorite-btn" type="button"
+                                    aria-label="Добавить город в избранное" title="Добавить в избранное">
+                                    <i class="bi bi-heart fs-5" aria-hidden="true"></i>
+                                </button>
 
-                            <!-- Основная инфа -->
-                            <h1 class="display-3 display-md-4 fw-bold mb-2" id="main-temp">--°C</h1>
-                            <p class="fs-5 mb-1" id="main-city">Загрузка...</p>
-                            <p class="text-muted mb-4" id="main-desc">Получаем данные...</p>
+                                <div class="weather-icon-large" id="main-icon" aria-hidden="true">
+                                    <i class="bi bi-cloud-sun-fill"></i>
+                                </div>
 
-                            <!-- Кнопка обновления геолокации -->
-                            <button class="btn btn-glass btn-sm rounded-pill mb-4 d-none" id="retry-geo-btn"
-                                onclick="retryGeolocation()">
-                                <i class="bi bi-geo-alt me-1"></i>Определить город
-                            </button>
+                                <h1 class="weather-hero__temperature" id="main-temp">--°C</h1>
+                                <p class="weather-hero__city" id="main-city">Загрузка...</p>
+                                <p class="weather-hero__description" id="main-desc">Получаем данные...</p>
+
+                                <button class="btn btn-glass btn-sm rounded-pill d-none" id="retry-geo-btn"
+                                    type="button" onclick="retryGeolocation()">
+                                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>Определить город
+                                </button>
+                            </section>
 
                             <!-- Детали -->
-                            <div class="row g-2 g-md-3 mb-4">
+                            <div class="row g-2 g-md-3 mb-4 weather-details" aria-label="Показатели погоды">
                                 <div class="col-4">
-                                    <div class="glass-card rounded-4 p-2 p-md-3">
+                                    <div class="glass-card rounded-4 p-2 p-md-3 weather-detail-card">
                                         <i class="bi bi-droplet fs-5 fs-md-4 text-info"></i>
                                         <p class="fw-bold mb-0 mt-1 small" id="detail-humidity">--%</p>
                                         <small class="text-muted d-none d-md-block">Влажность</small>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="glass-card rounded-4 p-2 p-md-3">
+                                    <div class="glass-card rounded-4 p-2 p-md-3 weather-detail-card">
                                         <i class="bi bi-wind fs-5 fs-md-4 text-primary"></i>
                                         <p class="fw-bold mb-0 mt-1 small" id="detail-wind">-- м/с</p>
                                         <small class="text-muted d-none d-md-block">Ветер</small>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="glass-card rounded-4 p-2 p-md-3">
+                                    <div class="glass-card rounded-4 p-2 p-md-3 weather-detail-card">
                                         <i class="bi bi-thermometer-half fs-5 fs-md-4 text-warning"></i>
                                         <p class="fw-bold mb-0 mt-1 small" id="detail-feels">--°C</p>
                                         <small class="text-muted d-none d-md-block">Ощущается</small>
@@ -173,8 +177,19 @@
                                 </div>
                             </div>
 
+                            <section class="weather-insights mt-4 mb-4" id="weather-insights" aria-labelledby="weather-insights-title">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                                    <div>
+                                        <p class="weather-section-kicker mb-1">БОЛЬШЕ ДЕТАЛЕЙ</p>
+                                        <h5 class="fw-bold mb-0" id="weather-insights-title">Атмосферные показатели</h5>
+                                    </div>
+                                    <i class="bi bi-speedometer2 weather-insights-mark" aria-hidden="true"></i>
+                                </div>
+                                <div class="row g-2 g-md-3" id="weather-insights-grid" aria-live="polite"></div>
+                            </section>
+
                             <!-- Прогноз на 5 дней -->
-                            <h5 class="fw-bold mb-3 mt-4">
+                            <h5 class="fw-bold mb-3 mt-4 forecast-heading">
                                 <i class="bi bi-calendar-week me-2"></i>Прогноз на 5 дней
                             </h5>
                             <div class="row g-2" id="forecast-container">
@@ -227,23 +242,31 @@
                                     <div class="input-group">
                                         <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
                                         <input type="text" class="form-control glass-search" id="compare-city-1"
-                                            placeholder="Первый город..." autocomplete="off">
+                                            placeholder="Первый город..." aria-label="Первый город для сравнения" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <div class="input-group">
                                         <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
                                         <input type="text" class="form-control glass-search" id="compare-city-2"
-                                            placeholder="Второй город..." autocomplete="off">
+                                            placeholder="Второй город..." aria-label="Второй город для сравнения" autocomplete="off">
                                     </div>
                                 </div>
                             </div>
                             <div class="text-center mb-4">
-                                <button class="btn btn-accent rounded-pill px-5" id="compare-btn">
+                                <button class="btn btn-accent rounded-pill px-5" id="compare-btn" type="button">
                                     <i class="bi bi-arrow-left-right me-2"></i>Сравнить
                                 </button>
                             </div>
-                            <div class="row g-4" id="compare-results"></div>
+                            <div class="row g-4" id="compare-results" aria-live="polite" aria-atomic="true">
+                                <div class="col-12">
+                                    <div class="compare-empty-state">
+                                        <span class="compare-empty-icon" aria-hidden="true"><i class="bi bi-columns-gap"></i></span>
+                                        <h4>Два города — один понятный выбор</h4>
+                                        <p>Выберите города выше, чтобы сравнить температуру, ветер, влажность и другие условия.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -256,28 +279,36 @@
                                 <i class="bi bi-map me-2"></i>Погода на карте
                             </h3>
 
+                            <!-- Управление картой -->
+                            <div class="d-flex justify-content-end mb-3">
+                                <button id="map-fullscreen-btn" class="btn btn-glass btn-sm rounded-pill" type="button" aria-pressed="false" onclick="toggleMapFullscreen()">
+                                    <i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i>На весь экран
+                                </button>
+                            </div>
+
                             <!-- Переключатель слоёв -->
                             <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
                                 <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
-                                    onclick="switchMapLayer('temperature')">
+                                    data-layer="temperature" aria-pressed="true" onclick="switchMapLayer('temperature')">
                                     <i class="bi bi-thermometer-half me-1"></i>Температура
                                 </button>
                                 <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    onclick="switchMapLayer('wind')">
+                                    data-layer="wind" aria-pressed="false" onclick="switchMapLayer('wind')">
                                     <i class="bi bi-wind me-1"></i>Ветер
                                 </button>
                                 <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    onclick="switchMapLayer('precipitation')">
+                                    data-layer="precipitation" aria-pressed="false" onclick="switchMapLayer('precipitation')">
                                     <i class="bi bi-droplet me-1"></i>Осадки
                                 </button>
                                 <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    onclick="switchMapLayer('clouds')">
+                                    data-layer="clouds" aria-pressed="false" onclick="switchMapLayer('clouds')">
                                     <i class="bi bi-cloud me-1"></i>Облака
                                 </button>
                             </div>
 
                             <!-- Контейнер карты -->
                             <div class="glass-card rounded-4 overflow-hidden weather-map-container">
+                                <div id="map-status" class="map-status" role="status" aria-live="polite" hidden></div>
                                 <div id="weather-map" style="width: 100%; height: 500px;"></div>
                             </div>
 
