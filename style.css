@@ -3117,3 +3117,79 @@ body {
         animation: none !important;
     }
 }
+
+
+/* Объёмные облачные слои */
+.weather-cloud-layers {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    contain: paint;
+}
+
+.weather-cloud-layer {
+    position: absolute;
+    inset: -12% -18%;
+    opacity: 0;
+    background:
+        radial-gradient(ellipse 23% 15% at 18% 30%, rgba(229, 239, 248, .42), transparent 72%),
+        radial-gradient(ellipse 28% 19% at 43% 24%, rgba(215, 229, 241, .34), transparent 72%),
+        radial-gradient(ellipse 24% 17% at 70% 35%, rgba(224, 235, 244, .38), transparent 72%),
+        radial-gradient(ellipse 32% 20% at 91% 22%, rgba(205, 222, 237, .3), transparent 72%);
+    filter: blur(15px);
+    transform: translate3d(0, 0, 0);
+    transition: opacity 2.2s ease, filter 2.2s ease;
+    animation: cloudDrift var(--cloud-speed, 70s) ease-in-out infinite alternate;
+}
+
+.weather-cloud-layer--back {
+    top: -10%;
+    filter: blur(26px);
+    animation-direction: alternate-reverse;
+}
+
+.weather-cloud-layer--middle {
+    top: 8%;
+    transform: scale(1.12);
+}
+
+.weather-cloud-layer--front {
+    top: 20%;
+    filter: blur(10px);
+    transform: scale(1.24);
+    animation-direction: alternate-reverse;
+}
+
+.weather-cloud-layer[data-weather="storm"],
+.weather-cloud-layer[data-weather="rain"] {
+    background:
+        radial-gradient(ellipse 32% 23% at 20% 28%, rgba(86, 105, 126, .72), transparent 75%),
+        radial-gradient(ellipse 34% 25% at 52% 24%, rgba(65, 82, 105, .68), transparent 75%),
+        radial-gradient(ellipse 30% 22% at 82% 32%, rgba(91, 108, 128, .7), transparent 75%);
+}
+
+.weather-cloud-layer[data-weather="snow"] {
+    background:
+        radial-gradient(ellipse 30% 22% at 20% 28%, rgba(218, 235, 248, .58), transparent 75%),
+        radial-gradient(ellipse 34% 25% at 52% 24%, rgba(198, 220, 239, .52), transparent 75%),
+        radial-gradient(ellipse 30% 22% at 82% 32%, rgba(228, 239, 247, .56), transparent 75%);
+}
+
+.weather-cloud-layer[data-weather="fog"] {
+    filter: blur(34px);
+    background: linear-gradient(180deg, rgba(205, 220, 228, .32), rgba(205, 220, 228, .06));
+}
+
+@keyframes cloudDrift {
+    from { translate: calc(var(--cloud-drift, 18px) * -1) 0; }
+    to { translate: var(--cloud-drift, 18px) 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .weather-cloud-layer {
+        animation: none !important;
+        transition: none !important;
+    }
+}
