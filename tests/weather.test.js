@@ -485,3 +485,41 @@ test('sun is shown only for clear daytime conditions', () => {
   assert.equal(context.shouldShowSun(500, 'day'), false);
   assert.equal(context.shouldShowSun(800, 'night'), false);
 });
+
+
+test('weather scene classification covers clear, clouds, rain, snow and fog', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const context = vm.createContext({
+    document: { addEventListener() {} },
+    window: { matchMedia: () => ({ matches: false }) }
+  });
+  vm.runInContext(source, context);
+
+  assert.equal(context.getWeatherSceneKey(800), 'clear');
+  assert.equal(context.getWeatherSceneKey(801), 'partly-cloudy');
+  assert.equal(context.getWeatherSceneKey(803), 'cloudy');
+  assert.equal(context.getWeatherSceneKey(502), 'rain');
+  assert.equal(context.getWeatherSceneKey(211), 'thunder');
+  assert.equal(context.getWeatherSceneKey(601), 'snow');
+  assert.equal(context.getWeatherSceneKey(741), 'fog');
+});
+
+test('weather effects set the active scene on the sky container', () => {
+  const attributes = {};
+  const sky = {
+    dataset: attributes,
+    querySelectorAll: () => [],
+    appendChild() {}
+  };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById: id => id === 'sky' ? sky : null
+    },
+    window: { matchMedia: () => ({ matches: true }) }
+  });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8'), context);
+  context.applyWeatherEffects(500, 'day');
+  assert.equal(attributes.weather, 'rain');
+  assert.equal(attributes.motion, 'reduced');
+});
