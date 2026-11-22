@@ -508,6 +508,7 @@ test('weather effects set the active scene on the sky container', () => {
   const attributes = {};
   const sky = {
     dataset: attributes,
+    querySelector: () => null,
     querySelectorAll: () => [],
     appendChild() {}
   };
