@@ -515,6 +515,7 @@ test('weather effects set the active scene on the sky container', () => {
   const context = vm.createContext({
     document: {
       addEventListener() {},
+      createElement: () => ({ dataset: {}, style: {}, setAttribute() {}, appendChild() {} }),
       getElementById: id => id === 'sky' ? sky : null
     },
     window: { matchMedia: () => ({ matches: true }) }
