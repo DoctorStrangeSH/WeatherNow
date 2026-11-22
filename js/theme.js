@@ -1,5 +1,6 @@
 let currentWeatherCode = 800;
 let currentTimezone = 0;
+let currentWindSpeed = 0;
 
 function initTheme() {
   createSkyElements();
@@ -33,7 +34,7 @@ function applyTimeTheme(timezoneOffset = currentTimezone) {
   }
   
   updateSkyElements(timeOfDay);
-  applyWeatherEffects(currentWeatherCode, timeOfDay);
+  applyWeatherEffects(currentWeatherCode, timeOfDay, currentWindSpeed);
   
   if (typeof updateChartTheme === 'function') {
     updateChartTheme();
@@ -51,9 +52,10 @@ function getWeatherSceneKey(weatherCode) {
   return 'cloudy';
 }
 
-function updateWeatherTheme(weatherCode, timezoneOffset) {
+function updateWeatherTheme(weatherCode, timezoneOffset, windSpeed) {
   currentWeatherCode = weatherCode;
   if (timezoneOffset !== undefined) currentTimezone = timezoneOffset;
+  if (Number.isFinite(Number(windSpeed))) currentWindSpeed = Number(windSpeed);
 
   const hero = document.querySelector('.weather-hero');
   if (hero) hero.dataset.weather = getWeatherSceneKey(weatherCode);
@@ -80,7 +82,24 @@ function updateSkyElements(timeOfDay) {
   updateStarsVisibility(timeOfDay === 'night');
 }
 
-function applyWeatherEffects(weatherCode, timeOfDay) {
+function getWeatherMotionProfile(weatherCode, windSpeed = 0) {
+  const code = Number(weatherCode);
+  const wind = Math.max(0, Number(windSpeed) || 0);
+  const rain = code >= 500 && code < 600;
+  const drizzle = code >= 300 && code < 400;
+  const snow = code >= 600 && code < 700;
+  const thunder = code >= 200 && code < 300;
+  const rainCount = rain ? (code === 502 || code === 503 || code === 504 || code === 522 ? 68 : code === 500 || code === 501 || code === 520 || code === 521 ? 42 : 30) : drizzle ? 18 : thunder ? 72 : 0;
+  const snowCount = snow ? (code === 602 || code === 622 ? 72 : code === 601 || code === 621 ? 48 : 28) : 0;
+  return {
+    rainCount,
+    snowCount,
+    windCount: wind >= 12 ? 22 : wind >= 8 ? 16 : wind >= 4 ? 10 : 4,
+    heavyRain: rainCount >= 42 || thunder
+  };
+}
+
+function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpeed) {
   const sky = document.getElementById('sky');
   if (!sky) return;
 
@@ -99,6 +118,7 @@ function applyWeatherEffects(weatherCode, timeOfDay) {
   
   sky.dataset.motion = 'full';
   const effectScale = getWeatherEffectScale();
+  const motionProfile = getWeatherMotionProfile(weatherCode, windSpeed);
 
   if (weatherCode >= 200 && weatherCode < 300) {
     clouds.forEach((c, i) => {
@@ -106,29 +126,29 @@ function applyWeatherEffects(weatherCode, timeOfDay) {
       c.style.opacity = '0.9';
       c.style.animationDuration = (20 + i * 5) + 's';
     });
-    createRain(Math.round(50 * effectScale), true);
+    createRain(Math.round(motionProfile.rainCount * effectScale), true);
     createLightning();
-    createWindLines(Math.round(15 * effectScale));
+    createWindLines(Math.round(motionProfile.windCount * effectScale));
   } else if (weatherCode >= 300 && weatherCode < 400) {
     clouds.forEach((c, i) => {
       c.style.opacity = '0.7';
       c.style.background = '#90A4AE';
     });
-    createRain(Math.round(20 * effectScale), false);
+    createRain(Math.round(motionProfile.rainCount * effectScale), false);
   } else if (weatherCode >= 500 && weatherCode < 600) {
     clouds.forEach((c, i) => {
       c.style.background = '#78909C';
       c.style.opacity = '0.85';
       c.style.animationDuration = (22 + i * 5) + 's';
     });
-    createRain(Math.round(40 * effectScale), true);
-    createWindLines(Math.round(10 * effectScale));
+    createRain(Math.round(motionProfile.rainCount * effectScale), motionProfile.heavyRain);
+    createWindLines(Math.round(motionProfile.windCount * effectScale));
   } else if (weatherCode >= 600 && weatherCode < 700) {
     clouds.forEach((c, i) => {
       c.style.background = '#B0BEC5';
       c.style.opacity = '0.8';
     });
-    createSnow(Math.round(40 * effectScale));
+    createSnow(Math.round(motionProfile.snowCount * effectScale));
   } else if (weatherCode >= 700 && weatherCode < 800) {
     clouds.forEach(c => c.style.opacity = '0.3');
     createFog();
