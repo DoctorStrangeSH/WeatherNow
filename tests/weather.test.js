@@ -523,3 +523,25 @@ test('weather effects set the active scene on the sky container', () => {
   assert.equal(attributes.weather, 'rain');
   assert.equal(attributes.motion, 'reduced');
 });
+
+
+test('weather icon renderer returns accessible SVG artwork for all weather families', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/weather.js'), 'utf8');
+  const context = vm.createContext({});
+  vm.runInContext(source, context);
+
+  for (const [code, label] of [
+    [800, 'Ясно'],
+    [801, 'Небольшая облачность'],
+    [500, 'Дождь'],
+    [211, 'Гроза'],
+    [601, 'Снег'],
+    [741, 'Туман'],
+    [804, 'Облачно']
+  ]) {
+    const markup = context.getWeatherIconMarkup(code);
+    assert.match(markup, /<svg/);
+    assert.match(markup, /aria-label=/);
+    assert.match(markup, new RegExp(label));
+  }
+});
