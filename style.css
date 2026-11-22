@@ -3078,3 +3078,42 @@ body {
         animation: none !important;
     }
 }
+
+
+/* Суточное движение небесных тел */
+.sun,
+.moon {
+    will-change: left, top, opacity, transform;
+    transition:
+        left 8s cubic-bezier(.22,.61,.36,1),
+        top 8s cubic-bezier(.22,.61,.36,1),
+        opacity 1.8s ease,
+        transform 1.8s ease;
+}
+
+.stars-container {
+    transition: opacity 2.4s ease;
+}
+
+.star {
+    animation: starTwinkle 3.8s ease-in-out infinite alternate;
+}
+
+.star:nth-child(3n) { animation-duration: 5.2s; }
+.star:nth-child(4n) { animation-delay: -1.7s; }
+.star:nth-child(7n) { animation-duration: 6.4s; }
+
+@keyframes starTwinkle {
+    from { opacity: .28; transform: scale(.82); }
+    to { opacity: .95; transform: scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sun,
+    .moon,
+    .stars-container,
+    .star {
+        transition: none !important;
+        animation: none !important;
+    }
+}
