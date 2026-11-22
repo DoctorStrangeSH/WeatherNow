@@ -97,7 +97,7 @@ function renderCurrentWeather(data) {
   document.getElementById('detail-feels').textContent = `${Math.round(data.main.feels_like)}°C`;
   renderWeatherInsights(data);
 
-  document.getElementById('main-icon').innerHTML = getWeatherEmoji(data.weather[0].id);
+  document.getElementById('main-icon').innerHTML = getWeatherIconMarkup(data.weather[0].id);
 
   if (typeof updateWeatherTheme === 'function') {
     updateWeatherTheme(data.weather[0].id, data.timezone);
@@ -173,7 +173,7 @@ function renderForecast(days) {
         <div class="glass-card rounded-4 p-2 p-md-3 text-center h-100 forecast-card">
           <p class="fw-bold small mb-1">${dayName}</p>
           <p class="text-muted small mb-2">${dateStr}</p>
-          <div class="fs-2 mb-2">${getWeatherEmoji(day.icon)}</div>
+          <div class="fs-2 mb-2">${getWeatherIconMarkup(day.icon)}</div>
           <div class="temp-range">
             <div class="temp-high" title="Максимальная">
               <i class="bi bi-arrow-up text-danger" style="font-size: 0.6rem;"></i>
@@ -230,7 +230,7 @@ function renderHourlyForecast() {
         <article class="hourly-forecast-item flex-shrink-0">
           <small class="hourly-forecast-day">${hour.dateLabel}</small>
           <span class="hourly-forecast-time">${hour.time}</span>
-          <span class="hourly-forecast-icon" aria-hidden="true">${getWeatherEmoji(hour.icon)}</span>
+          <span class="hourly-forecast-icon" aria-hidden="true">${getWeatherIconMarkup(hour.icon)}</span>
           <p class="fw-bold mb-0">${hour.temp}°</p>
           <small class="hourly-forecast-rain ${hour.pop > 0 ? 'is-visible' : ''}">${hour.pop > 0 ? `<i class="bi bi-droplet-fill" aria-hidden="true"></i> ${hour.pop}%` : 'Без осадков'}</small>
         </article>
@@ -344,7 +344,7 @@ function createCompareCityCard(data) {
 
   const icon = document.createElement('span');
   icon.className = 'compare-city-icon';
-  icon.textContent = getWeatherEmoji(data.weather?.[0]?.id);
+  icon.textContent = getWeatherIconMarkup(data.weather?.[0]?.id);
   icon.setAttribute('aria-hidden', 'true');
 
   header.append(cityName, condition);
