@@ -581,3 +581,39 @@ test('celestial body arc stays within the sky bounds', () => {
   assert.ok(noon.y > dusk.y);
   assert.ok([dawn, noon, dusk].every(point => point.x >= 0 && point.x <= 100 && point.y >= 0 && point.y <= 100));
 });
+
+
+test('cloud atmosphere responds to cloud cover and wind without replacing the sky', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const layerData = [];
+  const layers = [0, 1, 2].map(index => ({
+    dataset: {},
+    style: {
+      opacity: '',
+      setProperty(name, value) { this[name] = value; }
+    }
+  }));
+  const sky = {
+    querySelector(selector) { return selector === '.weather-cloud-layers' ? {} : null; },
+    querySelectorAll(selector) { return selector === '.weather-cloud-layer' ? layers : []; },
+    appendChild() {}
+  };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById: id => id === 'sky' ? sky : null,
+      createElement: () => ({ className: '', dataset: {}, setAttribute() {}, appendChild() {} })
+    },
+    window: { matchMedia: () => ({ matches: false }) }
+  });
+  vm.runInContext(source, context);
+
+  context.updateCloudAtmosphere(800, 2);
+  const clearOpacity = layers[0].style.opacity;
+  context.updateCloudAtmosphere(804, 12);
+  assert.ok(Number(layers[0].style.opacity) > Number(clearOpacity));
+  assert.equal(layers[0].dataset.weather, 'cloudy');
+  assert.equal(layers[0].style['--cloud-speed'], '52s');
+  assert.equal(layers[0].style['--cloud-drift'], '34px');
+  assert.equal(layers.length, 3);
+});
