@@ -2973,3 +2973,108 @@ body {
         transition: none !important;
     }
 }
+
+
+/* Единая система погодных иллюстраций */
+.weather-icon-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.weather-icon-cloud {
+    fill: #eaf3ff;
+    filter: drop-shadow(0 7px 12px rgba(4, 16, 34, .16));
+}
+
+.weather-icon-cloud--storm {
+    fill: #9fb4cc;
+}
+
+.weather-icon-sun {
+    fill: #ffc978;
+    filter: drop-shadow(0 0 13px rgba(255, 193, 107, .72));
+    transform-origin: 43px 33px;
+    animation: weatherSunPulse 5s ease-in-out infinite;
+}
+
+.weather-icon-rays {
+    fill: none;
+    stroke: #ffd18a;
+    stroke-width: 5;
+    stroke-linecap: round;
+    opacity: .9;
+}
+
+.weather-icon-rain {
+    fill: none;
+    stroke: #83c9f5;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 12 8;
+    animation: weatherRain 1.15s linear infinite;
+}
+
+.weather-icon-snow {
+    fill: none;
+    stroke: #d9f2ff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    animation: weatherSnow 3.5s ease-in-out infinite;
+}
+
+.weather-icon-bolt {
+    fill: #ffd36e;
+    filter: drop-shadow(0 0 8px rgba(255, 211, 110, .7));
+}
+
+.weather-icon-fog {
+    fill: none;
+    stroke: #d4e1ec;
+    stroke-width: 7;
+    stroke-linecap: round;
+    opacity: .85;
+    stroke-dasharray: 22 9;
+    animation: weatherFog 7s ease-in-out infinite alternate;
+}
+
+.weather-icon-large .weather-icon-svg {
+    filter: drop-shadow(0 14px 20px rgba(4, 16, 34, .18));
+}
+
+.forecast-card .weather-icon-svg,
+.hourly-item .weather-icon-svg {
+    width: 58px;
+    height: 50px;
+    margin-inline: auto;
+}
+
+@keyframes weatherSunPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+}
+
+@keyframes weatherRain {
+    to { stroke-dashoffset: -40; }
+}
+
+@keyframes weatherSnow {
+    0%, 100% { transform: translateY(-1px); opacity: .78; }
+    50% { transform: translateY(3px); opacity: 1; }
+}
+
+@keyframes weatherFog {
+    from { stroke-dashoffset: 0; opacity: .55; }
+    to { stroke-dashoffset: 32; opacity: .95; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .weather-icon-svg *,
+    .weather-icon-sun,
+    .weather-icon-rain,
+    .weather-icon-snow,
+    .weather-icon-fog {
+        animation: none !important;
+    }
+}
