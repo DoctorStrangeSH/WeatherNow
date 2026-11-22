@@ -3044,7 +3044,7 @@ body {
 }
 
 .forecast-card .weather-icon-svg,
-.hourly-item .weather-icon-svg {
+.hourly-forecast-icon .weather-icon-svg {
     width: 58px;
     height: 50px;
     margin-inline: auto;
