@@ -561,3 +561,23 @@ test('weather motion profile scales rain, snow and wind to condition severity', 
   assert.equal(context.getWeatherMotionProfile(800, 1).rainCount, 0);
   assert.equal(context.getWeatherMotionProfile(800, 1).snowCount, 0);
 });
+
+
+test('celestial body arc stays within the sky bounds', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const context = vm.createContext({
+    document: { addEventListener() {} },
+    window: { matchMedia: () => ({ matches: false }) }
+  });
+  vm.runInContext(source, context);
+
+  const dawn = context.getSkyArcPosition(5, 5, 20);
+  const noon = context.getSkyArcPosition(12.5, 5, 20);
+  const dusk = context.getSkyArcPosition(20, 5, 20);
+
+  assert.equal(dawn.x, 8);
+  assert.equal(dusk.x, 92);
+  assert.ok(noon.y > dawn.y);
+  assert.ok(noon.y > dusk.y);
+  assert.ok([dawn, noon, dusk].every(point => point.x >= 0 && point.x <= 100 && point.y >= 0 && point.y <= 100));
+});
