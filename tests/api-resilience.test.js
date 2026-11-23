@@ -255,3 +255,92 @@ test('forecast cache keeps several recently viewed cities and evicts the oldest 
   });
   assert.equal(context.getLastForecastSnapshot('City 2').data.list[0].dt, 22);
 });
+
+
+test('weather and forecast snapshots expose stale state after their freshness windows', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const values = new Map();
+  const fixedNow = Date.parse('2026-11-23T12:00:00.000Z');
+  class FixedDate extends Date {
+    static now() { return fixedNow; }
+  }
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date: FixedDate
+  });
+  vm.runInContext(storageSource, context);
+
+  const weather = {
+    name: 'Berlin',
+    coord: { lat: 52.52, lon: 13.405 },
+    main: { temp: 12 },
+    weather: [{ id: 800, description: 'ясно' }]
+  };
+  context.saveLastWeatherSnapshot(weather);
+  const freshWeather = context.getLastWeatherSnapshot();
+  assert.equal(freshWeather.stale, false);
+
+  const oldWeather = JSON.parse(values.get('weathernow-last-weather'));
+  oldWeather.savedAt = new Date(fixedNow - 7 * 60 * 60 * 1000).toISOString();
+  values.set('weathernow-last-weather', JSON.stringify(oldWeather));
+  assert.equal(context.getLastWeatherSnapshot().stale, true);
+
+  context.saveLastForecastSnapshot('Berlin', {
+    city: { name: 'Berlin' },
+    list: [{ dt: 1 }]
+  });
+  const freshForecast = context.getLastForecastSnapshot('Berlin');
+  assert.equal(freshForecast.stale, false);
+
+  const forecastCache = JSON.parse(values.get('weathernow-last-forecast'));
+  forecastCache.cities.berlin.savedAt = new Date(fixedNow - 13 * 60 * 60 * 1000).toISOString();
+  values.set('weathernow-last-forecast', JSON.stringify(forecastCache));
+  assert.equal(context.getLastForecastSnapshot('Berlin').stale, true);
+});
+
+test('forecast cache refuses an oversized city payload without throwing or writing it', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const values = new Map();
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  context.saveLastForecastSnapshot('Huge City', {
+    city: { name: 'Huge City' },
+    list: [{ description: 'x'.repeat(600 * 1024) }]
+  });
+  assert.equal(values.has('weathernow-last-forecast'), false);
+});
+
+test('cache storage quota failures never interrupt weather rendering', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const context = vm.createContext({
+    localStorage: {
+      getItem() { return null; },
+      setItem() { throw new Error('QuotaExceededError'); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+  assert.doesNotThrow(() => context.saveLastWeatherSnapshot({
+    name: 'Berlin',
+    coord: { lat: 52.52, lon: 13.405 },
+    main: { temp: 12 },
+    weather: [{ id: 800 }]
+  }));
+  assert.doesNotThrow(() => context.saveLastForecastSnapshot('Berlin', {
+    city: { name: 'Berlin' },
+    list: [{ dt: 1 }]
+  }));
+});
