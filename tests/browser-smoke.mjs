@@ -155,7 +155,7 @@ try {
   await page.addScriptTag({ path: path.join(ROOT, 'node_modules', 'axe-core', 'axe.min.js') });
   const homeA11y = await page.evaluate(async () => {
     const result = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } });
-    return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.length })), passes: result.passes.length };
+    return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.map(node => ({ target: node.target, html: node.html, summary: node.failureSummary })) })), passes: result.passes.length };
   });
   console.log('axe-core home audit:', JSON.stringify(homeA11y));
 
