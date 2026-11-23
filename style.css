@@ -357,8 +357,8 @@ body {
 }
 
 @keyframes rain {
-    0% { transform: translateY(-100px) rotate(18deg); }
-    100% { transform: translateY(100vh) rotate(18deg); }
+    0% { transform: translate3d(0, -100px, 0) rotate(var(--rain-angle, 0deg)); }
+    100% { transform: translate3d(0, 100vh, 0) rotate(var(--rain-angle, 0deg)); }
 }
 
 /* снег */
@@ -383,11 +383,11 @@ body {
 }
 
 @keyframes snow {
-    0% { transform: translateY(-10px) rotate(0deg) translateX(0); }
-    25% { transform: translateY(25vh) rotate(90deg) translateX(15px); }
-    50% { transform: translateY(50vh) rotate(180deg) translateX(-10px); }
-    75% { transform: translateY(75vh) rotate(270deg) translateX(10px); }
-    100% { transform: translateY(100vh) rotate(360deg) translateX(0); }
+    0% { transform: translate3d(0, -10px, 0) rotate(0deg); }
+    25% { transform: translate3d(calc(var(--snow-drift, 0px) * .25 + 12px), 25vh, 0) rotate(90deg); }
+    50% { transform: translate3d(calc(var(--snow-drift, 0px) * .5 - 10px), 50vh, 0) rotate(180deg); }
+    75% { transform: translate3d(calc(var(--snow-drift, 0px) * .75 + 10px), 75vh, 0) rotate(270deg); }
+    100% { transform: translate3d(var(--snow-drift, 0px), 100vh, 0) rotate(360deg); }
 }
 
 /* ветер */
