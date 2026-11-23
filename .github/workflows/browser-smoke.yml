@@ -1,0 +1,48 @@
+name: Browser and production smoke
+
+on:
+  push:
+    branches:
+      - main
+      - "project/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    name: Chromium browser smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Run desktop and mobile browser scenarios
+        run: node tests/browser-smoke.mjs
+
+  production-worker-smoke:
+    name: Production Cloudflare Worker smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify production Worker endpoints and security
+        run: node tests/worker-production-smoke.mjs
