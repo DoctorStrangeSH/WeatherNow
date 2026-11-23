@@ -416,7 +416,8 @@ function updateCloudAtmosphere(weatherCode, windSpeed = 0) {
   const snow = code >= 600 && code < 700;
   const fog = code >= 700 && code < 800;
   const coverage = code === 801 ? 0.28 : code === 802 ? 0.48 : code === 803 ? 0.7 : code === 804 ? 0.9 : storm ? 1 : rain ? 0.82 : snow ? 0.76 : fog ? 0.58 : 0;
-  const activeLayerCount = prefersReducedMotion() ? 0 : getActiveCloudLayerCount();
+  // Reduced motion keeps one static atmospheric layer rather than a flat empty sky.
+  const activeLayerCount = prefersReducedMotion() ? 1 : getActiveCloudLayerCount();
 
   layers.forEach((layer, index) => {
     const depth = index + 1;
