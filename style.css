@@ -2373,7 +2373,7 @@ body {
     height: clamp(84px, 10vw, 138px);
     background: radial-gradient(circle at 36% 32%, #fff1bd 0%, #ffc66f 42%, #ff9d52 78%, #f17b45 100%);
     box-shadow: 0 0 48px rgba(255, 183, 100, 0.28), 0 0 120px rgba(255, 169, 91, 0.15);
-    z-index: 0;
+    z-index: 2;
     pointer-events: none;
 }
 
@@ -2391,6 +2391,7 @@ body {
     height: 92px;
     background: radial-gradient(circle at 34% 30%, #fff 0%, #dce8f5 56%, #a9bfd9 100%);
     box-shadow: 0 0 58px rgba(192, 218, 255, 0.22);
+    z-index: 2;
     pointer-events: none;
 }
 
@@ -3127,6 +3128,7 @@ body {
     overflow: hidden;
     pointer-events: none;
     contain: paint;
+    isolation: isolate;
 }
 
 .weather-cloud-layer {
