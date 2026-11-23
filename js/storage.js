@@ -202,14 +202,14 @@ document.addEventListener('screenChanged', (e) => {
 
 const LAST_WEATHER_CACHE_KEY = 'weathernow-last-weather';
 const MAX_WEATHER_CACHE_AGE_MS = 6 * 60 * 60 * 1000;
+const MAX_WEATHER_CACHE_BYTES = 128 * 1024;
 
 function saveLastWeatherSnapshot(data) {
   if (!data || !data.name || !data.main || !Array.isArray(data.weather) || !data.weather[0] || !data.coord) return;
   try {
-    localStorage.setItem(LAST_WEATHER_CACHE_KEY, JSON.stringify({
-      savedAt: new Date().toISOString(),
-      data
-    }));
+    const serialized = JSON.stringify({ savedAt: new Date().toISOString(), data });
+    if (serialized.length * 2 > MAX_WEATHER_CACHE_BYTES) return;
+    localStorage.setItem(LAST_WEATHER_CACHE_KEY, serialized);
   } catch {
     // Storage may be unavailable or full; live weather must still work.
   }
