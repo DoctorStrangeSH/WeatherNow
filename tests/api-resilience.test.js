@@ -434,7 +434,10 @@ test('forecast cache rejects partially corrupted entries and empty forecast list
       berlin: validSnapshot,
       paris: { ...validSnapshot, data: { city: { name: 'Paris' }, list: [validItem, null] } },
       tokyo: { ...validSnapshot, data: { city: { name: 'Tokyo' }, list: [] } },
-      rome: { ...validSnapshot, data: { city: { name: 'Rome' }, list: [{ dt: 1, main: {}, weather: [] }] } }
+      rome: { ...validSnapshot, data: { city: { name: 'Rome' }, list: [{ dt: 1, main: {}, weather: [] }] } },
+      madrid: { ...validSnapshot, data: { city: { name: 'Madrid' }, list: [{ dt: null, main: { temp: 10 }, weather: [{ id: 800 }] }] } },
+      lisbon: { ...validSnapshot, data: { city: { name: 'Lisbon' }, list: [{ dt: 1, main: { temp: '' }, weather: [{ id: 800 }] }] } },
+      oslo: { ...validSnapshot, data: { city: { name: 'Oslo' }, list: [{ dt: 1, main: { temp: 10 }, weather: [{ description: ' ' }] }] } }
     }
   }));
 
@@ -442,4 +445,7 @@ test('forecast cache rejects partially corrupted entries and empty forecast list
   assert.equal(context.getLastForecastSnapshot('Paris'), null);
   assert.equal(context.getLastForecastSnapshot('Tokyo'), null);
   assert.equal(context.getLastForecastSnapshot('Rome'), null);
+  assert.equal(context.getLastForecastSnapshot('Madrid'), null);
+  assert.equal(context.getLastForecastSnapshot('Lisbon'), null);
+  assert.equal(context.getLastForecastSnapshot('Oslo'), null);
 });
