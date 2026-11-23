@@ -373,6 +373,8 @@
 - [x] Добавить публикацию категорийных баллов и лабораторных метрик Lighthouse в GitHub Actions Step Summary, чтобы результаты были доступны без скачивания ZIP-артефакта.
 - [x] Разобрать Lighthouse artifact #197: Performance 78, Accessibility 98, Best Practices 96, SEO 100; FCP 3.4 s, LCP 4.4 s, TBT 40 ms, CLS 0.005. Выявлены блокирующие CSS/шрифты, а console errors вызваны CORS на тестовом origin `127.0.0.1:4173`, не разрешённом Worker.
 - [x] Перевести Lighthouse preview server на `127.0.0.1:5500`, уже присутствующий в allowlist Worker, чтобы аудит мог загружать реальные погодные данные без ложных CORS-ошибок.
+- [x] Сделать Google Fonts stylesheet неблокирующим рендер: `media="print"` с переключением на `all` после загрузки и `<noscript>` fallback; сохранить `display=swap`.
+- [x] Обновить browser smoke: дождаться `document.fonts.ready` перед визуальными снимками, чтобы не сравнивать fallback-шрифт с загруженным Nunito.
 - [ ] Просмотреть численные показатели Lighthouse и определить/закрыть замечания по Performance, Accessibility, Best Practices и SEO.
 - [x] Добавить axe-core WCAG 2.1 A/AA аудит главного экрана и диалога уведомлений в Chromium smoke; отчёт выводится в CI.
 - [x] axe-core WCAG 2.1 A/AA: главный экран — 0 нарушений (28 passed), диалог уведомлений — 0 нарушений (12 passed); Chromium smoke #125 PASS. CI теперь падает при Critical/Serious нарушениях.
