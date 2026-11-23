@@ -300,7 +300,9 @@ function handleSearchClick(cityName, resultsId) {
 }
 
 function closeSearchResults() {
+  clearTimeout(searchTimeout);
   ['search-results', 'search-results-mobile'].forEach(id => {
+    searchRequestIds[id] = (searchRequestIds[id] || 0) + 1;
     const element = document.getElementById(id);
     if (element) {
       element.style.display = 'none';
