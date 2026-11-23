@@ -906,3 +906,42 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
   assert.deepEqual(renderedForecasts, ['Tokyo']);
   assert.equal(vm.runInContext('currentForecastData.city', context), 'Tokyo');
 });
+
+
+test('offline forecast restoration renders cached data and its saved timestamp', () => {
+  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+  const container = {
+    dataset: {},
+    children: [],
+    prepend(node) { this.children.unshift(node); }
+  };
+  const rendered = [];
+  const cachedForecast = {
+    city: { name: 'Berlin' },
+    list: [{ dt: 1795435200 }]
+  };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById(id) { return id === 'forecast-container' ? container : null; },
+      createElement(tag) { return { tagName: tag, className: '', textContent: '' }; }
+    },
+    getLastForecastSnapshot(city) {
+      return city === 'Berlin'
+        ? { data: cachedForecast, savedAt: '2026-11-23T08:00:00.000Z' }
+        : null;
+    },
+    groupForecastByDay(data) { return [data.city.name]; },
+    renderForecast(days) { rendered.push(days); },
+    renderFeelsLikeSection() {}
+  });
+  vm.runInContext(uiSource, context);
+
+  assert.equal(context.restoreCachedForecast('Berlin'), true);
+  assert.deepEqual(rendered, [['Berlin']]);
+  assert.equal(container.dataset.state, 'cached');
+  assert.equal(container.children[0].className, 'forecast-cache-note');
+  assert.match(container.children[0].textContent, /23\.11\.2026/);
+  assert.equal(context.currentForecastData.city.name, 'Berlin');
+  assert.equal(context.restoreCachedForecast('Paris'), false);
+});
