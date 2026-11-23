@@ -1833,135 +1833,6 @@ a:focus-visible {
     color: var(--text-muted);
 }
 
-.compare-city-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: clamp(1.1rem, 3vw, 1.6rem);
-    overflow: hidden;
-    border: 1px solid var(--card-border);
-    border-radius: 1.5rem;
-    background: var(--card-bg);
-    box-shadow: 0 14px 36px rgba(31, 58, 87, 0.07);
-    backdrop-filter: blur(14px);
-}
-
-.compare-city-header {
-    width: 100%;
-    text-align: center;
-}
-
-.compare-city-name {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.15rem;
-    font-weight: 800;
-}
-
-.compare-city-condition {
-    margin: 0.3rem 0 0;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-transform: capitalize;
-}
-
-.compare-city-icon {
-    margin: 1rem 0 0.35rem;
-    font-size: 3rem;
-    line-height: 1.2;
-}
-
-.compare-city-temperature {
-    margin: 0 0 1.3rem;
-    color: var(--text-primary);
-    font-size: clamp(3.4rem, 8vw, 4.5rem);
-    font-weight: 850;
-    letter-spacing: -0.08em;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.compare-metrics {
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
-}
-
-.compare-metric {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.8rem;
-    border: 1px solid var(--card-border);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.compare-metric > i {
-    color: var(--accent);
-    font-size: 1.15rem;
-}
-
-.compare-metric-copy {
-    display: grid;
-    min-width: 0;
-    gap: 0.12rem;
-}
-
-.compare-metric-copy small {
-    color: var(--text-muted);
-    font-size: 0.68rem;
-}
-
-.compare-metric-copy strong {
-    overflow: hidden;
-    color: var(--text-primary);
-    font-size: 0.82rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.compare-insight {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.65rem;
-    padding: 0.95rem 1rem;
-    color: var(--text-primary);
-    border: 1px solid var(--card-border);
-    border-radius: 1rem;
-    background: var(--accent-glow);
-    text-align: center;
-}
-
-.compare-insight > i {
-    color: var(--accent);
-    font-size: 1.2rem;
-}
-
-.compare-insight p,
-.compare-loading p,
-.compare-error p {
-    margin: 0;
-}
-
-.compare-loading,
-.compare-error {
-    display: grid;
-    justify-items: center;
-    gap: 0.75rem;
-    padding: 2.5rem 1rem;
-    color: var(--text-muted);
-    text-align: center;
-}
-
-.compare-error > i {
-    color: #d65b70;
-    font-size: 1.8rem;
-}
 
 @media (max-width: 575.98px) {
     .favorites-grid {
@@ -1972,14 +1843,6 @@ a:focus-visible {
         padding: 0.75rem;
     }
 
-    .compare-metrics {
-        gap: 0.45rem;
-    }
-
-    .compare-metric {
-        gap: 0.45rem;
-        padding: 0.65rem 0.55rem;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2735,8 +2598,6 @@ body {
 .weather-detail-card,
 .weather-insight-card,
 .forecast-card,
-.compare-city-card,
-.compare-insight,
 .favorites-empty,
 .glass-card {
     color: var(--text-primary);
@@ -2821,18 +2682,6 @@ body {
 .forecast-card .text-muted,
 .forecast-card small { color: var(--text-muted) !important; }
 
-.compare-city-card {
-    padding: 1.35rem;
-    min-height: 100%;
-}
-
-.compare-city-name,
-.compare-city-temperature { color: #f4f7fb !important; }
-.compare-city-temperature { font-size: 3rem; font-weight: 850; letter-spacing: -.06em; }
-.compare-city-condition,
-.compare-metric-copy small { color: var(--text-muted) !important; }
-.compare-metric { border-color: rgba(196,219,241,.12); }
-
 .screen h3 { color: #f4f7fb; letter-spacing: -.035em; }
 .screen .text-muted { color: var(--text-muted) !important; }
 
@@ -2902,43 +2751,6 @@ body {
     }
 }
 
-
-.compare-empty-state {
-    display: grid;
-    justify-items: center;
-    max-width: 540px;
-    margin: 1.8rem auto 0;
-    padding: 2.4rem 1.5rem;
-    text-align: center;
-    border: 1px dashed rgba(196,219,241,.2);
-    border-radius: 24px;
-    background: rgba(20,39,65,.38);
-}
-
-.compare-empty-icon {
-    display: grid;
-    place-items: center;
-    width: 58px;
-    height: 58px;
-    margin-bottom: 1rem;
-    border-radius: 18px;
-    color: #ffb16f;
-    background: rgba(255,173,102,.12);
-    font-size: 1.4rem;
-}
-
-.compare-empty-state h4 {
-    color: #f4f7fb;
-    font-size: 1.1rem;
-    font-weight: 800;
-}
-
-.compare-empty-state p {
-    max-width: 390px;
-    margin: 0;
-    color: var(--text-muted);
-    line-height: 1.65;
-}
 
 
 /* Погодная сцена: фон меняется вместе с фактическими условиями */
