@@ -947,3 +947,43 @@ test('offline forecast restoration renders cached data and its saved timestamp',
   assert.equal(context.currentForecastData.city.name, 'Berlin');
   assert.equal(context.restoreCachedForecast('Paris'), false);
 });
+
+
+test('a late failed weather request cannot replace the latest selected city state', async () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const pending = new Map();
+  const renderedCities = [];
+  const toasts = [];
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      querySelector() { return { dataset: {} }; },
+      getElementById() { return { textContent: '', dataset: {}, classList: { add() {}, remove() {} } }; }
+    },
+    currentWeatherRequestId: 0,
+    currentWeatherCityName: '',
+    forecastRequestId: 0,
+    fetchWeather(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
+    renderCurrentWeather(data) { renderedCities.push(data.name); },
+    updateRainMap() {},
+    closeSearchResults() {},
+    showToast(message) { toasts.push(message); }
+  });
+  vm.runInContext(appSource, context);
+
+  const first = context.loadCityWeather('Berlin');
+  const second = context.loadCityWeather('Paris');
+  pending.get('Paris').resolve({
+    name: 'Paris',
+    coord: { lat: 48.8566, lon: 2.3522 },
+    sys: { country: 'FR' }
+  });
+  await second;
+  pending.get('Berlin').reject(new Error('late network failure'));
+  await first;
+
+  assert.deepEqual(renderedCities, ['Paris']);
+  assert.deepEqual(toasts, []);
+  assert.equal(context.currentLat, 48.8566);
+  assert.equal(context.currentLon, 2.3522);
+});
