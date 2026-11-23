@@ -99,6 +99,46 @@ jobs:
           mkdir -p artifacts/lighthouse
           npx lighthouse http://127.0.0.1:4173/ --chrome-flags="--headless --no-sandbox" --only-categories=performance,accessibility,best-practices,seo --form-factor=mobile --screenEmulation.mobile --output=json --output=html --output-path=./artifacts/lighthouse/mobile
 
+      - name: Publish Lighthouse score summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const reportPath = 'artifacts/lighthouse/mobile.report.json';
+          if (!fs.existsSync(reportPath)) {
+            const message = 'Lighthouse JSON report was not generated.';
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Lighthouse mobile audit\\n\\n⚠️ ${message}\\n`);
+            console.error(message);
+            process.exit(1);
+          }
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const categories = report.categories || {};
+          const audits = report.audits || {};
+          const score = key => categories[key]?.score == null ? '—' : Math.round(categories[key].score * 100);
+          const metric = key => audits[key]?.displayValue || '—';
+          const rows = [
+            ['Performance', score('performance')],
+            ['Accessibility', score('accessibility')],
+            ['Best Practices', score('best-practices')],
+            ['SEO', score('seo')]
+          ];
+          const metrics = [
+            ['First Contentful Paint', metric('first-contentful-paint')],
+            ['Largest Contentful Paint', metric('largest-contentful-paint')],
+            ['Total Blocking Time', metric('total-blocking-time')],
+            ['Cumulative Layout Shift', metric('cumulative-layout-shift')],
+            ['Speed Index', metric('speed-index')]
+          ];
+          let summary = '## Lighthouse mobile audit\\n\\n';
+          summary += '| Category | Score / 100 |\\n|---|---:|\\n';
+          summary += rows.map(([name, value]) => `|${name}|${value}|`).join('\\n');
+          summary += '\\n\\n| Lab metric | Result |\\n|---|---|\\n';
+          summary += metrics.map(([name, value]) => `|${name}|${value}|`).join('\\n');
+          summary += '\\n';
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+          console.log(summary);
+          NODE
+
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v4
