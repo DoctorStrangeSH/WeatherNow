@@ -178,3 +178,57 @@ test('weather effect cleanup is idempotent and preserves permanent sky elements'
   vm.runInContext('clearWeatherEffects()', context);
   assert.deepEqual(sky.children.map(node => node.id), ['sun', 'moon']);
 });
+
+
+test('reinitializing sky elements reuses the moon and existing star field', () => {
+  const elements = new Map();
+  const sky = {
+    children: [],
+    appendChild(node) {
+      this.children.push(node);
+      elements.set(node.id, node);
+      node.parentNode = this;
+      return node;
+    },
+    querySelector(selector) {
+      if (selector === '.weather-cloud-layers') return this.children.find(node => node.className === 'weather-cloud-layers') || null;
+      return null;
+    }
+  };
+  const document = {
+    addEventListener() {},
+    body: { classList: { contains: () => false } },
+    getElementById(id) { return id === 'sky' ? sky : elements.get(id) || null; },
+    createElement() {
+      const node = {
+        children: [],
+        style: { setProperty() {} },
+        dataset: {},
+        className: '',
+        id: '',
+        appendChild(child) { this.children.push(child); child.parentNode = this; },
+        setAttribute() {},
+        set innerHTML(value) { if (value === '') this.children = []; }
+      };
+      return node;
+    }
+  };
+  const context = loadInBrowserContext(themeSource, {
+    document,
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 1440, matchMedia: () => ({ matches: false }) }
+  });
+
+  vm.runInContext('createSkyElements()', context);
+  const moon = elements.get('moon');
+  const stars = elements.get('stars');
+  const starNodes = stars.children.slice();
+  const skyChildCount = sky.children.length;
+
+  vm.runInContext('createSkyElements()', context);
+
+  assert.equal(elements.get('moon'), moon);
+  assert.equal(elements.get('stars'), stars);
+  assert.deepEqual(stars.children, starNodes);
+  assert.equal(sky.children.length, skyChildCount);
+});
