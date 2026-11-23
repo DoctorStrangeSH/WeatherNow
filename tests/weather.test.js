@@ -833,3 +833,48 @@ test('new city and geolocation requests invalidate pending forecasts immediately
   assert.match(source, /async function loadCityWeather\(city\)\s*\{\s*const requestId = \+\+currentWeatherRequestId;\s*forecastRequestId \+= 1;/);
   assert.match(source, /if \(requestId !== currentWeatherRequestId\) return;/);
 });
+
+test('rapid city selection ignores a slower response from the previously selected city', async () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const pending = new Map();
+  const renderedCities = [];
+  const context = vm.createContext({
+    document: { addEventListener() {} },
+    navigator: {},
+    currentWeatherRequestId: 0, forecastRequestId: 0, currentLat: null, currentLon: null,
+    fetchWeather(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
+    renderCurrentWeather(data) { renderedCities.push(data.name); },
+    updateRainMap() {}, closeSearchResults() {}, showToast() {}
+  });
+  vm.runInContext(appSource, context);
+  const firstRequest = context.loadCityWeather('Berlin');
+  const secondRequest = context.loadCityWeather('Tokyo');
+  pending.get('Tokyo').resolve({ name: 'Tokyo', coord: { lat: 35.6, lon: 139.7 } });
+  await secondRequest;
+  pending.get('Berlin').resolve({ name: 'Berlin', coord: { lat: 52.5, lon: 13.4 } });
+  await firstRequest;
+  assert.deepEqual(renderedCities, ['Tokyo']);
+  assert.equal(context.currentLat, 35.6);
+  assert.equal(context.currentLon, 139.7);
+});
+
+test('a stale forecast response cannot overwrite the forecast for the latest city', async () => {
+  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+  const pending = new Map();
+  const renderedForecasts = [];
+  const context = vm.createContext({
+    document: { addEventListener() {} },
+    fetchForecast(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
+    groupForecastByDay(data) { return [data.city]; },
+    renderForecast(days) { renderedForecasts.push(days[0]); }
+  });
+  vm.runInContext(uiSource, context);
+  const firstRequest = context.loadForecast('Berlin');
+  const secondRequest = context.loadForecast('Tokyo');
+  pending.get('Tokyo').resolve({ city: 'Tokyo' });
+  await secondRequest;
+  pending.get('Berlin').resolve({ city: 'Berlin' });
+  await firstRequest;
+  assert.deepEqual(renderedForecasts, ['Tokyo']);
+  assert.equal(context.currentForecastData.city, 'Tokyo');
+});
