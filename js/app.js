@@ -72,6 +72,11 @@ async function loadDefaultCity(requestId = ++currentWeatherRequestId) {
 async function loadCityWeather(city) {
   const requestId = ++currentWeatherRequestId;
   forecastRequestId += 1;
+  const previousCityName = currentWeatherCityName || '';
+  const hero = document.querySelector('.weather-hero');
+  const cityLabel = document.getElementById('main-city');
+  if (hero) hero.dataset.loadState = 'loading';
+  if (cityLabel) cityLabel.textContent = `Загружаем ${city}…`;
 
   try {
     const data = await fetchWeather(city);
@@ -84,6 +89,16 @@ async function loadCityWeather(city) {
     closeSearchResults();
   } catch (error) {
     if (requestId === currentWeatherRequestId) {
+      const hasPreviousWeather = Boolean(previousCityName);
+      if (hero) hero.dataset.loadState = hasPreviousWeather ? 'stale' : 'error';
+      if (cityLabel) cityLabel.textContent = previousCityName || 'Не удалось загрузить';
+      const description = document.getElementById('main-desc');
+      if (description) {
+        description.textContent = hasPreviousWeather
+          ? 'Не удалось обновить · показаны последние успешные данные'
+          : 'Погодные данные пока недоступны';
+      }
+
       const message = error instanceof Error && error.message
         ? error.message
         : 'Не удалось загрузить погоду. Попробуйте ещё раз';
