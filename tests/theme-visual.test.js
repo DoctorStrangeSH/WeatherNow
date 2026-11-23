@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const themeSource = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
 const chartSource = fs.readFileSync(path.join(__dirname, '../js/charts.js'), 'utf8');
+const searchSource = fs.readFileSync(path.join(__dirname, '../js/search.js'), 'utf8');
 
 function loadInBrowserContext(source, additions = {}) {
   const context = vm.createContext({
@@ -56,4 +57,24 @@ test('chart palette falls back to readable colors when theme tokens are missing'
   assert.equal(palette.legend, '#f3f7fc');
   assert.equal(palette.ticks, '#a9bbcf');
   assert.equal(palette.grid, 'rgba(255, 255, 255, 0.14)');
+});
+
+test('closing city search invalidates pending requests and prevents stale suggestions', () => {
+  const elements = {
+    'search-results': { style: {}, setAttribute() {} },
+    'search-results-mobile': { style: {}, setAttribute() {} }
+  };
+  const context = loadInBrowserContext(searchSource, {
+    document: {
+      addEventListener() {},
+      body: { classList: { contains: () => false } },
+      getElementById(id) { return elements[id] || null; }
+    },
+    clearTimeout() {}
+  });
+  vm.runInContext("searchRequestIds['search-results'] = 4; searchRequestIds['search-results-mobile'] = 2; closeSearchResults();", context);
+  assert.equal(vm.runInContext("searchRequestIds['search-results']", context), 5);
+  assert.equal(vm.runInContext("searchRequestIds['search-results-mobile']", context), 3);
+  assert.equal(elements['search-results'].style.display, 'none');
+  assert.equal(elements['search-results-mobile'].style.display, 'none');
 });
