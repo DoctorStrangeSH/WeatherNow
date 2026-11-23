@@ -158,6 +158,7 @@ try {
     return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.map(node => ({ target: node.target, html: node.html, summary: node.failureSummary })) })), passes: result.passes.length };
   });
   console.log('axe-core home audit:', JSON.stringify(homeA11y));
+  assert.equal(homeA11y.violations.filter(item => ['critical', 'serious'].includes(item.impact)).length, 0, 'Home screen must have no critical or serious WCAG violations');
 
   const search = page.locator('#header-search');
   await search.fill('Berlin');
@@ -253,6 +254,7 @@ try {
     return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.map(node => ({ target: node.target, html: node.html, summary: node.failureSummary })) })), passes: result.passes.length };
   });
   console.log('axe-core notification dialog audit:', JSON.stringify(dialogA11y));
+  assert.equal(dialogA11y.violations.filter(item => ['critical', 'serious'].includes(item.impact)).length, 0, 'Notification dialog must have no critical or serious WCAG violations');
   assert.equal(await page.locator('#notification-enabled').isChecked(), false);
   await page.locator('#notification-enabled').check();
   await page.locator('#notification-wind-threshold').fill('2');
