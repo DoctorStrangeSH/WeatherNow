@@ -944,7 +944,7 @@ test('offline forecast restoration renders cached data and its saved timestamp',
   assert.equal(container.dataset.state, 'cached');
   assert.equal(container.children[0].className, 'forecast-cache-note');
   assert.match(container.children[0].textContent, /23\.11\.2026/);
-  assert.equal(context.currentForecastData.city.name, 'Berlin');
+  assert.equal(vm.runInContext('currentForecastData.city.name', context), 'Berlin');
   assert.equal(context.restoreCachedForecast('Paris'), false);
 });
 
@@ -1094,7 +1094,7 @@ test('offline current weather rendering restores the matching cached forecast', 
       addEventListener() {},
       querySelector() { return { dataset: {} }; },
       getElementById(id) {
-        if (id === 'weather-insights-grid') return null;
+        if (id === 'weather-insights-grid' || id === 'hourly-container') return null;
         if (id === 'forecast-container') return forecastContainer;
         return getElement(id);
       }
