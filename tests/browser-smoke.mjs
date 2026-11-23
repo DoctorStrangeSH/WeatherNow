@@ -143,7 +143,9 @@ try {
   await search.fill('Berlin');
   await search.press('Enter');
   await page.waitForFunction(() => document.querySelector('#main-city')?.textContent.includes('Berlin, DE'));
+  await page.waitForFunction(() => document.querySelector('#search-results')?.style.display === 'none');
   assert.equal(await page.locator('#main-temp').innerText(), '12°C');
+  assert.equal(await page.locator('#search-results').isVisible(), false, 'City suggestions close after selection');
   await page.screenshot({ path: path.join(screenshotDir, 'desktop-1440.png'), fullPage: true });
 
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
