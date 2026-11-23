@@ -3319,3 +3319,17 @@ body {
     font-size: .78rem;
     text-align: left;
 }
+
+
+.cache-warning,
+.forecast-cache-note.is-stale {
+    color: #ffd59a;
+    font-weight: 650;
+}
+
+.forecast-cache-note.is-stale {
+    padding: .45rem .65rem;
+    border: 1px solid rgba(255, 190, 90, .28);
+    border-radius: .7rem;
+    background: rgba(110, 68, 24, .2);
+}
