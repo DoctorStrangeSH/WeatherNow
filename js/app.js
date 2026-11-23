@@ -92,8 +92,9 @@ async function loadCityWeather(city) {
     closeSearchResults();
   } catch (error) {
     if (requestId === currentWeatherRequestId) {
+      // Prefer a city-matched snapshot even when another city's weather is still visible.
+      if (restoreCachedWeather(city)) return;
       const hasPreviousWeather = Boolean(previousCityName);
-      if (!hasPreviousWeather && restoreCachedWeather(city)) return;
       if (hero) hero.dataset.loadState = hasPreviousWeather ? 'stale' : 'error';
       if (cityLabel) cityLabel.textContent = previousCityName || 'Не удалось загрузить';
       const description = document.getElementById('main-desc');
