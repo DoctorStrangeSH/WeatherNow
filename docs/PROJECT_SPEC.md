@@ -118,6 +118,8 @@
 
 ## 6. Аудит текущей реализации — подтверждённые риски
 
+- [x] Ограничить ожидание ответа OpenWeatherMap на стороне Worker: upstream fetch прерывается через `AbortSignal.timeout(8000)`, ошибки/таймауты возвращают безопасный HTTP 502 без деталей и секрета.
+- [ ] Настроить edge rate limiting по IP через Cloudflare Rate Limiting binding после создания namespace в аккаунте; CORS не считается защитой от прямых запросов к публичному Worker.
 - [x] Критический риск клиентского API-ключа закрыт в текущей версии: `js/config.js` содержит только публичный адрес Cloudflare Worker, а OpenWeatherMap secret читается Worker из `OPENWEATHER_API_KEY`.
 - [x] Отозвать старый OpenWeatherMap API-ключ, ранее опубликованный в истории Git; владелец подтвердил замену ключа.
 - [x] `js/api.js` не логирует полные URL запросов и обращается к Worker, а не напрямую к OpenWeatherMap.
