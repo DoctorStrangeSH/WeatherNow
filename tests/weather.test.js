@@ -619,3 +619,18 @@ test('cloud atmosphere responds to cloud cover and wind without replacing the sk
   assert.equal(layers[0].style['--cloud-drift'], '34px');
   assert.equal(layers.length, 3);
 });
+
+
+test('weather scene uses one cloud system and keeps sky layers ordered', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+  const themeSource = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+
+  assert.doesNotMatch(html, /class="cloud cloud-/);
+  assert.match(themeSource, /createCloudLayers\(\)/);
+  assert.match(css, /\.weather-cloud-layers\s*\{[^}]*z-index:\s*1/s);
+  assert.match(css, /\.sun\s*\{[^}]*z-index:\s*2/s);
+  assert.match(css, /\.moon\s*\{[^}]*z-index:\s*2/s);
+  assert.match(css, /\.weather-cloud-layer\s*\{[^}]*animation:\s*cloudDrift/s);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*animation:\s*none/s);
+});
