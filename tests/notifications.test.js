@@ -99,3 +99,22 @@ test('notifications cannot be sent unless browser permission is granted and sett
   assert.equal(notifications.length, 1);
   assert.equal(notifications[0].options.tag, 'weather-wind');
 });
+
+
+test('same city alert is delivered only once per day, including concurrent checks', async () => {
+  const { context, notifications, values } = createContext();
+  context.document = {
+    getElementById(id) {
+      return id === 'main-city' ? { textContent: 'Berlin, DE' } : null;
+    }
+  };
+  context.fetchWeather = async () => weather(500);
+  vm.runInContext('notificationsEnabled = true', context);
+  await Promise.all([
+    context.checkWeatherForAlerts(),
+    context.checkWeatherForAlerts()
+  ]);
+  await context.checkWeatherForAlerts();
+  assert.equal(notifications.length, 1);
+  assert.ok(values.has('weathernow-notification-history'));
+});
