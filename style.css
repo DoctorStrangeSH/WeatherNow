@@ -3212,6 +3212,7 @@ body {
 
     .weather-cloud-layer--back { filter: blur(17px); }
     .weather-cloud-layer--front { filter: blur(7px); }
+    .weather-cloud-layer[data-weather="fog"] { filter: blur(20px); }
 }
 
 @media (max-width: 390px) {
@@ -3222,4 +3223,5 @@ body {
 
     .weather-cloud-layer--back { filter: blur(12px); }
     .weather-cloud-layer--front { filter: blur(5px); }
+    .weather-cloud-layer[data-weather="fog"] { filter: blur(16px); }
 }
