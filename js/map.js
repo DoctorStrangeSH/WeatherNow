@@ -82,10 +82,10 @@ async function toggleMapFullscreen() {
     }
     updateFullscreenButton();
   } catch {
-    // Some browsers expose the Fullscreen API but reject it for embedded or
-    // restricted contexts. Keep the map usable with the CSS fullscreen fallback.
-    if (container.classList.contains('map-fullscreen-fallback')) {
-      container.classList.remove('map-fullscreen-fallback');
+    // If native fullscreen was entered, do not layer the CSS fallback over it.
+    // A rejected request, however, should still leave a usable fullscreen map.
+    if (document.fullscreenElement === container) {
+      setMapStatus('Не удалось выйти из полноэкранного режима. Используйте Esc.', 'error');
     } else {
       container.classList.add('map-fullscreen-fallback');
     }
