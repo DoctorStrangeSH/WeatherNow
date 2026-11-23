@@ -140,3 +140,42 @@ test('rain, snow and wind particle containers isolate layout and paint', () => {
     assert.match(rule, /isolation:\s*isolate;/);
   }
 });
+
+
+test('weather effect cleanup is idempotent and preserves permanent sky elements', () => {
+  const removableIds = new Set(['rain-container', 'snow-container', 'wind-lines', 'lightning', 'fog']);
+  const sky = {
+    children: [],
+    querySelectorAll(selector) {
+      const id = selector.slice(1);
+      return this.children.filter(node => node.id === id);
+    },
+    appendChild(node) {
+      this.children.push(node);
+      node.remove = () => {
+        const index = this.children.indexOf(node);
+        if (index !== -1) this.children.splice(index, 1);
+      };
+    }
+  };
+
+  for (const id of ['rain-container', 'rain-container', 'snow-container', 'wind-lines', 'lightning', 'fog', 'sun', 'moon']) {
+    sky.appendChild({ id });
+  }
+
+  const context = loadInBrowserContext(themeSource, {
+    document: {
+      addEventListener() {},
+      body: { classList: { contains: () => false } },
+      getElementById(id) {
+        return id === 'sky' ? sky : null;
+      }
+    }
+  });
+
+  vm.runInContext('clearWeatherEffects()', context);
+  assert.deepEqual(sky.children.map(node => node.id), ['sun', 'moon']);
+
+  vm.runInContext('clearWeatherEffects()', context);
+  assert.deepEqual(sky.children.map(node => node.id), ['sun', 'moon']);
+});
