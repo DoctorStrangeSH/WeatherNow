@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -87,8 +87,10 @@ const server = createServer(async (request, response) => {
 const browser = await chromium.launch({ headless: true });
 const pageErrors = [];
 const workerRequests = [];
+const screenshotDir = process.env.SCREENSHOT_DIR || path.join(ROOT, 'artifacts', 'browser-smoke');
 
 try {
+  await mkdir(screenshotDir, { recursive: true });
   await new Promise(resolve => server.listen(5500, '127.0.0.1', resolve));
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
@@ -142,6 +144,7 @@ try {
   await search.press('Enter');
   await page.waitForFunction(() => document.querySelector('#main-city')?.textContent.includes('Berlin, DE'));
   assert.equal(await page.locator('#main-temp').innerText(), '12°C');
+  await page.screenshot({ path: path.join(screenshotDir, 'desktop-1440.png'), fullPage: true });
 
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -157,6 +160,9 @@ try {
     assert.ok(await page.locator('#main-city').isVisible(), `City label is visible at ${width}px`);
     assert.ok(await page.locator('#main-temp').isVisible(), `Temperature is visible at ${width}px`);
   }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(screenshotDir, 'mobile-390.png'), fullPage: true });
 
   await context.setOffline(true);
   await page.waitForFunction(() => document.body.dataset.network === 'offline');
@@ -174,7 +180,7 @@ try {
   assert.ok(workerRequests.every(url => !url.searchParams.has('appid')), 'Browser requests must never expose an upstream API key');
 
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`);
-  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, offline/online recovery, and API-key isolation.');
+  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, offline/online recovery, and API-key isolation. Screenshots saved.');
   await context.close();
 } finally {
   await browser.close();
