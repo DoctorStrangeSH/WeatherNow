@@ -16,10 +16,17 @@ async function initApp() {
   forecastRequestId += 1;
 
   if (navigator.geolocation) {
-    document.getElementById('main-city').textContent = 'Определяем город...';
-    
+    const cityLabel = document.getElementById('main-city');
+    if (cityLabel) cityLabel.textContent = 'Определяем город...';
+
+    // Start the default-city request immediately instead of waiting for the
+    // geolocation permission prompt or its 15-second timeout.
+    let geolocationResolved = false;
+    loadDefaultCity(requestId, () => !geolocationResolved);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        geolocationResolved = true;
         try {
           const data = await getCityByCoords(pos.coords.latitude, pos.coords.longitude);
           if (requestId !== currentWeatherRequestId) return;
@@ -35,7 +42,6 @@ async function initApp() {
         }
       },
       () => {
-        if (requestId === currentWeatherRequestId) loadDefaultCity(requestId);
         const retryBtn = document.getElementById('retry-geo-btn');
         if (retryBtn) retryBtn.classList.remove('d-none');
       },
@@ -53,20 +59,21 @@ function retryGeolocation() {
   initApp();
 }
 
-async function loadDefaultCity(requestId = ++currentWeatherRequestId) {
+async function loadDefaultCity(requestId = ++currentWeatherRequestId, canApply = () => true) {
   try {
     const data = await fetchWeather(CONFIG.DEFAULT_CITY);
-    if (requestId !== currentWeatherRequestId) return;
+    if (requestId !== currentWeatherRequestId || !canApply()) return;
 
     currentLat = data.coord.lat;
     currentLon = data.coord.lon;
     renderCurrentWeather(data);
     updateRainMap(currentLat, currentLon);
   } catch {
-    if (requestId !== currentWeatherRequestId) return;
+    if (requestId !== currentWeatherRequestId || !canApply()) return;
 
     if (restoreCachedWeather(CONFIG.DEFAULT_CITY)) return;
-    document.getElementById('main-city').textContent = 'Не удалось загрузить';
+    const cityLabel = document.getElementById('main-city');
+    if (cityLabel) cityLabel.textContent = 'Не удалось загрузить';
     const retryBtn = document.getElementById('retry-geo-btn');
     if (retryBtn) retryBtn.classList.remove('d-none');
   }
