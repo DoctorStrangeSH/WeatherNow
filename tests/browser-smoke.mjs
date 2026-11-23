@@ -179,6 +179,68 @@ try {
   console.log('axe-core home audit:', JSON.stringify(homeA11y));
   assert.equal(homeA11y.violations.filter(item => ['critical', 'serious'].includes(item.impact)).length, 0, 'Home screen must have no critical or serious WCAG violations');
 
+  // Exercise actual weather scene DOM and CSS at mobile and desktop sizes.
+  // The context uses reduced-motion: clouds must remain visible as a static layer.
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [name, code, hourTheme] of [
+      ['clear-day', 800, 'day'],
+      ['cloudy-night', 804, 'night'],
+      ['rain-day', 502, 'day'],
+      ['snow-night', 601, 'night'],
+      ['storm-night', 211, 'night'],
+      ['fog-morning', 741, 'morning']
+    ]) {
+      const state = await page.evaluate(({ code, hourTheme }) => {
+        currentWeatherCode = code;
+        currentWindSpeed = 8;
+        document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
+        document.body.classList.add('theme-' + hourTheme);
+        updateSkyElements(hourTheme);
+        applyWeatherEffects(code, hourTheme, 8);
+        const sky = document.getElementById('sky');
+        const moon = document.getElementById('moon');
+        const sun = document.getElementById('sun');
+        const clouds = [...sky.querySelectorAll('.weather-cloud-layer')];
+        const visibleClouds = clouds.filter(layer =>
+          getComputedStyle(layer).display !== 'none' &&
+          Number(getComputedStyle(layer).opacity) > 0
+        );
+        return {
+          scene: sky.dataset.weather,
+          background: getComputedStyle(sky).backgroundImage,
+          moonOpacity: Number(getComputedStyle(moon).opacity),
+          sunAnimation: getComputedStyle(sun).animationName,
+          cloudCount: visibleClouds.length,
+          cloudsStatic: visibleClouds.every(layer => getComputedStyle(layer).animationName === 'none'),
+          viewport: document.documentElement.clientWidth,
+          documentWidth: document.documentElement.scrollWidth,
+          effectCount: sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog').length
+        };
+      }, { code, hourTheme });
+      assert.equal(state.scene, ({
+        800: 'clear', 804: 'cloudy', 502: 'rain',
+        601: 'snow', 211: 'thunder', 741: 'fog'
+      })[code], `Scene key for ${name}`);
+      assert.match(state.background, /gradient/i, `Background for ${name}`);
+      assert.ok(state.documentWidth <= state.viewport + 1, `No overflow for ${name} at ${width}px`);
+      assert.ok(state.effectCount <= 1, `No leftover particle layers for ${name}`);
+      if (hourTheme === 'night') {
+        assert.ok(state.moonOpacity > 0.85, `Moon visible for ${name}`);
+      }
+      if (code === 804 || code === 502 || code === 601 || code === 211 || code === 741) {
+        assert.equal(state.cloudCount, 1, `One static cloud layer for ${name}`);
+        assert.ok(state.cloudsStatic, `Cloud layer not animated for ${name}`);
+      }
+      assert.equal(state.sunAnimation, 'none', `Sun glow is lightweight for ${name}`);
+      if (width === 390) {
+        await page.screenshot({ path: path.join(screenshotDir, `scene-${name}-390.png`), fullPage: false });
+      }
+    }
+  }
+  // Restore the API-backed city scene before the rest of browser smoke.
+  await page.evaluate(() => updateWeatherTheme(800, 0, 2));
+
   const search = page.locator('#header-search');
   await search.fill('Berlin');
   await search.press('Enter');
