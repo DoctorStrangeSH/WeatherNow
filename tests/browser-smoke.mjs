@@ -179,6 +179,11 @@ try {
     }
     assert.ok(await page.locator('#main-city').isVisible(), `City label is visible at ${width}px`);
     assert.ok(await page.locator('#main-temp').isVisible(), `Temperature is visible at ${width}px`);
+    if (width < 992) {
+      assert.ok(await page.locator('#mobile-search').isVisible(), `Compact tablet/mobile search is visible at ${width}px`);
+    } else {
+      assert.ok(await page.locator('#header-search').isVisible(), `Desktop search is visible at ${width}px`);
+    }
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
