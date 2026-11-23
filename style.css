@@ -3455,3 +3455,93 @@ body {
     border-color: #713305;
     color: #ffffff;
 }
+
+
+/* Map controls stay available while the map is in fullscreen mode. */
+.weather-map-container {
+    position: relative;
+    isolation: isolate;
+    background: #10223a;
+}
+.map-toolbar {
+    position: absolute;
+    z-index: 8;
+    inset: .75rem .75rem auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .65rem;
+    pointer-events: none;
+}
+.map-layer-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    max-width: min(100%, 720px);
+    pointer-events: auto;
+}
+.map-toolbar .btn {
+    min-height: 40px;
+    border-color: rgba(224, 238, 250, .3);
+    background: rgba(12, 28, 48, .88);
+    color: #f4f7fb;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.map-toolbar .map-layer-btn.active {
+    border-color: rgba(255, 185, 117, .8);
+    background: rgba(126, 72, 34, .94);
+    color: #fff;
+}
+.map-fullscreen-btn {
+    flex: 0 0 auto;
+    pointer-events: auto;
+}
+.weather-map-container:fullscreen,
+.weather-map-container.map-fullscreen-fallback {
+    position: fixed;
+    z-index: 10000;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: #0b1728;
+}
+.weather-map-container:fullscreen #weather-map,
+.weather-map-container.map-fullscreen-fallback #weather-map {
+    width: 100%;
+    height: 100% !important;
+}
+.weather-map-container:fullscreen .map-toolbar,
+.weather-map-container.map-fullscreen-fallback .map-toolbar {
+    inset: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) auto max(.75rem, env(safe-area-inset-left));
+}
+@media (max-width: 640px) {
+    .map-toolbar {
+        inset: .5rem .5rem auto;
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .map-layer-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .4rem;
+        max-width: 100%;
+    }
+    .map-layer-controls .btn,
+    .map-fullscreen-btn {
+        width: 100%;
+        min-height: 44px;
+        padding-inline: .5rem;
+        font-size: .78rem;
+        white-space: nowrap;
+    }
+    .map-fullscreen-btn { align-self: flex-end; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .map-toolbar .btn { transition: none !important; }
+}
