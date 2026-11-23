@@ -337,9 +337,6 @@ function createSkyElements() {
   const sky = document.getElementById('sky');
   if (!sky) return;
   
-  const oldMoon = document.getElementById('moon');
-  if (oldMoon) oldMoon.remove();
-  
   let sun = document.getElementById('sun');
   if (!sun) {
     sun = document.createElement('div');
@@ -348,10 +345,13 @@ function createSkyElements() {
     sky.appendChild(sun);
   }
   
-  const moon = document.createElement('div');
-  moon.className = 'moon';
-  moon.id = 'moon';
-  sky.appendChild(moon);
+  let moon = document.getElementById('moon');
+  if (!moon) {
+    moon = document.createElement('div');
+    moon.className = 'moon';
+    moon.id = 'moon';
+    sky.appendChild(moon);
+  }
   
   let starsContainer = document.getElementById('stars');
   if (!starsContainer) {
@@ -416,10 +416,12 @@ function createStars() {
   const container = document.getElementById('stars');
   if (!container) return;
   
-  container.innerHTML = '';
   // Keep the star field atmospheric without running 100 twinkle animations
   // on compact screens, low-memory devices, or data-saving connections.
   const starCount = getStarCount();
+  if (container.children.length === starCount) return;
+
+  container.innerHTML = '';
   for (let i = 0; i < starCount; i++) {
     const star = document.createElement('div');
     star.className = 'star';
