@@ -384,9 +384,9 @@ body {
 
 @keyframes snow {
     0% { transform: translate3d(0, -10px, 0) rotate(0deg); }
-    25% { transform: translate3d(calc(var(--snow-drift, 0px) * .25 + 12px), 25vh, 0) rotate(90deg); }
-    50% { transform: translate3d(calc(var(--snow-drift, 0px) * .5 - 10px), 50vh, 0) rotate(180deg); }
-    75% { transform: translate3d(calc(var(--snow-drift, 0px) * .75 + 10px), 75vh, 0) rotate(270deg); }
+    25% { transform: translate3d(calc(var(--snow-drift-q1, 0px) + 12px), 25vh, 0) rotate(90deg); }
+    50% { transform: translate3d(calc(var(--snow-drift-half, 0px) - 10px), 50vh, 0) rotate(180deg); }
+    75% { transform: translate3d(calc(var(--snow-drift-q3, 0px) + 10px), 75vh, 0) rotate(270deg); }
     100% { transform: translate3d(var(--snow-drift, 0px), 100vh, 0) rotate(360deg); }
 }
 
