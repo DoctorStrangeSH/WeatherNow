@@ -1,4 +1,5 @@
 const API_BASE = 'https://api.openweathermap.org';
+const UPSTREAM_TIMEOUT_MS = 8000;
 const DEFAULT_ORIGINS = [
   'https://doctorstrangesh.github.io',
   'http://localhost:5500',
@@ -188,6 +189,7 @@ export default {
     try {
       const upstream = await fetch(upstreamUrl.toString(), {
         headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
         cf: { cacheTtl: route.ttl, cacheEverything: true }
       });
       if (!upstream.ok) {
