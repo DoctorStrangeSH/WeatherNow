@@ -106,3 +106,24 @@ test('ambient star count scales down on compact and low-resource devices', () =>
   });
   assert.equal(desktop.getStarCount(), 100);
 });
+
+
+test('cloud depth scales with device capability while retaining full desktop atmosphere', () => {
+  const compact = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 375, matchMedia: () => ({ matches: false }) }
+  });
+  assert.equal(compact.getActiveCloudLayerCount(), 1);
+
+  const midRange = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 4, hardwareConcurrency: 4 },
+    window: { innerWidth: 1024, matchMedia: () => ({ matches: false }) }
+  });
+  assert.equal(midRange.getActiveCloudLayerCount(), 2);
+
+  const desktop = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 1440, matchMedia: () => ({ matches: false }) }
+  });
+  assert.equal(desktop.getActiveCloudLayerCount(), 3);
+});
