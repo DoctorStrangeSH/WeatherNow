@@ -236,14 +236,58 @@ function getLastWeatherSnapshot() {
 
 
 const LAST_FORECAST_CACHE_KEY = 'weathernow-last-forecast';
+const MAX_CACHED_FORECAST_CITIES = 8;
+
+function normalizeForecastCity(city) {
+  return String(city || '').trim().toLocaleLowerCase('ru-RU');
+}
+
+function isValidForecastSnapshot(snapshot) {
+  const savedAt = Date.parse(snapshot?.savedAt || '');
+  return Boolean(snapshot && snapshot.data &&
+    Array.isArray(snapshot.data.list) && snapshot.data.city &&
+    Number.isFinite(savedAt));
+}
+
+function readForecastCache() {
+  try {
+    const raw = localStorage.getItem(LAST_FORECAST_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+
+    // Migrate the previous single-city cache format without losing its data.
+    if (parsed && parsed.city && isValidForecastSnapshot(parsed)) {
+      return { [normalizeForecastCity(parsed.city)]: parsed };
+    }
+
+    if (!parsed || parsed.version !== 2 || !parsed.cities ||
+        typeof parsed.cities !== 'object' || Array.isArray(parsed.cities)) return {};
+
+    return Object.fromEntries(
+      Object.entries(parsed.cities).filter(([city, snapshot]) =>
+        Boolean(city) && isValidForecastSnapshot(snapshot))
+    );
+  } catch {
+    return {};
+  }
+}
 
 function saveLastForecastSnapshot(city, data) {
-  if (!city || !data || !Array.isArray(data.list) || !data.city) return;
+  const cityKey = normalizeForecastCity(city);
+  if (!cityKey || !data || !Array.isArray(data.list) || !data.city) return;
+
   try {
+    const cities = readForecastCache();
+    cities[cityKey] = { savedAt: new Date().toISOString(), data };
+
+    // Keep the most recently updated cities and bound local storage usage.
+    const recentCities = Object.entries(cities)
+      .sort((a, b) => Date.parse(b[1].savedAt) - Date.parse(a[1].savedAt))
+      .slice(0, MAX_CACHED_FORECAST_CITIES);
+
     localStorage.setItem(LAST_FORECAST_CACHE_KEY, JSON.stringify({
-      city: String(city).trim().toLowerCase(),
-      savedAt: new Date().toISOString(),
-      data
+      version: 2,
+      cities: Object.fromEntries(recentCities)
     }));
   } catch {
     // Forecast caching is optional; do not interrupt live rendering.
@@ -251,16 +295,14 @@ function saveLastForecastSnapshot(city, data) {
 }
 
 function getLastForecastSnapshot(city) {
-  try {
-    const raw = localStorage.getItem(LAST_FORECAST_CACHE_KEY);
-    if (!raw) return null;
-    const snapshot = JSON.parse(raw);
-    const savedAt = Date.parse(snapshot?.savedAt || '');
-    if (!snapshot || snapshot.city !== String(city || '').trim().toLowerCase() ||
-        !snapshot.data || !Array.isArray(snapshot.data.list) ||
-        !snapshot.data.city || !Number.isFinite(savedAt)) return null;
-    return { data: snapshot.data, savedAt: new Date(savedAt).toISOString() };
-  } catch {
-    return null;
-  }
+  const cityKey = normalizeForecastCity(city);
+  if (!cityKey) return null;
+
+  const snapshot = readForecastCache()[cityKey];
+  if (!isValidForecastSnapshot(snapshot)) return null;
+
+  return {
+    data: snapshot.data,
+    savedAt: new Date(Date.parse(snapshot.savedAt)).toISOString()
+  };
 }
