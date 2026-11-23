@@ -102,7 +102,7 @@ function updateSkyElements(timeOfDay) {
   moon.style.left = `${moonPosition.x}%`;
   moon.style.right = 'auto';
   moon.style.top = `${moonPosition.y}%`;
-  moon.style.opacity = timeOfDay === 'night' ? '0.72' : '0';
+  moon.style.opacity = timeOfDay === 'night' ? '0.94' : '0';
   moon.style.transform = 'translate(-50%, -50%)';
   
   updateStarsVisibility(timeOfDay === 'night', currentWeatherCode);
