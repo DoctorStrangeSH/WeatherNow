@@ -766,11 +766,20 @@ body {
 }
 
 #hourly-container {
+    display: block;
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    overflow-x: clip;
+    overflow: hidden;
     contain: inline-size;
+}
+
+#hourly-container > .hourly-scroll {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: nowrap;
 }
 
 .hourly-scroll > * {
