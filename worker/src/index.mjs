@@ -169,6 +169,21 @@ export default {
     const validated = route.validate(withoutTrackingParams(url.searchParams));
     if (validated.error) return json({ error: validated.error }, 400, cors);
 
+    if (env.WEATHER_RATE_LIMITER) {
+      const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+      try {
+        const { success } = await env.WEATHER_RATE_LIMITER.limit({ key: clientIp });
+        if (!success) {
+          return json({ error: 'Слишком много запросов. Попробуйте позже' }, 429, {
+            ...cors,
+            'Retry-After': '60'
+          });
+        }
+      } catch {
+        return json({ error: 'Weather service is temporarily unavailable' }, 503, cors);
+      }
+    }
+
     const upstreamUrl = new URL(route.path, API_BASE);
     for (const [key, value] of Object.entries(validated.params)) {
       upstreamUrl.searchParams.set(key, value);
