@@ -212,6 +212,25 @@ try {
   assert.ok(await page.locator('#weather-map iframe').isVisible(), 'Weather map is visible on mobile');
   await page.screenshot({ path: path.join(screenshotDir, 'mobile-map-390.png'), fullPage: true });
 
+  await page.evaluate(() => showScreen('home'));
+  await page.locator('#favorite-btn').click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('weathernow-favorites') || '[]').some(city => city.name === 'Berlin'));
+  await page.evaluate(() => showScreen('favorites'));
+  await page.waitForSelector('.favorite-city-card');
+  assert.match(await page.locator('.favorite-city-name').first().innerText(), /Berlin/);
+  await page.screenshot({ path: path.join(screenshotDir, 'favorites-390.png'), fullPage: true });
+  await page.locator('.favorite-city-remove').first().click();
+  await page.waitForFunction(() => document.querySelectorAll('.favorite-city-card').length === 0);
+
+  await page.evaluate(() => showScreen('compare'));
+  await page.locator('#compare-city-1').fill('Berlin');
+  await page.locator('#compare-city-2').fill('Москва');
+  await page.locator('#compare-btn').click();
+  await page.waitForFunction(() => document.querySelectorAll('.compare-city-card').length === 2);
+  assert.match(await page.locator('.compare-city-name').nth(0).innerText(), /Berlin/);
+  assert.match(await page.locator('.compare-city-name').nth(1).innerText(), /Москва/);
+  await page.screenshot({ path: path.join(screenshotDir, 'compare-390.png'), fullPage: true });
+
   await context.setOffline(true);
   await page.waitForFunction(() => document.body.dataset.network === 'offline');
   assert.equal(await page.locator('#network-status').isVisible(), true);
@@ -228,7 +247,7 @@ try {
   assert.ok(workerRequests.every(url => !url.searchParams.has('appid')), 'Browser requests must never expose an upstream API key');
 
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`);
-  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, offline/online recovery, and API-key isolation. Screenshots saved.');
+  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, favorites add/remove, city comparison, offline/online recovery, and API-key isolation. Screenshots saved.');
   await context.close();
 } finally {
   await browser.close();
