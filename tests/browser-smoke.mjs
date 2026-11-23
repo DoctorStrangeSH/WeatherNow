@@ -275,14 +275,18 @@ try {
   await page.locator('.favorite-city-remove').first().click();
   await page.waitForFunction(() => document.querySelectorAll('.favorite-city-card').length === 0);
 
-  await page.evaluate(() => showScreen('compare'));
-  await page.locator('#compare-city-1').fill('Berlin');
-  await page.locator('#compare-city-2').fill('Москва');
-  await page.locator('#compare-btn').click();
-  await page.waitForFunction(() => document.querySelectorAll('.compare-city-card').length === 2);
-  assert.match(await page.locator('.compare-city-name').nth(0).innerText(), /Berlin/);
-  assert.match(await page.locator('.compare-city-name').nth(1).innerText(), /Москва/);
-  await page.screenshot({ path: path.join(screenshotDir, 'compare-390.png'), fullPage: true });
+  assert.equal(await page.locator('#screen-compare').count(), 0, 'Removed comparison screen must not return');
+  assert.equal(await page.locator('button[onclick*="showScreen(\\'compare\\')"]').count(), 0, 'No navigation button should target the removed screen');
+
+  await page.evaluate(() => showScreen('home'));
+  const citySearch = page.locator('#header-search');
+  await citySearch.fill('петер');
+  await page.waitForFunction(() => {
+    const results = document.querySelector('#search-results');
+    return results && results.textContent.includes('Санкт-Петербург');
+  });
+  assert.match(await page.locator('#search-results').innerText(), /Санкт-Петербург/);
+  await page.screenshot({ path: path.join(screenshotDir, 'city-search-390.png'), fullPage: true });
 
   await page.evaluate(() => openWeatherNotificationSettings());
   await page.waitForSelector('#notification-settings-dialog[open]');
