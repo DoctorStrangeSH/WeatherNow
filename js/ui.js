@@ -151,7 +151,7 @@ function renderCurrentWeather(data, options = {}) {
     updateFavoriteButton(data.name);
   }
 
-  if (typeof checkWeatherForAlerts === 'function') {
+  if (options.cached !== true && typeof checkWeatherForAlerts === 'function') {
     checkWeatherForAlerts(data);
   }
 
