@@ -222,11 +222,17 @@ function getLastWeatherSnapshot() {
     const snapshot = JSON.parse(raw);
     const data = snapshot?.data;
     const savedAt = Date.parse(snapshot?.savedAt || '');
-    if (!data || typeof data.name !== 'string' || !data.main ||
-        !Number.isFinite(Number(data.main.temp)) ||
-        !Array.isArray(data.weather) || !data.weather[0] ||
-        !data.coord || !Number.isFinite(Number(data.coord.lat)) ||
-        !Number.isFinite(Number(data.coord.lon)) || !Number.isFinite(savedAt)) {
+    const condition = data?.weather?.[0];
+    if (!data || typeof data.name !== 'string' || !data.name.trim() ||
+        !data.main || !Number.isFinite(data.main.temp) ||
+        !Number.isFinite(data.main.feels_like) ||
+        !Number.isFinite(data.main.humidity) ||
+        !data.wind || !Number.isFinite(data.wind.speed) ||
+        !condition ||
+        !(Number.isFinite(condition.id) && condition.id > 0) &&
+          !(typeof condition.description === 'string' && condition.description.trim()) ||
+        !data.coord || !Number.isFinite(data.coord.lat) ||
+        !Number.isFinite(data.coord.lon) || !Number.isFinite(savedAt)) {
       return null;
     }
     const ageMs = Math.max(0, Date.now() - savedAt);
