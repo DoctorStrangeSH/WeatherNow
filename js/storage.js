@@ -198,3 +198,38 @@ document.addEventListener('screenChanged', (e) => {
     renderFavorites();
   }
 });
+
+
+const LAST_WEATHER_CACHE_KEY = 'weathernow-last-weather';
+
+function saveLastWeatherSnapshot(data) {
+  if (!data || !data.name || !data.main || !Array.isArray(data.weather) || !data.weather[0] || !data.coord) return;
+  try {
+    localStorage.setItem(LAST_WEATHER_CACHE_KEY, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      data
+    }));
+  } catch {
+    // Storage may be unavailable or full; live weather must still work.
+  }
+}
+
+function getLastWeatherSnapshot() {
+  try {
+    const raw = localStorage.getItem(LAST_WEATHER_CACHE_KEY);
+    if (!raw) return null;
+    const snapshot = JSON.parse(raw);
+    const data = snapshot?.data;
+    const savedAt = Date.parse(snapshot?.savedAt || '');
+    if (!data || typeof data.name !== 'string' || !data.main ||
+        !Number.isFinite(Number(data.main.temp)) ||
+        !Array.isArray(data.weather) || !data.weather[0] ||
+        !data.coord || !Number.isFinite(Number(data.coord.lat)) ||
+        !Number.isFinite(Number(data.coord.lon)) || !Number.isFinite(savedAt)) {
+      return null;
+    }
+    return { data, savedAt: new Date(savedAt).toISOString() };
+  } catch {
+    return null;
+  }
+}
