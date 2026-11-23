@@ -217,6 +217,7 @@ test('latest city request wins when weather responses arrive out of order', asyn
   const context = vm.createContext({
     document: { addEventListener() {} },
     currentWeatherRequestId: 0,
+    forecastRequestId: 0,
     fetchWeather: city => new Promise(resolve => pending.set(city, resolve)),
     renderCurrentWeather: data => renderedCities.push(data.name),
     updateRainMap() {},
@@ -692,6 +693,7 @@ test('theme initialization keeps only one refresh interval', () => {
   let intervalId = 0;
   const cleared = [];
   const sky = {
+    dataset: {},
     querySelector() { return null; },
     appendChild() {},
     querySelectorAll() { return []; }
@@ -864,6 +866,7 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
   const renderedForecasts = [];
   const context = vm.createContext({
     document: { addEventListener() {} },
+    window: { addEventListener() {} },
     fetchForecast(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
     groupForecastByDay(data) { return [data.city]; },
     renderForecast(days) { renderedForecasts.push(days[0]); }
