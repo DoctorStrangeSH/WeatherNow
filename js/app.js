@@ -65,6 +65,7 @@ async function loadDefaultCity(requestId = ++currentWeatherRequestId) {
   } catch {
     if (requestId !== currentWeatherRequestId) return;
 
+    if (restoreCachedWeather(CONFIG.DEFAULT_CITY)) return;
     document.getElementById('main-city').textContent = 'Не удалось загрузить';
     const retryBtn = document.getElementById('retry-geo-btn');
     if (retryBtn) retryBtn.classList.remove('d-none');
@@ -92,6 +93,7 @@ async function loadCityWeather(city) {
   } catch (error) {
     if (requestId === currentWeatherRequestId) {
       const hasPreviousWeather = Boolean(previousCityName);
+      if (!hasPreviousWeather && restoreCachedWeather(city)) return;
       if (hero) hero.dataset.loadState = hasPreviousWeather ? 'stale' : 'error';
       if (cityLabel) cityLabel.textContent = previousCityName || 'Не удалось загрузить';
       const description = document.getElementById('main-desc');
@@ -167,12 +169,14 @@ function dismissNetworkStatus() {
   if (banner && navigator.onLine !== false) banner.hidden = true;
 }
 
-function restoreCachedWeather() {
+function restoreCachedWeather(expectedCity) {
   if (typeof getLastWeatherSnapshot !== 'function') return false;
   const snapshot = getLastWeatherSnapshot();
   if (!snapshot) return false;
 
   const data = snapshot.data;
+  if (expectedCity && String(data.name).trim().toLocaleLowerCase('ru-RU') !==
+      String(expectedCity).trim().toLocaleLowerCase('ru-RU')) return false;
   currentLat = data.coord.lat;
   currentLon = data.coord.lon;
   renderCurrentWeather(data, { cached: true, savedAt: snapshot.savedAt, stale: snapshot.stale });
