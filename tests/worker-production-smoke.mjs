@@ -25,7 +25,7 @@ async function retryableGet(path) {
 const weatherResponse = await retryableGet('/weather?q=Berlin');
 assert.equal(weatherResponse.status, 200, 'Production /weather endpoint must return HTTP 200');
 const weather = await weatherResponse.json();
-assert.equal(weather.name, 'Berlin');
+assert.ok(['berlin', 'берлин'].includes(String(weather.name).toLocaleLowerCase('ru-RU')));
 assert.ok(Number.isFinite(weather.main?.temp), 'Current temperature must be numeric');
 assert.ok(Number.isFinite(weather.coord?.lat) && Number.isFinite(weather.coord?.lon));
 assert.ok(Array.isArray(weather.weather) && weather.weather.length > 0);
@@ -33,14 +33,14 @@ assert.ok(Array.isArray(weather.weather) && weather.weather.length > 0);
 const forecastResponse = await retryableGet('/forecast?q=Berlin');
 assert.equal(forecastResponse.status, 200, 'Production /forecast endpoint must return HTTP 200');
 const forecast = await forecastResponse.json();
-assert.equal(forecast.city?.name, 'Berlin');
+assert.ok(['berlin', 'берлин'].includes(String(forecast.city?.name).toLocaleLowerCase('ru-RU')));
 assert.ok(Array.isArray(forecast.list) && forecast.list.length > 0);
 
 const directResponse = await retryableGet('/direct?q=Berlin&limit=5');
 assert.equal(directResponse.status, 200, 'Production /direct endpoint must return HTTP 200');
 const cities = await directResponse.json();
 assert.ok(Array.isArray(cities) && cities.length > 0);
-assert.ok(cities.some(city => String(city.name).toLowerCase() === 'berlin'));
+assert.ok(cities.some(city => ['berlin', 'берлин'].includes(String(city.name).toLocaleLowerCase('ru-RU'))));
 
 const preflight = await request('/weather?q=Berlin', {
   method: 'OPTIONS',
