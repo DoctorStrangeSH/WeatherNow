@@ -3310,3 +3310,12 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .network-status__retry { transition: none; }
 }
+
+
+.forecast-cache-note {
+    grid-column: 1 / -1;
+    margin: 0 0 .35rem;
+    color: rgba(255, 255, 255, .76);
+    font-size: .78rem;
+    text-align: left;
+}
