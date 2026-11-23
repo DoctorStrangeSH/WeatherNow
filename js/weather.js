@@ -1,3 +1,15 @@
+function getWeatherEmoji(code) {
+  if (code >= 200 && code < 300) return '⛈️';
+  if (code >= 300 && code < 400) return '🌦️';
+  if (code >= 500 && code < 600) return '🌧️';
+  if (code >= 600 && code < 700) return '🌨️';
+  if (code >= 700 && code < 800) return '🌫️';
+  if (code === 800) return '☀️';
+  if (code === 801) return '🌤️';
+  if (code === 802) return '⛅';
+  return '☁️';
+}
+
 function getWeatherIconMarkup(code) {
   let symbol;
 
@@ -50,6 +62,38 @@ function parseForecastDate(dateString) {
   const [year, month, day] = dateString.split('-').map(Number);
   if (!year || !month || !day) return new Date(NaN);
   return new Date(year, month - 1, day);
+}
+
+function getHourlyForecast(forecastData, dayIndex = 0) {
+  // dt_txt хранит локальное время города; дату выбираем с учётом смещения API.
+  const timezoneOffset = Number(forecastData.city?.timezone);
+  const now = new Date();
+  let targetDate;
+
+  if (Number.isFinite(timezoneOffset)) {
+    const cityNow = new Date(now.getTime() + timezoneOffset * 1000);
+    cityNow.setUTCDate(cityNow.getUTCDate() + dayIndex);
+    targetDate = cityNow.toISOString().slice(0, 10);
+  } else {
+    const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayIndex);
+    targetDate = [
+      localDate.getFullYear(),
+      String(localDate.getMonth() + 1).padStart(2, '0'),
+      String(localDate.getDate()).padStart(2, '0')
+    ].join('-');
+  }
+
+  return forecastData.list
+    .filter(item => item.dt_txt.startsWith(targetDate))
+    .map(item => ({
+      time: item.dt_txt.split(' ')[1].slice(0, 5),
+      temp: Math.round(item.main.temp),
+      icon: item.weather[0].id,
+      description: item.weather[0].description,
+      pop: Math.round(item.pop * 100),
+      wind: item.wind.speed,
+      humidity: item.main.humidity
+    }));
 }
 
 function groupForecastByDay(forecastData) {
