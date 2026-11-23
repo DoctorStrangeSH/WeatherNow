@@ -3597,3 +3597,32 @@ body.theme-night #sky[data-weather="fog"] {
         radial-gradient(ellipse 40% 28% at 50% 22%, rgba(204, 225, 241, .62), transparent 74%),
         radial-gradient(ellipse 34% 24% at 82% 34%, rgba(237, 246, 252, .68), transparent 76%);
 }
+
+
+/* Low-cost solar illumination: static halo, animated opacity/scale only. */
+#sky .sun {
+    z-index: 2;
+    animation: none;
+    will-change: auto;
+}
+#sky .sun::after {
+    animation: sunAura 8s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+}
+body.theme-morning #sky .sun::after {
+    background: radial-gradient(circle, rgba(255, 191, 137, .31), rgba(255, 170, 119, .12) 45%, transparent 72%);
+}
+body.theme-evening #sky .sun::after {
+    background: radial-gradient(circle, rgba(255, 154, 116, .32), rgba(246, 101, 112, .1) 48%, transparent 74%);
+}
+@media (prefers-reduced-motion: reduce) {
+    #sky .sun,
+    #sky .sun::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    #sky .sun::after {
+        opacity: .65;
+        transform: none;
+    }
+}
