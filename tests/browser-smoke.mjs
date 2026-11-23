@@ -201,11 +201,14 @@ try {
   await page.waitForFunction(() => document.querySelector('#screen-rainmap')?.classList.contains('active'));
   await page.waitForSelector('#weather-map iframe');
   assert.equal(await page.locator('[data-layer="precipitation"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(await page.locator('[data-layer="precipitation"]').evaluate(button => button.classList.contains('active')));
   assert.equal(await page.locator('[data-layer="temperature"]').getAttribute('aria-pressed'), 'false');
+  assert.ok(!(await page.locator('[data-layer="temperature"]').evaluate(button => button.classList.contains('active'))));
   assert.match(await page.locator('#weather-map iframe').getAttribute('src'), /overlay=rain/);
   await page.locator('[data-layer="wind"]').click();
   await page.waitForFunction(() => document.querySelector('#weather-map iframe')?.src.includes('overlay=wind'));
   assert.equal(await page.locator('[data-layer="wind"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(await page.locator('[data-layer="wind"]').evaluate(button => button.classList.contains('active')));
   assert.ok(await page.locator('#weather-map iframe').isVisible(), 'Weather map is visible on mobile');
   await page.screenshot({ path: path.join(screenshotDir, 'mobile-map-390.png'), fullPage: true });
 
