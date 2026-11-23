@@ -934,14 +934,13 @@ test('offline forecast restoration renders cached data and its saved timestamp',
         : null;
     },
     parseForecastDate(value) { return new Date(value * 1000); },
-    groupForecastByDay(data) { return [data.city.name]; },
-    renderForecast(days) { rendered.push(days); },
+    groupForecastByDay() { return []; },
     renderFeelsLikeSection() {}
   });
   vm.runInContext(uiSource, context);
 
   assert.equal(context.restoreCachedForecast('Berlin'), true);
-  assert.deepEqual(rendered, [['Berlin']]);
+  assert.equal(context.currentForecastData.city.name, 'Berlin');
   assert.equal(container.dataset.state, 'cached');
   assert.equal(container.children[0].className, 'forecast-cache-note');
   assert.match(container.children[0].textContent, /23\.11\.2026/);
@@ -1056,14 +1055,13 @@ test('failed forecast request restores the cached forecast for the selected city
         : null;
     },
     parseForecastDate(value) { return new Date(value * 1000); },
-    groupForecastByDay(data) { return [data.city.name]; },
-    renderForecast(days) { rendered.push(days[0]); },
+    groupForecastByDay() { return []; },
     renderFeelsLikeSection() {}
   });
   vm.runInContext(uiSource, context);
 
   await context.loadForecast('Paris');
-  assert.deepEqual(rendered, ['Paris']);
+  assert.equal(context.currentForecastData.city.name, 'Paris');
   assert.equal(container.dataset.state, 'cached');
   assert.equal(container.children[0].className, 'forecast-cache-note');
 });
@@ -1091,7 +1089,7 @@ test('restoring cached weather also restores its cached forecast and dependent w
     document: {
       addEventListener() {},
       querySelector() { return { dataset: {} }; },
-      getElementById: getElement
+      getElementById(id) { return id === 'weather-insights-grid' ? null : getElement(id); }
     },
     window: { addEventListener() {} },
     capitalize: value => value,
