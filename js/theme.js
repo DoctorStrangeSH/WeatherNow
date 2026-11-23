@@ -1,11 +1,13 @@
 let currentWeatherCode = 800;
 let currentTimezone = 0;
 let currentWindSpeed = 0;
+let themeRefreshInterval = null;
 
 function initTheme() {
   createSkyElements();
   applyTimeTheme();
-  setInterval(applyTimeTheme, 600000);
+  if (themeRefreshInterval !== null) clearInterval(themeRefreshInterval);
+  themeRefreshInterval = setInterval(applyTimeTheme, 600000);
 }
 
 function applyTimeTheme(timezoneOffset = currentTimezone) {
@@ -194,37 +196,39 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
 }
 
 function createRain(intensity, heavy = false) {
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+
+  const count = Math.max(0, Math.min(100, Math.floor(Number(intensity) || 0)));
   const container = document.createElement('div');
   container.className = 'rain-container';
   container.id = 'rain-container';
-  
-  const sky = document.getElementById('sky');
-  if (!sky) return;
-  
-  for (let i = 0; i < intensity; i++) {
+
+  for (let i = 0; i < count; i++) {
     const drop = document.createElement('div');
     drop.className = 'raindrop';
     drop.style.left = Math.random() * 100 + '%';
     drop.style.animationDuration = (Math.random() * 0.3 + (heavy ? 0.3 : 0.5)) + 's';
     drop.style.animationDelay = Math.random() * 1 + 's';
     drop.style.height = (Math.random() * 10 + (heavy ? 15 : 8)) + 'px';
-    drop.style.width = (heavy ? '2px' : '1.5px');
+    drop.style.width = heavy ? '2px' : '1.5px';
     drop.style.opacity = Math.random() * 0.4 + (heavy ? 0.4 : 0.2);
     container.appendChild(drop);
   }
-  
+
   sky.appendChild(container);
 }
 
 function createSnow(intensity) {
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+
+  const count = Math.max(0, Math.min(100, Math.floor(Number(intensity) || 0)));
   const container = document.createElement('div');
   container.className = 'snow-container';
   container.id = 'snow-container';
-  
-  const sky = document.getElementById('sky');
-  if (!sky) return;
-  
-  for (let i = 0; i < intensity; i++) {
+
+  for (let i = 0; i < count; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
     const size = Math.random() * 4 + 2;
@@ -237,19 +241,20 @@ function createSnow(intensity) {
     flake.style.boxShadow = '0 0 3px rgba(255,255,255,0.5)';
     container.appendChild(flake);
   }
-  
+
   sky.appendChild(container);
 }
 
 function createWindLines(intensity) {
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+
+  const count = Math.max(0, Math.min(40, Math.floor(Number(intensity) || 0)));
   const container = document.createElement('div');
   container.className = 'wind-lines';
   container.id = 'wind-lines';
-  
-  const sky = document.getElementById('sky');
-  if (!sky) return;
-  
-  for (let i = 0; i < intensity; i++) {
+
+  for (let i = 0; i < count; i++) {
     const line = document.createElement('div');
     line.className = 'wind-line';
     line.style.top = Math.random() * 70 + '%';
@@ -259,7 +264,7 @@ function createWindLines(intensity) {
     line.style.height = (Math.random() * 1.5 + 0.5) + 'px';
     container.appendChild(line);
   }
-  
+
   sky.appendChild(container);
 }
 
@@ -302,9 +307,11 @@ function prefersReducedMotion() {
 }
 
 function clearWeatherEffects() {
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+
   ['rain-container', 'snow-container', 'wind-lines', 'lightning', 'fog'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.remove();
+    sky.querySelectorAll(`#${id}`).forEach(element => element.remove());
   });
 }
 
