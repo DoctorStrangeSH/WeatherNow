@@ -293,35 +293,32 @@
                                 <i class="bi bi-map me-2"></i>Погода на карте
                             </h3>
 
-                            <!-- Управление картой -->
-                            <div class="d-flex justify-content-end mb-3">
-                                <button id="map-fullscreen-btn" class="btn btn-glass btn-sm rounded-pill" type="button" aria-pressed="false" onclick="toggleMapFullscreen()">
-                                    <i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i>На весь экран
-                                </button>
-                            </div>
-
-                            <!-- Переключатель слоёв -->
-                            <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap" role="group" aria-label="Слои погодной карты">
-                                <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    data-layer="temperature" aria-pressed="false" onclick="switchMapLayer('temperature')">
-                                    <i class="bi bi-thermometer-half me-1"></i>Температура
-                                </button>
-                                <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    data-layer="wind" aria-pressed="false" onclick="switchMapLayer('wind')">
-                                    <i class="bi bi-wind me-1"></i>Ветер
-                                </button>
-                                <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
-                                    data-layer="precipitation" aria-pressed="true" onclick="switchMapLayer('precipitation')">
-                                    <i class="bi bi-droplet me-1"></i>Осадки
-                                </button>
-                                <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    data-layer="clouds" aria-pressed="false" onclick="switchMapLayer('clouds')">
-                                    <i class="bi bi-cloud me-1"></i>Облака
-                                </button>
-                            </div>
-
-                            <!-- Контейнер карты -->
+                            <!-- Карта и постоянно доступная панель управления -->
                             <div class="glass-card rounded-4 overflow-hidden weather-map-container">
+                                <div class="map-toolbar">
+                                    <div class="map-layer-controls" role="group" aria-label="Слои погодной карты">
+                                        <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
+                                            data-layer="temperature" aria-pressed="false" onclick="switchMapLayer('temperature')">
+                                            <i class="bi bi-thermometer-half me-1" aria-hidden="true"></i>Температура
+                                        </button>
+                                        <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
+                                            data-layer="wind" aria-pressed="false" onclick="switchMapLayer('wind')">
+                                            <i class="bi bi-wind me-1" aria-hidden="true"></i>Ветер
+                                        </button>
+                                        <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
+                                            data-layer="precipitation" aria-pressed="true" onclick="switchMapLayer('precipitation')">
+                                            <i class="bi bi-droplet me-1" aria-hidden="true"></i>Осадки
+                                        </button>
+                                        <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
+                                            data-layer="clouds" aria-pressed="false" onclick="switchMapLayer('clouds')">
+                                            <i class="bi bi-cloud me-1" aria-hidden="true"></i>Облака
+                                        </button>
+                                    </div>
+                                    <button id="map-fullscreen-btn" class="btn btn-glass btn-sm rounded-pill map-fullscreen-btn"
+                                        type="button" aria-pressed="false" onclick="toggleMapFullscreen()">
+                                        <i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i>На весь экран
+                                    </button>
+                                </div>
                                 <div id="map-status" class="map-status" role="status" aria-live="polite" hidden></div>
                                 <div id="weather-map" style="width: 100%; height: 500px;"></div>
                             </div>
