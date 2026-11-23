@@ -282,13 +282,17 @@ function createFog() {
 }
 
 function getWeatherEffectScale() {
-  if (typeof navigator === 'undefined') return 1;
-  const memory = Number(navigator.deviceMemory) || 4;
-  const cores = Number(navigator.hardwareConcurrency) || 4;
-  const saveData = Boolean(navigator.connection?.saveData);
-  if (saveData || memory <= 2 || cores <= 2) return 0.35;
-  if (memory <= 4 || cores <= 4) return 0.65;
-  return 1;
+  const memory = typeof navigator === 'undefined' ? 4 : Number(navigator.deviceMemory) || 4;
+  const cores = typeof navigator === 'undefined' ? 4 : Number(navigator.hardwareConcurrency) || 4;
+  const saveData = typeof navigator !== 'undefined' && Boolean(navigator.connection?.saveData);
+  let scale = saveData || memory <= 2 || cores <= 2 ? 0.35 : memory <= 4 || cores <= 4 ? 0.65 : 1;
+
+  // На небольших экранах уменьшаем число частиц независимо от мощности устройства.
+  const viewportWidth = typeof window !== 'undefined' ? Number(window.innerWidth) : 0;
+  if (viewportWidth > 0 && viewportWidth <= 390) scale = Math.min(scale, 0.4);
+  else if (viewportWidth > 0 && viewportWidth <= 767) scale = Math.min(scale, 0.55);
+
+  return scale;
 }
 
 function prefersReducedMotion() {
