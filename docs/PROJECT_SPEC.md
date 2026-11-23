@@ -362,6 +362,7 @@
 - [x] Получить успешный CI-прогон браузерных и production Worker smoke-сценариев (Browser and production smoke #99: оба job PASS; Quality checks #643: 93/93 PASS).
 - [x] Chromium desktop/mobile smoke: запуск, прогноз, поиск, карта и слои, избранное, сравнение, уведомления, offline/online — Browser and production smoke #99 PASS.
 - [ ] Проверка браузеров Firefox и Safari/WebKit; добавлена матрица Playwright Chromium/Firefox/WebKit в `browser-smoke.yml`, ожидается результат CI.
+- [x] Оптимизировать browser matrix CI: каждый job устанавливает только свой движок Playwright, вместо повторной установки Chromium, Firefox и WebKit в каждом из трёх job.
 - [x] Автоматическая проверка адаптивности 320–1440 px в Chromium без горизонтального переполнения.
 - [x] Просмотреть desktop/mobile скриншоты главного экрана: устранено «плавающее» солнце, повышена контрастность легенд всех графиков, исправлено повторное появление подсказки поиска после выбора города.
 - [x] Исправить runtime-ошибку графика «Ощущается как»: оставшаяся ссылка на удалённую переменную `isDark` заменена на токен темы.
