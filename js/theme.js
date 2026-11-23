@@ -307,6 +307,10 @@ function getWeatherEffectScale() {
   return scale;
 }
 
+function getStarCount() {
+  return Math.round(100 * getWeatherEffectScale());
+}
+
 function prefersReducedMotion() {
   return typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
@@ -403,7 +407,10 @@ function createStars() {
   if (!container) return;
   
   container.innerHTML = '';
-  for (let i = 0; i < 100; i++) {
+  // Keep the star field atmospheric without running 100 twinkle animations
+  // on compact screens, low-memory devices, or data-saving connections.
+  const starCount = getStarCount();
+  for (let i = 0; i < starCount; i++) {
     const star = document.createElement('div');
     star.className = 'star';
     const size = Math.random() * 2.5 + 1;
