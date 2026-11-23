@@ -15,9 +15,13 @@ permissions:
 
 jobs:
   browser-smoke:
-    name: Chromium browser smoke
+    name: ${{ matrix.browser }} browser smoke
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -31,16 +35,19 @@ jobs:
         run: |
           npm init -y
           npm install --no-save playwright@1.56.1 axe-core@4.10.3
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
 
       - name: Run desktop and mobile browser scenarios
+        env:
+          BROWSER: ${{ matrix.browser }}
+          SCREENSHOT_DIR: artifacts/browser-smoke/${{ matrix.browser }}
         run: node tests/browser-smoke.mjs
 
       - name: Upload browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: weathernow-browser-smoke
+          name: weathernow-browser-smoke-${{ matrix.browser }}
           path: artifacts/browser-smoke/*.png
           if-no-files-found: ignore
 
