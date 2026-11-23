@@ -89,15 +89,24 @@ function renderWeatherInsights(data) {
   grid.replaceChildren(...items);
 }
 
-function renderCurrentWeather(data) {
+function renderCurrentWeather(data, options = {}) {
   currentForecastData = null;
+  if (options.cached !== true && typeof saveLastWeatherSnapshot === 'function') {
+    saveLastWeatherSnapshot(data);
+  }
   currentWeatherCityName = data.name || '';
   const weatherHero = document.querySelector('.weather-hero');
   if (weatherHero) weatherHero.dataset.loadState = 'ready';
   if (typeof dismissNetworkStatus === 'function') dismissNetworkStatus();
   document.getElementById('main-city').textContent = `${data.name}, ${data.sys.country}`;
   document.getElementById('main-temp').textContent = `${Math.round(data.main.temp)}°C`;
-  document.getElementById('main-desc').textContent = capitalize(data.weather[0].description);
+  const weatherDescription = capitalize(data.weather[0].description);
+  const mainDescription = document.getElementById('main-desc');
+  if (mainDescription) {
+    mainDescription.textContent = options.cached === true
+      ? `${weatherDescription} · сохранено ${new Date(options.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}`
+      : weatherDescription;
+  }
   document.getElementById('detail-humidity').textContent = `${data.main.humidity}%`;
   document.getElementById('detail-wind').textContent = `${data.wind.speed} м/с`;
   document.getElementById('detail-feels').textContent = `${Math.round(data.main.feels_like)}°C`;
