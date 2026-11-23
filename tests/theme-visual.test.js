@@ -271,3 +271,17 @@ test('reinitializing theme replaces the refresh interval instead of stacking tim
   assert.deepEqual(clearedTimers, [1, 2]);
   assert.deepEqual([...activeTimers], [3]);
 });
+
+
+test('weather map controls occupy a separate row above the provider iframe', () => {
+  const mapStyles = styleSource.slice(styleSource.lastIndexOf('/* Map controls live above the provider iframe'));
+  assert.match(mapStyles, /\.map-toolbar\s*\{[^}]*position:\s*relative;/s);
+  assert.match(mapStyles, /\.weather-map-container\s*\{[^}]*display:\s*flex;/s);
+  assert.match(mapStyles, /#weather-map\s*\{[^}]*min-height:\s*500px;/s);
+});
+
+test('moon is layered above clouds and does not run a continuous glow animation', () => {
+  const moonStyles = styleSource.slice(styleSource.lastIndexOf('/* Keep the moon visible above cloud layers'));
+  assert.match(moonStyles, /#sky \.moon\s*\{[^}]*z-index:\s*3/s);
+  assert.match(moonStyles, /animation:\s*none\s*!important;/);
+});
