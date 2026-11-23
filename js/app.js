@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSearch();
   setupCompareButton();
   setupNetworkStatus();
+  if (navigator.onLine === false && restoreCachedWeather()) return;
   initApp();
 });
 
@@ -164,4 +165,17 @@ function setupNetworkStatus() {
 function dismissNetworkStatus() {
   const banner = document.getElementById('network-status');
   if (banner && navigator.onLine !== false) banner.hidden = true;
+}
+
+function restoreCachedWeather() {
+  if (typeof getLastWeatherSnapshot !== 'function') return false;
+  const snapshot = getLastWeatherSnapshot();
+  if (!snapshot) return false;
+
+  const data = snapshot.data;
+  currentLat = data.coord.lat;
+  currentLon = data.coord.lon;
+  renderCurrentWeather(data, { cached: true, savedAt: snapshot.savedAt });
+  updateRainMap(currentLat, currentLon);
+  return true;
 }
