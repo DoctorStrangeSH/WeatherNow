@@ -294,9 +294,9 @@
                             </div>
 
                             <!-- Переключатель слоёв -->
-                            <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
+                            <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap" role="group" aria-label="Слои погодной карты">
                                 <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
-                                    data-layer="temperature" aria-pressed="true" onclick="switchMapLayer('temperature')">
+                                    data-layer="temperature" aria-pressed="false" onclick="switchMapLayer('temperature')">
                                     <i class="bi bi-thermometer-half me-1"></i>Температура
                                 </button>
                                 <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
@@ -304,7 +304,7 @@
                                     <i class="bi bi-wind me-1"></i>Ветер
                                 </button>
                                 <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    data-layer="precipitation" aria-pressed="false" onclick="switchMapLayer('precipitation')">
+                                    data-layer="precipitation" aria-pressed="true" onclick="switchMapLayer('precipitation')">
                                     <i class="bi bi-droplet me-1"></i>Осадки
                                 </button>
                                 <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
@@ -338,7 +338,7 @@
                                 </div>
                             </div>
 
-                            <p class="text-center text-muted small mt-2">Данные предоставлены OpenWeatherMap</p>
+                            <p class="text-center text-muted small mt-2">Карта: Windy · Погодные показатели и прогноз: OpenWeatherMap</p>
                         </div>
                     </div>
                 </div>
