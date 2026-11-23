@@ -1002,12 +1002,20 @@ test('failed city switch restores the cached snapshot for the newly requested ci
     currentWeatherCityName: 'Berlin',
     forecastRequestId: 0,
     fetchWeather: async () => { throw new Error('Network unavailable'); },
-    restoreCachedWeather(city) {
-      if (city !== 'Paris') return false;
-      rendered.push(city);
-      return true;
+    getLastWeatherSnapshot() {
+      return {
+        data: {
+          name: 'Paris',
+          coord: { lat: 48.8566, lon: 2.3522 },
+          sys: { country: 'FR' },
+          main: { temp: 12 },
+          weather: [{ id: 800, description: 'ясно' }]
+        },
+        savedAt: '2026-11-23T08:00:00.000Z',
+        stale: false
+      };
     },
-    renderCurrentWeather() {},
+    renderCurrentWeather(data) { rendered.push(data.name); },
     updateRainMap() {},
     closeSearchResults() {},
     showToast() {}
