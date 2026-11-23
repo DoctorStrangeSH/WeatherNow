@@ -153,10 +153,30 @@ try {
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth
     }));
-    assert.ok(
-      dimensions.document <= dimensions.viewport + 1,
-      `Horizontal overflow at ${width}px: document ${dimensions.document}px, viewport ${dimensions.viewport}px`
-    );
+    await page.screenshot({ path: path.join(screenshotDir, `viewport-${width}.png`), fullPage: true });
+    if (dimensions.document > dimensions.viewport + 1) {
+      const offenders = await page.evaluate(() => {
+        const viewportWidth = document.documentElement.clientWidth;
+        return [...document.body.querySelectorAll('*')]
+          .map(element => {
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return {
+              tag: element.tagName.toLowerCase(),
+              id: element.id || '',
+              className: typeof element.className === 'string' ? element.className.slice(0, 100) : '',
+              left: Math.round(rect.left),
+              right: Math.round(rect.right),
+              width: Math.round(rect.width),
+              overflowX: style.overflowX
+            };
+          })
+          .filter(item => item.width > 0 && (item.left < -1 || item.right > viewportWidth + 1))
+          .sort((a, b) => b.right - a.right)
+          .slice(0, 15);
+      });
+      throw new Error(`Horizontal overflow at ${width}px: document ${dimensions.document}px, viewport ${dimensions.viewport}px. Offending elements: ${JSON.stringify(offenders)}`);
+    }
     assert.ok(await page.locator('#main-city').isVisible(), `City label is visible at ${width}px`);
     assert.ok(await page.locator('#main-temp').isVisible(), `Temperature is visible at ${width}px`);
   }
