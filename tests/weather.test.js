@@ -1065,3 +1065,94 @@ test('failed forecast request restores the cached forecast for the selected city
   assert.equal(container.dataset.state, 'cached');
   assert.equal(container.children[0].className, 'forecast-cache-note');
 });
+
+
+test('restoring cached weather also restores its cached forecast and dependent weather panels', () => {
+  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+  const elements = new Map();
+  const getElement = id => {
+    if (!elements.has(id)) {
+      elements.set(id, {
+        textContent: '',
+        innerHTML: '',
+        dataset: {},
+        classList: { toggle() {}, remove() {}, add() {} },
+        setAttribute() {},
+        onclick: null
+      });
+    }
+    return elements.get(id);
+  };
+  const forecastRestores = [];
+  const wardrobeRenders = [];
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      querySelector() { return { dataset: {} }; },
+      getElementById: getElement
+    },
+    capitalize: value => value,
+    getWeatherIconMarkup: () => '<svg></svg>',
+    renderWeatherInsights() {},
+    updateWeatherTheme() {},
+    dismissNetworkStatus() {},
+    restoreCachedForecast(city) { forecastRestores.push(city); return true; },
+    renderFeelsLikeSection() {},
+    renderWardrobe(data) { wardrobeRenders.push(data.name); },
+    updateFavoriteButton() {},
+    toggleFavorite() {}
+  });
+  vm.runInContext(uiSource, context);
+
+  context.renderCurrentWeather({
+    name: 'Berlin',
+    sys: { country: 'DE' },
+    main: { temp: 12, feels_like: 11, humidity: 70 },
+    wind: { speed: 3.5 },
+    weather: [{ id: 800, description: 'ясно' }],
+    coord: { lat: 52.52, lon: 13.405 },
+    timezone: 3600
+  }, { cached: true, savedAt: '2026-11-23T10:00:00.000Z', stale: false });
+
+  assert.equal(getElement('main-city').textContent, 'Berlin, DE');
+  assert.equal(getElement('main-temp').textContent, '12°C');
+  assert.deepEqual(forecastRestores, ['Berlin']);
+  assert.deepEqual(wardrobeRenders, ['Berlin']);
+});
+
+test('network recovery refreshes the currently selected city without page reload', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const listeners = {};
+  const calls = [];
+  const banner = { hidden: true, classList: { add() {}, remove() {} } };
+  const message = { textContent: '' };
+  const retry = { disabled: false, addEventListener(event, callback) { this.callback = callback; } };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      body: { dataset: {} },
+      getElementById(id) {
+        return id === 'network-status' ? banner
+          : id === 'network-status-message' ? message
+          : id === 'network-retry-btn' ? retry : null;
+      }
+    },
+    window: { addEventListener(event, callback) { listeners[event] = callback; } },
+    navigator: { onLine: true },
+    currentWeatherCityName: 'Paris',
+    loadCityWeather(city) { calls.push(city); },
+    initApp() { calls.push('init'); }
+  });
+  vm.runInContext(appSource, context);
+  context.setupNetworkStatus();
+
+  listeners.offline();
+  assert.equal(banner.hidden, false);
+  assert.equal(context.document.body.dataset.network, 'offline');
+  assert.equal(retry.disabled, true);
+
+  listeners.online();
+  assert.deepEqual(calls, ['Paris']);
+  assert.equal(context.document.body.dataset.network, 'online');
+  assert.equal(retry.disabled, false);
+});
