@@ -104,6 +104,8 @@ test('offline mode shows a status banner and disables retry until connection ret
     window: { addEventListener(type, callback) { listeners[type] = callback; } },
     navigator: { onLine: false },
     currentWeatherCityName: 'Berlin',
+    currentWeatherRequestId: 0,
+    forecastRequestId: 0,
     fetchWeather(city) {
       context.refreshedCity = city;
       return Promise.resolve({ name: city, coord: { lat: 1, lon: 2 } });
