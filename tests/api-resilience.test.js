@@ -221,3 +221,37 @@ test('cached forecast is restored only for the matching city', () => {
   values.set('weathernow-last-forecast', '{invalid');
   assert.equal(context.getLastForecastSnapshot('Berlin'), null);
 });
+
+
+test('forecast cache keeps several recently viewed cities and evicts the oldest beyond its limit', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const values = new Map();
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  for (let index = 1; index <= 9; index += 1) {
+    const city = `City ${index}`;
+    context.saveLastForecastSnapshot(city, {
+      city: { name: city },
+      list: [{ dt: index }]
+    });
+  }
+
+  assert.equal(context.getLastForecastSnapshot('City 9').data.city.name, 'City 9');
+  assert.equal(context.getLastForecastSnapshot('City 2').data.city.name, 'City 2');
+  assert.equal(context.getLastForecastSnapshot('City 1'), null);
+  assert.equal(context.getLastForecastSnapshot('City 9 ').data.city.name, 'City 9');
+
+  context.saveLastForecastSnapshot('City 2', {
+    city: { name: 'City 2' },
+    list: [{ dt: 22 }]
+  });
+  assert.equal(context.getLastForecastSnapshot('City 2').data.list[0].dt, 22);
+});
