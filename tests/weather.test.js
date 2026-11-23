@@ -1076,7 +1076,7 @@ test('restoring cached weather also restores its cached forecast and dependent w
         textContent: '',
         innerHTML: '',
         dataset: {},
-        classList: { toggle() {}, remove() {}, add() {} },
+        classList: { toggle() {}, remove() {}, add() {}, contains() { return false; } },
         setAttribute() {},
         onclick: null
       });
