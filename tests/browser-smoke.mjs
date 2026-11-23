@@ -143,6 +143,8 @@ try {
   });
 
   await page.goto(APP_ORIGIN, { waitUntil: 'domcontentloaded' });
+  // Wait for the non-blocking Google Fonts stylesheet to settle before visual snapshots.
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForFunction(() => {
     const city = document.querySelector('#main-city')?.textContent || '';
     const temperature = document.querySelector('#main-temp')?.textContent || '';
