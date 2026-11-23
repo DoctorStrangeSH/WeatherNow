@@ -253,9 +253,19 @@ function normalizeForecastCity(city) {
 
 function isValidForecastSnapshot(snapshot) {
   const savedAt = Date.parse(snapshot?.savedAt || '');
-  return Boolean(snapshot && snapshot.data &&
-    Array.isArray(snapshot.data.list) && snapshot.data.city &&
-    Number.isFinite(savedAt));
+  const data = snapshot?.data;
+  if (!data || !data.city || typeof data.city.name !== 'string' ||
+      !data.city.name.trim() || !Array.isArray(data.list) ||
+      data.list.length === 0 || !Number.isFinite(savedAt)) return false;
+
+  // Validate every forecast slot before handing cached content to renderers.
+  return data.list.every(item =>
+    item && Number.isFinite(Number(item.dt)) &&
+    item.main && Number.isFinite(Number(item.main.temp)) &&
+    Array.isArray(item.weather) && item.weather[0] &&
+    (Number.isFinite(Number(item.weather[0].id)) ||
+      typeof item.weather[0].description === 'string')
+  );
 }
 
 function readForecastCache() {
