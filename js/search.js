@@ -259,7 +259,7 @@ function setSearchExpanded(resultsId, expanded) {
 
 function appendHighlightedText(container, value, query) {
   const text = String(value || '');
-  const normalizedText = normalizeCitySearchText(text);\n  const normalizedQuery = normalizeCitySearchText(query);\n  const index = normalizedText.indexOf(normalizedQuery);
+  const index = text.toLocaleLowerCase().indexOf(String(query || '').toLocaleLowerCase());
 
   if (!query || index < 0) {
     container.textContent = text;
