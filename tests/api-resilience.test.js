@@ -174,7 +174,8 @@ test('last successful weather snapshot survives reload and rejects malformed cac
   const weather = {
     name: 'Berlin',
     coord: { lat: 52.52, lon: 13.405 },
-    main: { temp: 12, humidity: 70 },
+    main: { temp: 12, feels_like: 11, humidity: 70 },
+    wind: { speed: 3.5 },
     weather: [{ id: 800, description: 'ясно' }],
     sys: { country: 'DE' }
   };
@@ -210,7 +211,7 @@ test('cached forecast is restored only for the matching city', () => {
 
   const forecast = {
     city: { name: 'Berlin', country: 'DE' },
-    list: [{ dt: 1795435200, main: { temp: 8 }, weather: [{ description: 'облачно' }] }]
+    list: [{ dt: 1795435200, main: { temp: 8 }, weather: [{ id: 803, description: 'облачно' }] }]
   };
   context.saveLastForecastSnapshot('Berlin', forecast);
   const restored = context.getLastForecastSnapshot('Berlin');
@@ -277,7 +278,8 @@ test('weather and forecast snapshots expose stale state after their freshness wi
   const weather = {
     name: 'Berlin',
     coord: { lat: 52.52, lon: 13.405 },
-    main: { temp: 12 },
+    main: { temp: 12, feels_like: 11, humidity: 70 },
+    wind: { speed: 3.5 },
     weather: [{ id: 800, description: 'ясно' }]
   };
   context.saveLastWeatherSnapshot(weather);
@@ -348,7 +350,7 @@ test('cache storage quota failures never interrupt weather rendering', () => {
 
 test('network failures fall back only to a cached snapshot for the requested city', () => {
   const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
-  assert.match(appSource, /if \(!hasPreviousWeather && restoreCachedWeather\(city\)\) return;/);
+  assert.match(appSource, /if \(restoreCachedWeather\(city\)\) return;/);
   assert.match(appSource, /if \(restoreCachedWeather\(CONFIG\.DEFAULT_CITY\)\) return;/);
   assert.match(appSource, /function restoreCachedWeather\(expectedCity\)/);
   assert.match(appSource, /String\(data\.name\).*toLocaleLowerCase\('ru-RU'\)/);
