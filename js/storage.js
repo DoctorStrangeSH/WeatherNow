@@ -278,12 +278,14 @@ function saveLastForecastSnapshot(city, data) {
 
   try {
     const cities = readForecastCache();
+    // Reinsert to preserve true recency even when two saves share a timestamp.
+    delete cities[cityKey];
     cities[cityKey] = { savedAt: new Date().toISOString(), data };
 
     // Keep the most recently updated cities and bound local storage usage.
     const recentCities = Object.entries(cities)
-      .sort((a, b) => Date.parse(b[1].savedAt) - Date.parse(a[1].savedAt))
-      .slice(0, MAX_CACHED_FORECAST_CITIES);
+      .slice(-MAX_CACHED_FORECAST_CITIES)
+      .reverse();
 
     localStorage.setItem(LAST_FORECAST_CACHE_KEY, JSON.stringify({
       version: 2,
