@@ -201,6 +201,7 @@ document.addEventListener('screenChanged', (e) => {
 
 
 const LAST_WEATHER_CACHE_KEY = 'weathernow-last-weather';
+const MAX_WEATHER_CACHE_AGE_MS = 6 * 60 * 60 * 1000;
 
 function saveLastWeatherSnapshot(data) {
   if (!data || !data.name || !data.main || !Array.isArray(data.weather) || !data.weather[0] || !data.coord) return;
@@ -228,7 +229,13 @@ function getLastWeatherSnapshot() {
         !Number.isFinite(Number(data.coord.lon)) || !Number.isFinite(savedAt)) {
       return null;
     }
-    return { data, savedAt: new Date(savedAt).toISOString() };
+    const ageMs = Math.max(0, Date.now() - savedAt);
+    return {
+      data,
+      savedAt: new Date(savedAt).toISOString(),
+      ageMs,
+      stale: ageMs > MAX_WEATHER_CACHE_AGE_MS
+    };
   } catch {
     return null;
   }
@@ -237,6 +244,8 @@ function getLastWeatherSnapshot() {
 
 const LAST_FORECAST_CACHE_KEY = 'weathernow-last-forecast';
 const MAX_CACHED_FORECAST_CITIES = 8;
+const MAX_FORECAST_CACHE_AGE_MS = 12 * 60 * 60 * 1000;
+const MAX_FORECAST_CACHE_BYTES = 1024 * 1024;
 
 function normalizeForecastCity(city) {
   return String(city || '').trim().toLocaleLowerCase('ru-RU');
@@ -282,14 +291,25 @@ function saveLastForecastSnapshot(city, data) {
     delete cities[cityKey];
     cities[cityKey] = { savedAt: new Date().toISOString(), data };
 
-    // Keep the most recently updated cities and bound local storage usage.
-    const recentCities = Object.entries(cities)
-      .slice(-MAX_CACHED_FORECAST_CITIES);
+    // Keep recent cities and enforce a conservative per-cache size budget.
+    let recentCities = Object.entries(cities).slice(-MAX_CACHED_FORECAST_CITIES);
+    let serialized = '';
 
-    localStorage.setItem(LAST_FORECAST_CACHE_KEY, JSON.stringify({
-      version: 2,
-      cities: Object.fromEntries(recentCities)
-    }));
+    while (recentCities.length > 0) {
+      serialized = JSON.stringify({
+        version: 2,
+        cities: Object.fromEntries(recentCities)
+      });
+      // UTF-16 length * 2 is a conservative approximation of storage bytes.
+      if (serialized.length * 2 <= MAX_FORECAST_CACHE_BYTES) break;
+      recentCities = recentCities.slice(1);
+    }
+
+    if (recentCities.length === 0 || !recentCities.some(([key]) => key === cityKey)) {
+      return;
+    }
+
+    localStorage.setItem(LAST_FORECAST_CACHE_KEY, serialized);
   } catch {
     // Forecast caching is optional; do not interrupt live rendering.
   }
@@ -302,8 +322,12 @@ function getLastForecastSnapshot(city) {
   const snapshot = readForecastCache()[cityKey];
   if (!isValidForecastSnapshot(snapshot)) return null;
 
+  const savedAtMs = Date.parse(snapshot.savedAt);
+  const ageMs = Math.max(0, Date.now() - savedAtMs);
   return {
     data: snapshot.data,
-    savedAt: new Date(Date.parse(snapshot.savedAt)).toISOString()
+    savedAt: new Date(savedAtMs).toISOString(),
+    ageMs,
+    stale: ageMs > MAX_FORECAST_CACHE_AGE_MS
   };
 }
