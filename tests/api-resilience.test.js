@@ -240,7 +240,7 @@ test('forecast cache keeps several recently viewed cities and evicts the oldest 
     const city = `City ${index}`;
     context.saveLastForecastSnapshot(city, {
       city: { name: city },
-      list: [{ dt: index }]
+      list: [{ dt: index, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }]
     });
   }
 
@@ -251,7 +251,7 @@ test('forecast cache keeps several recently viewed cities and evicts the oldest 
 
   context.saveLastForecastSnapshot('City 2', {
     city: { name: 'City 2' },
-    list: [{ dt: 22 }]
+    list: [{ dt: 22, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }]
   });
   assert.equal(context.getLastForecastSnapshot('City 2').data.list[0].dt, 22);
 });
@@ -291,7 +291,7 @@ test('weather and forecast snapshots expose stale state after their freshness wi
 
   context.saveLastForecastSnapshot('Berlin', {
     city: { name: 'Berlin' },
-    list: [{ dt: 1 }]
+    list: [{ dt: 1, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }]
   });
   const freshForecast = context.getLastForecastSnapshot('Berlin');
   assert.equal(freshForecast.stale, false);
@@ -317,7 +317,7 @@ test('forecast cache refuses an oversized city payload without throwing or writi
 
   context.saveLastForecastSnapshot('Huge City', {
     city: { name: 'Huge City' },
-    list: [{ description: 'x'.repeat(600 * 1024) }]
+    list: [{ dt: 1, main: { temp: 10 }, weather: [{ id: 800, description: 'x'.repeat(600 * 1024) }] }]
   });
   assert.equal(values.has('weathernow-last-forecast'), false);
 });
@@ -341,7 +341,7 @@ test('cache storage quota failures never interrupt weather rendering', () => {
   }));
   assert.doesNotThrow(() => context.saveLastForecastSnapshot('Berlin', {
     city: { name: 'Berlin' },
-    list: [{ dt: 1 }]
+    list: [{ dt: 1, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }]
   }));
 });
 
@@ -375,7 +375,7 @@ test('private browsing storage access failures are treated as an empty cache', (
   }));
   assert.doesNotThrow(() => context.saveLastForecastSnapshot('Berlin', {
     city: { name: 'Berlin' },
-    list: [{ dt: 1 }]
+    list: [{ dt: 1, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }]
   }));
 });
 
@@ -384,7 +384,7 @@ test('forecast cache migration preserves a valid legacy single-city snapshot', (
   const legacy = {
     city: 'Berlin',
     savedAt: '2026-11-23T10:00:00.000Z',
-    data: { city: { name: 'Berlin' }, list: [{ dt: 1 }] }
+    data: { city: { name: 'Berlin' }, list: [{ dt: 1, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }] }
   };
   const values = new Map([['weathernow-last-forecast', JSON.stringify(legacy)]]);
   const context = vm.createContext({
@@ -400,10 +400,46 @@ test('forecast cache migration preserves a valid legacy single-city snapshot', (
   assert.equal(context.getLastForecastSnapshot('Berlin').data.city.name, 'Berlin');
   context.saveLastForecastSnapshot('Paris', {
     city: { name: 'Paris' },
-    list: [{ dt: 2 }]
+    list: [{ dt: 2, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] }]
   });
   const migrated = JSON.parse(values.get('weathernow-last-forecast'));
   assert.equal(migrated.version, 2);
   assert.ok(migrated.cities.berlin);
   assert.ok(migrated.cities.paris);
+});
+
+
+test('forecast cache rejects partially corrupted entries and empty forecast lists', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const validItem = { dt: 1, main: { temp: 10 }, weather: [{ id: 800, description: 'ясно' }] };
+  const validSnapshot = {
+    city: 'Berlin',
+    savedAt: '2026-11-23T10:00:00.000Z',
+    data: { city: { name: 'Berlin' }, list: [validItem] }
+  };
+  const values = new Map();
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  values.set('weathernow-last-forecast', JSON.stringify({
+    version: 2,
+    cities: {
+      berlin: validSnapshot,
+      paris: { ...validSnapshot, data: { city: { name: 'Paris' }, list: [validItem, null] } },
+      tokyo: { ...validSnapshot, data: { city: { name: 'Tokyo' }, list: [] } },
+      rome: { ...validSnapshot, data: { city: { name: 'Rome' }, list: [{ dt: 1, main: {}, weather: [] }] } }
+    }
+  }));
+
+  assert.equal(context.getLastForecastSnapshot('Berlin').data.city.name, 'Berlin');
+  assert.equal(context.getLastForecastSnapshot('Paris'), null);
+  assert.equal(context.getLastForecastSnapshot('Tokyo'), null);
+  assert.equal(context.getLastForecastSnapshot('Rome'), null);
 });
