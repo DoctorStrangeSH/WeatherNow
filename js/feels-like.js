@@ -154,7 +154,7 @@ function renderFeelsLikeChart(data) {
         x: { grid: { display: false }, ticks: { color: palette.ticks } },
         y: {
           grid: { color: palette.grid },
-          ticks: { callback: v => v + '°', color: isDark ? '#ccc' : '#666' }
+          ticks: { callback: v => v + '°', color: palette.ticks }
         }
       }
     }
