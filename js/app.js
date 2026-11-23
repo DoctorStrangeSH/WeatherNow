@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   setupSearch();
   setupCompareButton();
+  setupNetworkStatus();
   initApp();
 });
 
@@ -112,4 +113,55 @@ function setupMapButtons() {
     btn.addEventListener('click', function() {
     });
   });
+}
+
+function setupNetworkStatus() {
+  const banner = document.getElementById('network-status');
+  const message = document.getElementById('network-status-message');
+  const retryButton = document.getElementById('network-retry-btn');
+  if (!banner) return;
+
+  const setOfflineState = () => {
+    banner.hidden = false;
+    banner.classList.remove('is-online');
+    if (message) message.textContent = 'Нет подключения к интернету. Показываем последние загруженные данные.';
+    if (retryButton) retryButton.disabled = true;
+    document.body.dataset.network = 'offline';
+  };
+
+  const setOnlineState = () => {
+    banner.hidden = false;
+    banner.classList.add('is-online');
+    if (message) message.textContent = 'Подключение восстановлено. Обновляем погоду…';
+    if (retryButton) retryButton.disabled = false;
+    document.body.dataset.network = 'online';
+
+    if (currentWeatherCityName) {
+      loadCityWeather(currentWeatherCityName);
+    } else {
+      initApp();
+    }
+  };
+
+  window.addEventListener('offline', setOfflineState);
+  window.addEventListener('online', setOnlineState);
+
+  if (retryButton) {
+    retryButton.addEventListener('click', () => {
+      if (!navigator.onLine) {
+        setOfflineState();
+        return;
+      }
+      if (currentWeatherCityName) loadCityWeather(currentWeatherCityName);
+      else initApp();
+    });
+  }
+
+  if (navigator.onLine === false) setOfflineState();
+  else document.body.dataset.network = 'online';
+}
+
+function dismissNetworkStatus() {
+  const banner = document.getElementById('network-status');
+  if (banner && navigator.onLine !== false) banner.hidden = true;
 }
