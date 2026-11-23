@@ -82,9 +82,12 @@ async function loadCityWeather(city) {
     renderCurrentWeather(data);
     updateRainMap(currentLat, currentLon);
     closeSearchResults();
-  } catch {
+  } catch (error) {
     if (requestId === currentWeatherRequestId) {
-      showToast('Город не найден 😢', 'danger');
+      const message = error instanceof Error && error.message
+        ? error.message
+        : 'Не удалось загрузить погоду. Попробуйте ещё раз';
+      showToast(message, 'danger');
     }
   }
 }
