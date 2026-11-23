@@ -285,3 +285,21 @@ test('moon is layered above clouds and does not run a continuous glow animation'
   assert.match(moonStyles, /#sky \.moon\s*\{[^}]*z-index:\s*3/s);
   assert.match(moonStyles, /animation:\s*none\s*!important;/);
 });
+
+
+test('weather sky has distinct time-of-day palettes for clear, storm, snow and fog scenes', () => {
+  const sceneStyles = styleSource.slice(styleSource.lastIndexOf('/* Distinct cinematic palettes'));
+  for (const token of [
+    'body.theme-morning #sky[data-weather="clear"]',
+    'body.theme-day #sky[data-weather="clear"]',
+    'body.theme-evening #sky[data-weather="clear"]',
+    'body.theme-night #sky[data-weather="clear"]',
+    'body.theme-night #sky[data-weather="thunder"]',
+    'body.theme-night #sky[data-weather="snow"]',
+    'body.theme-night #sky[data-weather="fog"]'
+  ]) {
+    assert.ok(sceneStyles.includes(token), `Missing scene palette: ${token}`);
+  }
+  assert.match(sceneStyles, /weather-cloud-layer\[data-weather="storm"\]/);
+  assert.match(sceneStyles, /weather-cloud-layer\[data-weather="rain"\]/);
+});
