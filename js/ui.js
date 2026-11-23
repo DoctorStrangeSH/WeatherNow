@@ -1,6 +1,7 @@
 let currentLat = null;
 let currentLon = null;
 let currentForecastData = null;
+let currentForecastCity = '';
 let currentWeatherRequestId = 0;
 let forecastRequestId = 0;
 
@@ -129,12 +130,21 @@ function renderCurrentWeather(data) {
 
 async function loadForecast(city) {
   const requestId = ++forecastRequestId;
+  currentForecastCity = city;
+
+  const container = document.getElementById('forecast-container');
+  if (container) {
+    container.dataset.state = 'loading';
+    container.textContent = 'Загружаем прогноз…';
+  }
 
   try {
     const forecastData = await fetchForecast(city);
     if (requestId !== forecastRequestId) return;
 
     currentForecastData = forecastData;
+    const forecastContainer = document.getElementById('forecast-container');
+    if (forecastContainer) forecastContainer.dataset.state = 'ready';
     const dailyForecast = groupForecastByDay(forecastData);
     renderForecast(dailyForecast);
     
@@ -142,18 +152,30 @@ async function loadForecast(city) {
       renderFeelsLikeSection(forecastData);
     }
 
-  } catch {
+  } catch (error) {
     if (requestId !== forecastRequestId) return;
 
-    const container = document.getElementById('forecast-container');
-    if (container) {
-      container.innerHTML = `
-        <div class="col-12 text-center text-muted py-3">
-          <i class="bi bi-exclamation-circle me-2"></i>Не удалось загрузить прогноз
-        </div>
-      `;
+    const forecastContainer = document.getElementById('forecast-container');
+    if (forecastContainer) {
+      forecastContainer.dataset.state = 'error';
+      const message = document.createElement('p');
+      message.className = 'col-12 text-center text-muted py-3 mb-2';
+      message.textContent = error instanceof Error && error.message
+        ? error.message
+        : 'Не удалось загрузить прогноз';
+
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'btn btn-glass btn-sm rounded-pill mx-auto';
+      retry.textContent = 'Повторить загрузку';
+      retry.addEventListener('click', retryForecast);
+      forecastContainer.replaceChildren(message, retry);
     }
   }
+}
+
+function retryForecast() {
+  if (currentForecastCity) loadForecast(currentForecastCity);
 }
 
 function renderForecast(days) {
