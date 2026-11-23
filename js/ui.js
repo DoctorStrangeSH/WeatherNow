@@ -151,6 +151,10 @@ function renderCurrentWeather(data, options = {}) {
     updateFavoriteButton(data.name);
   }
 
+  if (typeof checkWeatherForAlerts === 'function') {
+    checkWeatherForAlerts(data);
+  }
+
   const rainMapScreen = document.getElementById('screen-rainmap');
   if (rainMapScreen && rainMapScreen.classList.contains('active')) {
     if (typeof updateRainMap === 'function') {
