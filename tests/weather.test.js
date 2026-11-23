@@ -887,6 +887,7 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
       }
     },
     window: { addEventListener() {} },
+    forecastRequestId: 0,
     fetchForecast(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
     groupForecastByDay(data) { return [data.city]; },
     renderForecast(days) { renderedForecasts.push(days[0]); }
