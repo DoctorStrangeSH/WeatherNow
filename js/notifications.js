@@ -14,6 +14,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = Object.freeze({
 });
 
 let notificationSettings = loadNotificationSettings();
+const notificationInFlight = new Set();
 let notificationsEnabled = notificationSettings.enabled && typeof Notification !== 'undefined'
   && Notification.permission === 'granted';
 
@@ -150,12 +151,12 @@ async function saveWeatherNotificationSettings() {
   }
 }
 
-async function checkWeatherForAlerts() {
+async function checkWeatherForAlerts(weatherData = null) {
   if (!notificationsEnabled || typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   try {
     const cityName = document.getElementById('main-city')?.textContent.split(',')[0]?.trim();
     if (!cityName) return;
-    const data = await fetchWeather(cityName);
+    const data = weatherData || await fetchWeather(cityName);
     const alerts = getWeatherAlertCandidates(data);
     let history = {};
     try {
@@ -166,9 +167,14 @@ async function checkWeatherForAlerts() {
     const today = new Date().toISOString().slice(0, 10);
     for (const alert of alerts) {
       const key = `${today}:${String(data.name).toLocaleLowerCase('ru-RU')}:${alert.type}`;
-      if (history[key]) continue;
-      sendNotification(alert.title, alert.body, alert.type);
-      history[key] = true;
+      if (history[key] || notificationInFlight.has(key)) continue;
+      notificationInFlight.add(key);
+      try {
+        sendNotification(alert.title, alert.body, alert.type);
+        history[key] = true;
+      } finally {
+        notificationInFlight.delete(key);
+      }
     }
     try {
       const keys = Object.keys(history).sort().slice(-60);
