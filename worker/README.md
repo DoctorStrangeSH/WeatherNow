@@ -50,13 +50,12 @@ The edge cache is an optimization; requests still work if the Cache API is unava
 
 ## Security checklist
 
-1. Revoke the old key that was previously committed to the public repository.
-2. Create a replacement key in OpenWeatherMap.
-3. Store the replacement using `npx wrangler secret put OPENWEATHER_API_KEY`.
-4. Deploy the Worker.
-5. Confirm the browser network requests contain no `appid` parameter.
+1. The previously exposed key has been revoked by the project owner.
+2. A replacement key has been stored as the Cloudflare Worker Secret `OPENWEATHER_API_KEY`.
+3. Keep the secret out of source files, browser code, command arguments, issues, pull requests and logs.
+4. After changing the secret or Worker code, deploy the Worker and verify all production endpoints.
+5. Confirm browser requests contain no `appid` parameter.
 6. Check that an unapproved Origin receives HTTP 403.
-7. Never commit a real API key or paste it into an issue or pull request.
 
 ## Local tests
 
