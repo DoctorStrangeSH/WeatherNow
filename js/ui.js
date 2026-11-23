@@ -94,6 +94,7 @@ function renderCurrentWeather(data) {
   currentWeatherCityName = data.name || '';
   const weatherHero = document.querySelector('.weather-hero');
   if (weatherHero) weatherHero.dataset.loadState = 'ready';
+  if (typeof dismissNetworkStatus === 'function') dismissNetworkStatus();
   document.getElementById('main-city').textContent = `${data.name}, ${data.sys.country}`;
   document.getElementById('main-temp').textContent = `${Math.round(data.main.temp)}°C`;
   document.getElementById('main-desc').textContent = capitalize(data.weather[0].description);
