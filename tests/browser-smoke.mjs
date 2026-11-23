@@ -152,6 +152,13 @@ try {
   await page.waitForFunction(() => document.querySelector('#forecast-container')?.children.length > 0);
   assert.ok(await page.locator('#hourly-container').count() === 1, 'hourly forecast container is present');
 
+  await page.addScriptTag({ path: path.join(ROOT, 'node_modules', 'axe-core', 'axe.min.js') });
+  const homeA11y = await page.evaluate(async () => {
+    const result = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } });
+    return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.length })), passes: result.passes.length };
+  });
+  console.log('axe-core home audit:', JSON.stringify(homeA11y));
+
   const search = page.locator('#header-search');
   await search.fill('Berlin');
   await search.press('Enter');
@@ -240,6 +247,12 @@ try {
 
   await page.evaluate(() => openWeatherNotificationSettings());
   await page.waitForSelector('#notification-settings-dialog[open]');
+  const dialogA11y = await page.evaluate(async () => {
+    const dialog = document.querySelector('#notification-settings-dialog');
+    const result = await axe.run(dialog, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } });
+    return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.length })), passes: result.passes.length };
+  });
+  console.log('axe-core notification dialog audit:', JSON.stringify(dialogA11y));
   assert.equal(await page.locator('#notification-enabled').isChecked(), false);
   await page.locator('#notification-enabled').check();
   await page.locator('#notification-wind-threshold').fill('2');
