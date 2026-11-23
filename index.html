@@ -70,7 +70,7 @@
                         </div>
                         <!-- Кнопки навигации -->
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('rainmap')"
-                            title="Карта осадков">
+                            title="Погода на карте" aria-label="Открыть погодную карту">
                             <i class="bi bi-map me-1"></i>Карта
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('favorites')"
@@ -256,19 +256,19 @@
                                 <div class="map-toolbar">
                                     <div class="map-layer-controls" role="group" aria-label="Слои погодной карты">
                                         <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                            data-layer="temperature" aria-pressed="false" onclick="switchMapLayer('temperature')">
+                                            data-layer="temperature" aria-pressed="false" onclick="switchMapLayer('temperature')" title="Показать температуру">
                                             <i class="bi bi-thermometer-half me-1" aria-hidden="true"></i>Температура
                                         </button>
                                         <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                            data-layer="wind" aria-pressed="false" onclick="switchMapLayer('wind')">
+                                            data-layer="wind" aria-pressed="false" onclick="switchMapLayer('wind')" title="Показать ветер">
                                             <i class="bi bi-wind me-1" aria-hidden="true"></i>Ветер
                                         </button>
                                         <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
-                                            data-layer="precipitation" aria-pressed="true" onclick="switchMapLayer('precipitation')">
+                                            data-layer="precipitation" aria-pressed="true" onclick="switchMapLayer('precipitation')" title="Показать осадки">
                                             <i class="bi bi-droplet me-1" aria-hidden="true"></i>Осадки
                                         </button>
                                         <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                            data-layer="clouds" aria-pressed="false" onclick="switchMapLayer('clouds')">
+                                            data-layer="clouds" aria-pressed="false" onclick="switchMapLayer('clouds')" title="Показать облачность">
                                             <i class="bi bi-cloud me-1" aria-hidden="true"></i>Облака
                                         </button>
                                     </div>
