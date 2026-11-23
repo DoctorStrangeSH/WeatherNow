@@ -107,7 +107,7 @@ jobs:
           const reportPath = 'artifacts/lighthouse/mobile.report.json';
           if (!fs.existsSync(reportPath)) {
             const message = 'Lighthouse JSON report was not generated.';
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Lighthouse mobile audit\\n\\n⚠️ ${message}\\n`);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Lighthouse mobile audit\n\n⚠️ ${message}\n`);
             console.error(message);
             process.exit(1);
           }
@@ -129,12 +129,12 @@ jobs:
             ['Cumulative Layout Shift', metric('cumulative-layout-shift')],
             ['Speed Index', metric('speed-index')]
           ];
-          let summary = '## Lighthouse mobile audit\\n\\n';
-          summary += '| Category | Score / 100 |\\n|---|---:|\\n';
-          summary += rows.map(([name, value]) => `|${name}|${value}|`).join('\\n');
-          summary += '\\n\\n| Lab metric | Result |\\n|---|---|\\n';
-          summary += metrics.map(([name, value]) => `|${name}|${value}|`).join('\\n');
-          summary += '\\n';
+          let summary = '## Lighthouse mobile audit\n\n';
+          summary += '| Category | Score / 100 |\n|---|---:|\n';
+          summary += rows.map(([name, value]) => `|${name}|${value}|`).join('\n');
+          summary += '\n\n| Lab metric | Result |\n|---|---|\n';
+          summary += metrics.map(([name, value]) => `|${name}|${value}|`).join('\n');
+          summary += '\n';
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
           console.log(summary);
           NODE
