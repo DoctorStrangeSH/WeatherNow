@@ -1097,7 +1097,8 @@ test('offline current weather rendering restores the matching cached forecast', 
         if (id === 'weather-insights-grid' || id === 'hourly-container') return null;
         if (id === 'forecast-container') return forecastContainer;
         return getElement(id);
-      }
+      },
+      createElement(tag) { return { tagName: tag, className: '', textContent: '' }; }
     },
     window: { addEventListener() {} },
     capitalize: value => value,
