@@ -897,6 +897,7 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
     renderForecast(days) { renderedForecasts.push(days[0]); }
   });
   vm.runInContext(uiSource, context);
+  context.renderForecast = days => renderedForecasts.push(days[0]);
   const firstRequest = context.loadForecast('Berlin');
   const secondRequest = context.loadForecast('Tokyo');
   pending.get('Tokyo').resolve({ city: 'Tokyo' });
@@ -926,6 +927,7 @@ test('offline forecast restoration renders cached data and its saved timestamp',
       getElementById(id) { return id === 'forecast-container' ? container : null; },
       createElement(tag) { return { tagName: tag, className: '', textContent: '' }; }
     },
+    window: { addEventListener() {} },
     getLastForecastSnapshot(city) {
       return city === 'Berlin'
         ? { data: cachedForecast, savedAt: '2026-11-23T08:00:00.000Z' }
