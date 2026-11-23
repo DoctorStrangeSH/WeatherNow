@@ -3463,52 +3463,70 @@ body {
 }
 
 
-/* Map controls stay available while the map is in fullscreen mode. */
+/* Map controls live above the provider iframe: no controls are painted over map labels. */
 .weather-map-container {
+    display: flex;
+    flex-direction: column;
     position: relative;
     isolation: isolate;
+    overflow: hidden;
     background: #10223a;
 }
 .map-toolbar {
-    position: absolute;
-    z-index: 8;
-    inset: .75rem .75rem auto;
+    position: relative;
+    z-index: 3;
+    inset: auto;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: .65rem;
-    pointer-events: none;
+    padding: .75rem;
+    background: rgba(12, 28, 48, .96);
+    border-bottom: 1px solid rgba(224, 238, 250, .14);
 }
 .map-layer-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: .4rem;
-    max-width: min(100%, 720px);
-    pointer-events: auto;
+    gap: .45rem;
+    min-width: 0;
+    max-width: 100%;
 }
 .map-toolbar .btn {
     min-height: 40px;
     border-color: rgba(224, 238, 250, .3);
-    background: rgba(12, 28, 48, .88);
+    background: rgba(24, 45, 69, .96);
     color: #f4f7fb;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .16);
+    white-space: nowrap;
 }
 .map-toolbar .map-layer-btn.active {
     border-color: rgba(255, 185, 117, .8);
     background: rgba(126, 72, 34, .94);
     color: #fff;
 }
-.map-fullscreen-btn {
-    flex: 0 0 auto;
-    pointer-events: auto;
+.map-fullscreen-btn { flex: 0 0 auto; }
+#weather-map {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    min-height: 500px;
+    background: var(--card-bg);
+}
+#weather-map iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    border: 0;
 }
 .weather-map-container:fullscreen,
 .weather-map-container.map-fullscreen-fallback {
     position: fixed;
     z-index: 10000;
     inset: 0;
+    display: flex;
+    flex-direction: column;
     width: 100vw;
     height: 100dvh;
     max-width: none;
@@ -3519,35 +3537,50 @@ body {
 }
 .weather-map-container:fullscreen #weather-map,
 .weather-map-container.map-fullscreen-fallback #weather-map {
-    width: 100%;
-    height: 100% !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
 }
-.weather-map-container:fullscreen .map-toolbar,
-.weather-map-container.map-fullscreen-fallback .map-toolbar {
-    inset: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) auto max(.75rem, env(safe-area-inset-left));
+.weather-map-container:fullscreen #weather-map iframe,
+.weather-map-container.map-fullscreen-fallback #weather-map iframe {
+    height: 100%;
+    min-height: 0;
 }
 @media (max-width: 640px) {
     .map-toolbar {
-        inset: .5rem .5rem auto;
         align-items: stretch;
         flex-direction: column;
+        padding: .6rem;
     }
     .map-layer-controls {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: .4rem;
-        max-width: 100%;
     }
     .map-layer-controls .btn,
     .map-fullscreen-btn {
         width: 100%;
         min-height: 44px;
-        padding-inline: .5rem;
+        padding-inline: .45rem;
         font-size: .78rem;
         white-space: nowrap;
     }
-    .map-fullscreen-btn { align-self: flex-end; width: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
     .map-toolbar .btn { transition: none !important; }
+}
+
+/* Keep the moon visible above cloud layers without a continuous glow animation. */
+#sky .moon {
+    z-index: 3 !important;
+    filter: drop-shadow(0 0 18px rgba(210, 228, 255, .52));
+    animation: none !important;
+    will-change: auto;
+}
+.theme-night #sky .moon {
+    opacity: .94;
+    box-shadow: 0 0 34px rgba(192, 218, 255, .38), 0 0 70px rgba(192, 218, 255, .18);
+}
+@media (max-width: 640px) {
+    #sky .moon { width: 68px; height: 68px; }
 }
