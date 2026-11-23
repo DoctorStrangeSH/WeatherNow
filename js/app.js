@@ -175,7 +175,7 @@ function restoreCachedWeather() {
   const data = snapshot.data;
   currentLat = data.coord.lat;
   currentLon = data.coord.lon;
-  renderCurrentWeather(data, { cached: true, savedAt: snapshot.savedAt });
+  renderCurrentWeather(data, { cached: true, savedAt: snapshot.savedAt, stale: snapshot.stale });
   updateRainMap(currentLat, currentLon);
   return true;
 }
