@@ -8,6 +8,7 @@ const themeSource = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf
 const chartSource = fs.readFileSync(path.join(__dirname, '../js/charts.js'), 'utf8');
 const searchSource = fs.readFileSync(path.join(__dirname, '../js/search.js'), 'utf8');
 const feelsLikeSource = fs.readFileSync(path.join(__dirname, '../js/feels-like.js'), 'utf8');
+const styleSource = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
 
 function loadInBrowserContext(source, additions = {}) {
   const context = vm.createContext({
@@ -126,4 +127,13 @@ test('cloud depth scales with device capability while retaining full desktop atm
     window: { innerWidth: 1440, matchMedia: () => ({ matches: false }) }
   });
   assert.equal(desktop.getActiveCloudLayerCount(), 3);
+});
+
+
+test('rain, snow and wind particle containers isolate layout and paint', () => {
+  for (const selector of ['.rain-container', '.snow-container', '.wind-lines']) {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rule = new RegExp(escaped + '\\s*\\{[^}]*contain:\\s*layout paint;[^}]*isolation:\\s*isolate;', 's');
+    assert.match(styleSource, rule, selector + ' should isolate particle rendering');
+  }
 });
