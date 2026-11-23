@@ -127,6 +127,14 @@ function getWeatherMotionProfile(weatherCode, windSpeed = 0) {
   };
 }
 
+function getPrecipitationWindProfile(windSpeed = 0) {
+  const speed = Math.max(0, Math.min(30, Number(windSpeed) || 0));
+  return {
+    rainAngle: Math.round(Math.min(30, speed * 1.7)),
+    snowDrift: Math.round(Math.min(48, speed * 2.4))
+  };
+}
+
 function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpeed) {
   const sky = document.getElementById('sky');
   if (!sky) return;
@@ -148,6 +156,7 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
   sky.dataset.motion = 'full';
   const effectScale = getWeatherEffectScale();
   const motionProfile = getWeatherMotionProfile(weatherCode, windSpeed);
+  const precipitationWind = getPrecipitationWindProfile(windSpeed);
 
   if (weatherCode >= 200 && weatherCode < 300) {
     clouds.forEach((c, i) => {
@@ -155,7 +164,7 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
       c.style.opacity = '0.9';
       c.style.animationDuration = (20 + i * 5) + 's';
     });
-    createRain(Math.round(motionProfile.rainCount * effectScale), true);
+    createRain(Math.round(motionProfile.rainCount * effectScale), true, precipitationWind);
     createLightning();
     createWindLines(Math.round(motionProfile.windCount * effectScale));
   } else if (weatherCode >= 300 && weatherCode < 400) {
@@ -163,21 +172,21 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
       c.style.opacity = '0.7';
       c.style.background = '#90A4AE';
     });
-    createRain(Math.round(motionProfile.rainCount * effectScale), false);
+    createRain(Math.round(motionProfile.rainCount * effectScale), false, precipitationWind);
   } else if (weatherCode >= 500 && weatherCode < 600) {
     clouds.forEach((c, i) => {
       c.style.background = '#78909C';
       c.style.opacity = '0.85';
       c.style.animationDuration = (22 + i * 5) + 's';
     });
-    createRain(Math.round(motionProfile.rainCount * effectScale), motionProfile.heavyRain);
+    createRain(Math.round(motionProfile.rainCount * effectScale), motionProfile.heavyRain, precipitationWind);
     createWindLines(Math.round(motionProfile.windCount * effectScale));
   } else if (weatherCode >= 600 && weatherCode < 700) {
     clouds.forEach((c, i) => {
       c.style.background = '#B0BEC5';
       c.style.opacity = '0.8';
     });
-    createSnow(Math.round(motionProfile.snowCount * effectScale));
+    createSnow(Math.round(motionProfile.snowCount * effectScale), precipitationWind);
   } else if (weatherCode >= 700 && weatherCode < 800) {
     clouds.forEach(c => c.style.opacity = '0.3');
     createFog();
@@ -202,7 +211,7 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
   }
 }
 
-function createRain(intensity, heavy = false) {
+function createRain(intensity, heavy = false, wind = getPrecipitationWindProfile(currentWindSpeed)) {
   const sky = document.getElementById('sky');
   if (!sky) return;
 
@@ -215,6 +224,7 @@ function createRain(intensity, heavy = false) {
     const drop = document.createElement('div');
     drop.className = 'raindrop';
     drop.style.left = Math.random() * 100 + '%';
+    drop.style.setProperty('--rain-angle', wind.rainAngle + 'deg');
     drop.style.animationDuration = (Math.random() * 0.3 + (heavy ? 0.3 : 0.5)) + 's';
     drop.style.animationDelay = Math.random() * 1 + 's';
     drop.style.height = (Math.random() * 10 + (heavy ? 15 : 8)) + 'px';
@@ -226,7 +236,7 @@ function createRain(intensity, heavy = false) {
   sky.appendChild(container);
 }
 
-function createSnow(intensity) {
+function createSnow(intensity, wind = getPrecipitationWindProfile(currentWindSpeed)) {
   const sky = document.getElementById('sky');
   if (!sky) return;
 
@@ -238,14 +248,17 @@ function createSnow(intensity) {
   for (let i = 0; i < count; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
-    const size = Math.random() * 4 + 2;
+    // Alternate foreground and background particles to create depth without more DOM nodes.
+    const foreground = i % 3 === 0;
+    const size = foreground ? Math.random() * 2.5 + 4 : Math.random() * 2 + 1.5;
     flake.style.width = size + 'px';
     flake.style.height = size + 'px';
     flake.style.left = Math.random() * 100 + '%';
-    flake.style.animationDuration = (Math.random() * 3 + 3) + 's';
+    flake.style.setProperty('--snow-drift', (foreground ? wind.snowDrift : Math.round(wind.snowDrift * 0.55)) + 'px');
+    flake.style.animationDuration = (Math.random() * 3 + (foreground ? 3 : 5)) + 's';
     flake.style.animationDelay = Math.random() * 5 + 's';
-    flake.style.opacity = Math.random() * 0.4 + 0.4;
-    flake.style.boxShadow = '0 0 3px rgba(255,255,255,0.5)';
+    flake.style.opacity = foreground ? '0.85' : '0.48';
+    flake.style.boxShadow = foreground ? '0 0 5px rgba(255,255,255,0.55)' : 'none';
     container.appendChild(flake);
   }
 
