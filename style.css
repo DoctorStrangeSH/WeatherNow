@@ -3437,3 +3437,10 @@ body {
     contain: layout paint style;
     pointer-events: none;
 }
+
+/* Accessible contrast for secondary copy on dark glass surfaces. */
+.footer-copy { color: #a8bad0; }
+.notification-dialog__header p,
+.notification-setting small,
+.notification-dialog__note,
+.notification-setting__control small { color: #a8bad0; }
