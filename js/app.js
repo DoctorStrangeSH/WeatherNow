@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initApp() {
   const requestId = ++currentWeatherRequestId;
+  forecastRequestId += 1;
 
   if (navigator.geolocation) {
     document.getElementById('main-city').textContent = 'Определяем город...';
@@ -70,6 +71,7 @@ async function loadDefaultCity(requestId = ++currentWeatherRequestId) {
 
 async function loadCityWeather(city) {
   const requestId = ++currentWeatherRequestId;
+  forecastRequestId += 1;
 
   try {
     const data = await fetchWeather(city);
