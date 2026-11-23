@@ -816,13 +816,13 @@ test('switching cities resets missing timezone and wind instead of reusing previ
   const appliedTimezones = [];
   context.applyTimeTheme = timezone => appliedTimezones.push(timezone);
   context.updateWeatherTheme(500, 7200, 14);
-  assert.equal(context.currentWeatherCode, 500);
-  assert.equal(context.currentTimezone, 7200);
-  assert.equal(context.currentWindSpeed, 14);
+  assert.equal(vm.runInContext('currentWeatherCode', context), 500);
+  assert.equal(vm.runInContext('currentTimezone', context), 7200);
+  assert.equal(vm.runInContext('currentWindSpeed', context), 14);
   context.updateWeatherTheme(801, undefined, undefined);
-  assert.equal(context.currentWeatherCode, 801);
-  assert.equal(context.currentTimezone, 0);
-  assert.equal(context.currentWindSpeed, 0);
+  assert.equal(vm.runInContext('currentWeatherCode', context), 801);
+  assert.equal(vm.runInContext('currentTimezone', context), 0);
+  assert.equal(vm.runInContext('currentWindSpeed', context), 0);
   assert.deepEqual(appliedTimezones, [7200, 0]);
   assert.equal(hero.dataset.weather, 'partly-cloudy');
 });
@@ -876,5 +876,5 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
   pending.get('Berlin').resolve({ city: 'Berlin' });
   await firstRequest;
   assert.deepEqual(renderedForecasts, ['Tokyo']);
-  assert.equal(context.currentForecastData.city, 'Tokyo');
+  assert.equal(vm.runInContext('currentForecastData.city', context), 'Tokyo');
 });
