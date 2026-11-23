@@ -1,31 +1,51 @@
 const API_TIMEOUT_MS = 12000;
 
 async function requestJson(url, fallbackMessage) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const maxAttempts = 2;
 
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      if (response.status === 404) throw new Error('Город или прогноз не найден');
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('Проблема с доступом к погодному сервису');
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        const error = response.status === 404
+          ? new Error('Город или прогноз не найден')
+          : response.status === 401 || response.status === 403
+            ? new Error('Проблема с доступом к погодному сервису')
+            : response.status === 429
+              ? new Error('Слишком много запросов. Попробуйте позже')
+              : new Error(fallbackMessage);
+
+        error.retryable = response.status >= 500 && response.status <= 504;
+        throw error;
       }
-      if (response.status === 429) throw new Error('Слишком много запросов. Попробуйте позже');
-      throw new Error(fallbackMessage);
+
+      return await response.json();
+    } catch (error) {
+      const isTimeout = error.name === 'AbortError';
+      const isNetworkError = error instanceof TypeError;
+      const retryable = error.retryable === true || isTimeout || isNetworkError;
+
+      if (attempt < maxAttempts && retryable) {
+        await new Promise(resolve => setTimeout(resolve, 350));
+        continue;
+      }
+
+      if (isTimeout) {
+        throw new Error('Сервис погоды отвечает слишком долго. Попробуйте ещё раз');
+      }
+      if (isNetworkError) {
+        throw new Error('Нет соединения с сервисом погоды');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    return await response.json();
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Сервис погоды отвечает слишком долго. Попробуйте ещё раз');
-    }
-    if (error instanceof TypeError) {
-      throw new Error('Нет соединения с сервисом погоды');
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  throw new Error(fallbackMessage);
 }
 
 async function fetchWeather(city) {
