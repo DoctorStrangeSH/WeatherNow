@@ -3379,7 +3379,7 @@ body {
 
 /* Weather notification preferences */
 .notification-dialog {
-    width: min( min(100% - 1.25rem, 560px));
+    width: min(100% - 1.25rem, 560px);
     max-width: 560px;
     max-height: min(88dvh, 780px);
     padding: 0;
