@@ -344,3 +344,40 @@ test('rain and snow preserve reduced-motion support and use wind-aware transform
   assert.match(themeSource, /createRain\(Math\.round\(motionProfile\.rainCount \* effectScale\), true, precipitationWind\)/);
   assert.match(themeSource, /createSnow\(Math\.round\(motionProfile\.snowCount \* effectScale\), precipitationWind\)/);
 });
+
+
+test('reduced-motion keeps one static cloud layer when weather has clouds', () => {
+  const layers = Array.from({ length: 3 }, () => ({
+    style: { setProperty() {} },
+    dataset: {}
+  }));
+  const sky = {
+    querySelector() { return {}; },
+    querySelectorAll(selector) {
+      return selector === '.weather-cloud-layer' ? layers : [];
+    }
+  };
+  const context = loadInBrowserContext(themeSource, {
+    document: {
+      addEventListener() {},
+      getElementById(id) { return id === 'sky' ? sky : null; }
+    },
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: {
+      innerWidth: 1440,
+      matchMedia: () => ({ matches: true })
+    }
+  });
+  vm.runInContext('updateCloudAtmosphere(804, 5)', context);
+  assert.equal(layers[0].style.display, '');
+  assert.ok(Number(layers[0].style.opacity) > 0);
+  assert.equal(layers[1].style.display, 'none');
+  assert.equal(layers[2].style.display, 'none');
+});
+
+test('solar illumination does not animate expensive box shadows', () => {
+  const styles = styleSource.slice(styleSource.lastIndexOf('/* Low-cost solar illumination:'));
+  assert.match(styles, /#sky \.sun\s*\{[^}]*animation:\s*none;/s);
+  assert.match(styles, /#sky \.sun::after\s*\{[^}]*animation:\s*sunAura/s);
+  assert.match(styles, /prefers-reduced-motion:\s*reduce/);
+});
