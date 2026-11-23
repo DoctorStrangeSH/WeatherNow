@@ -59,3 +59,43 @@ jobs:
 
       - name: Verify production Worker endpoints and security
         run: node tests/worker-production-smoke.mjs
+
+
+  lighthouse:
+    name: Lighthouse performance audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Lighthouse and static server
+        run: npm install --no-save lighthouse@12.8.2 http-server@14.1.1
+
+      - name: Start local preview server
+        run: |
+          npx http-server . -p 4173 -c-1 > /tmp/weathernow-server.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/weathernow-server.log
+          exit 1
+
+      - name: Run mobile Lighthouse audit
+        run: |
+          mkdir -p artifacts/lighthouse
+          npx lighthouse http://127.0.0.1:4173/ --chrome-flags="--headless --no-sandbox" --only-categories=performance,accessibility,best-practices,seo --form-factor=mobile --screenEmulation.mobile --output=json --output=html --output-path=./artifacts/lighthouse/mobile
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weathernow-lighthouse-mobile
+          path: artifacts/lighthouse/
+          if-no-files-found: ignore
