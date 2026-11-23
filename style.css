@@ -440,15 +440,76 @@ body {
 /* туман */
 #fog {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(200, 200, 200, 0.4);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    inset: 0;
+    overflow: hidden;
     pointer-events: none;
     z-index: 2;
+    background: linear-gradient(180deg, rgba(207, 224, 232, .08), rgba(207, 224, 232, .24));
+}
+
+#fog::before,
+#fog::after {
+    content: "";
+    position: absolute;
+    inset: -18% -28%;
+    border-radius: 50%;
+    filter: blur(34px);
+    will-change: transform, opacity;
+    background:
+        radial-gradient(ellipse 44% 24% at 18% 48%, rgba(230, 241, 244, .46), transparent 76%),
+        radial-gradient(ellipse 38% 22% at 58% 42%, rgba(218, 233, 238, .34), transparent 78%),
+        radial-gradient(ellipse 42% 26% at 88% 56%, rgba(237, 244, 245, .4), transparent 76%);
+    animation: fogDrift 34s ease-in-out infinite alternate;
+}
+
+#fog::after {
+    inset: -8% -34%;
+    opacity: .62;
+    filter: blur(48px);
+    animation-duration: 52s;
+    animation-direction: alternate-reverse;
+}
+
+@keyframes fogDrift {
+    from { transform: translate3d(-3%, 1%, 0) scale(.98); }
+    to { transform: translate3d(3%, -1%, 0) scale(1.04); }
+}
+
+#lightning::before {
+    content: "";
+    position: absolute;
+    top: 7%;
+    right: 20%;
+    width: clamp(42px, 7vw, 92px);
+    height: min(54vh, 430px);
+    opacity: 0;
+    transform: skewX(-8deg);
+    transform-origin: top center;
+    clip-path: polygon(52% 0, 100% 0, 67% 38%, 91% 38%, 18% 100%, 38% 52%, 8% 52%);
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(190,211,255,.82) 42%, rgba(143,176,255,.08));
+    filter: drop-shadow(0 0 12px rgba(208, 224, 255, .95)) drop-shadow(0 0 34px rgba(155, 183, 255, .72));
+    animation: lightningBolt 6s steps(1, end) infinite;
+}
+
+@keyframes lightningBolt {
+    0%, 90%, 92%, 94%, 96%, 100% { opacity: 0; }
+    91% { opacity: .96; }
+    93% { opacity: .72; }
+    95% { opacity: .28; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #fog::before,
+    #fog::after,
+    #lightning,
+    #lightning::before {
+        animation: none !important;
+    }
+
+    #fog::before,
+    #fog::after {
+        transform: none !important;
+    }
 }
 
 /* стеклянные эффекты */
