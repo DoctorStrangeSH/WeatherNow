@@ -875,7 +875,17 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
   const pending = new Map();
   const renderedForecasts = [];
   const context = vm.createContext({
-    document: { addEventListener() {} },
+    document: {
+      addEventListener() {},
+      getElementById() {
+        return {
+          dataset: {},
+          textContent: '',
+          replaceChildren() {},
+          querySelector() { return null; }
+        };
+      }
+    },
     window: { addEventListener() {} },
     fetchForecast(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
     groupForecastByDay(data) { return [data.city]; },
