@@ -132,8 +132,11 @@ test('cloud depth scales with device capability while retaining full desktop atm
 
 test('rain, snow and wind particle containers isolate layout and paint', () => {
   for (const selector of ['.rain-container', '.snow-container', '.wind-lines']) {
-    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const rule = new RegExp(escaped + '\\s*\\{[^}]*contain:\\s*layout paint;[^}]*isolation:\\s*isolate;', 's');
-    assert.match(styleSource, rule, selector + ' should isolate particle rendering');
+    const start = styleSource.indexOf(selector + ' {');
+    assert.notEqual(start, -1, selector + ' rule should exist');
+    const end = styleSource.indexOf('}', start);
+    const rule = styleSource.slice(start, end);
+    assert.match(rule, /contain:\\s*layout paint;/);
+    assert.match(rule, /isolation:\\s*isolate;/);
   }
 });
