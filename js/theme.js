@@ -77,7 +77,7 @@ function shouldShowSun(weatherCode, timeOfDay) {
 function getSkyArcPosition(hour, startHour, endHour) {
   const progress = Math.max(0, Math.min(1, (hour - startHour) / (endHour - startHour)));
   const x = 8 + progress * 84;
-  const y = 14 + Math.sin(progress * Math.PI) * 42;
+  const y = 6 + Math.sin(progress * Math.PI) * 18;
   return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
 }
 
@@ -97,12 +97,12 @@ function updateSkyElements(timeOfDay) {
   sun.style.left = `${sunPosition.x}%`;
   sun.style.right = 'auto';
   sun.style.top = `${sunPosition.y}%`;
-  sun.style.opacity = sunVisible ? (timeOfDay === 'evening' ? '0.68' : '0.92') : '0';
+  sun.style.opacity = sunVisible ? (timeOfDay === 'evening' ? '0.5' : '0.72') : '0';
   sun.style.transform = 'translate(-50%, -50%)';
   moon.style.left = `${moonPosition.x}%`;
   moon.style.right = 'auto';
   moon.style.top = `${moonPosition.y}%`;
-  moon.style.opacity = timeOfDay === 'night' ? '0.88' : '0';
+  moon.style.opacity = timeOfDay === 'night' ? '0.72' : '0';
   moon.style.transform = 'translate(-50%, -50%)';
   
   updateStarsVisibility(timeOfDay === 'night', currentWeatherCode);
