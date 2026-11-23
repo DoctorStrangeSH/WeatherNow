@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKER_ORIGIN = 'https://openweathermap-6310.sokrat3895.workers.dev';
@@ -84,7 +84,10 @@ const server = createServer(async (request, response) => {
   }
 });
 
-const browser = await chromium.launch({ headless: true });
+const browserName = process.env.BROWSER || 'chromium';
+const browserEngine = { chromium, firefox, webkit }[browserName];
+if (!browserEngine) throw new Error(`Unsupported BROWSER value: ${browserName}`);
+const browser = await browserEngine.launch({ headless: true });
 const pageErrors = [];
 const workerRequests = [];
 const screenshotDir = process.env.SCREENSHOT_DIR || path.join(ROOT, 'artifacts', 'browser-smoke');
