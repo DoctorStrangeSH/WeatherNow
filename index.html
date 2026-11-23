@@ -73,10 +73,6 @@
                             title="Карта осадков">
                             <i class="bi bi-map me-1"></i>Карта
                         </button>
-                        <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('compare')"
-                            title="Сравнить города">
-                            <i class="bi bi-layout-split me-1"></i>Сравнить
-                        </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('favorites')"
                             title="Избранное" aria-label="Избранные города">
                             <i class="bi bi-heart me-1"></i>Избранное
@@ -96,10 +92,6 @@
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('rainmap')"
                             title="Карта" aria-label="Карта осадков">
                             <i class="bi bi-map"></i>
-                        </button>
-                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('compare')"
-                            title="Сравнить" aria-label="Сравнить города">
-                            <i class="bi bi-layout-split"></i>
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('favorites')"
                             title="Избранное" aria-label="Избранные города">
@@ -252,47 +244,6 @@
                 <div class="screen" id="screen-favorites"></div>
 
                 <!-- ЭКРАН 3: СРАВНЕНИЕ -->
-                <div class="screen" id="screen-compare">
-                    <div class="row justify-content-center">
-                        <div class="col-12 col-lg-10">
-                            <h3 class="fw-bold mb-4 text-center">
-                                <i class="bi bi-layout-split me-2"></i>Сравнение городов
-                            </h3>
-                            <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control glass-search" id="compare-city-1"
-                                            placeholder="Первый город..." aria-label="Первый город для сравнения" autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control glass-search" id="compare-city-2"
-                                            placeholder="Второй город..." aria-label="Второй город для сравнения" autocomplete="off">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center mb-4">
-                                <button class="btn btn-accent rounded-pill px-5" id="compare-btn" type="button">
-                                    <i class="bi bi-arrow-left-right me-2"></i>Сравнить
-                                </button>
-                            </div>
-                            <div class="row g-4" id="compare-results" aria-live="polite" aria-atomic="true">
-                                <div class="col-12">
-                                    <div class="compare-empty-state">
-                                        <span class="compare-empty-icon" aria-hidden="true"><i class="bi bi-columns-gap"></i></span>
-                                        <h4>Два города — один понятный выбор</h4>
-                                        <p>Выберите города выше, чтобы сравнить температуру, ветер, влажность и другие условия.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ЭКРАН 4: КАРТА ОСАДКОВ -->
                 <div class="screen" id="screen-rainmap">
                     <div class="row justify-content-center">
                         <div class="col-12 col-lg-10">
