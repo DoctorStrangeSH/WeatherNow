@@ -3195,3 +3195,31 @@ body {
         transition: none !important;
     }
 }
+
+
+/* Мобильный бюджет эффектов: меньше размытия и более дешёвые слои */
+@media (max-width: 767.98px) {
+    .weather-cloud-layers {
+        contain: strict;
+    }
+
+    .weather-cloud-layer {
+        inset-inline: -10%;
+        filter: blur(11px);
+        will-change: translate, opacity;
+        backface-visibility: hidden;
+    }
+
+    .weather-cloud-layer--back { filter: blur(17px); }
+    .weather-cloud-layer--front { filter: blur(7px); }
+}
+
+@media (max-width: 390px) {
+    .weather-cloud-layer {
+        inset-inline: -6%;
+        filter: blur(8px);
+    }
+
+    .weather-cloud-layer--back { filter: blur(12px); }
+    .weather-cloud-layer--front { filter: blur(5px); }
+}
