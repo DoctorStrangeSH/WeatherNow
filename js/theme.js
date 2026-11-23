@@ -106,6 +106,8 @@ function updateSkyElements(timeOfDay) {
   moon.style.transform = 'translate(-50%, -50%)';
   
   updateStarsVisibility(timeOfDay === 'night', currentWeatherCode);
+  if (typeof updateChartTheme === 'function') updateChartTheme();
+  if (typeof updateFeelsLikeChartTheme === 'function') updateFeelsLikeChartTheme();
 }
 
 function getWeatherMotionProfile(weatherCode, windSpeed = 0) {
