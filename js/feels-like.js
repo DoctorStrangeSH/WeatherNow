@@ -79,17 +79,22 @@ function switchFeelsLikeView(view) {
   const cardsContainer = document.getElementById('feels-like-cards');
   const buttons = document.querySelectorAll('#feels-like-container .btn-glass');
   
-  buttons.forEach(btn => btn.classList.remove('active'));
+  buttons.forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-pressed', 'false');
+  });
   
   if (view === 'chart') {
     chartContainer.classList.remove('d-none');
     cardsContainer.classList.add('d-none');
     buttons[0].classList.add('active');
+    buttons[0].setAttribute('aria-pressed', 'true');
     if (feelsLikeData) renderFeelsLikeChart(feelsLikeData);
   } else {
     chartContainer.classList.add('d-none');
     cardsContainer.classList.remove('d-none');
     buttons[1].classList.add('active');
+    buttons[1].setAttribute('aria-pressed', 'true');
   }
 }
 
