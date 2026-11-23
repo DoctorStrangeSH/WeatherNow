@@ -651,4 +651,5 @@ test('mobile weather effects use a reduced particle budget and lighter cloud fil
   assert.match(themeSource, /viewportWidth <= 767\) scale = Math\.min\(scale, 0\.55\)/);
   assert.match(css, /@media\s*\(max-width:\s*767\.98px\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*filter:\s*blur\(11px\)/);
   assert.match(css, /@media\s*\(max-width:\s*390px\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*filter:\s*blur\(8px\)/);
+  assert.match(css, /\.weather-cloud-layer\[data-weather="fog"\]\s*\{\s*filter:\s*blur\(16px\)/);
 });
