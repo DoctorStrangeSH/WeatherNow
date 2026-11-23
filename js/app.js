@@ -112,13 +112,6 @@ async function loadCityWeather(city) {
   }
 }
 
-function setupMapButtons() {
-  document.querySelectorAll('.map-layer-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-    });
-  });
-}
-
 function setupNetworkStatus() {
   const banner = document.getElementById('network-status');
   const message = document.getElementById('network-status-message');
