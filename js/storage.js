@@ -260,11 +260,11 @@ function isValidForecastSnapshot(snapshot) {
 
   // Validate every forecast slot before handing cached content to renderers.
   return data.list.every(item =>
-    item && Number.isFinite(Number(item.dt)) &&
-    item.main && Number.isFinite(Number(item.main.temp)) &&
+    item && Number.isFinite(item.dt) &&
+    item.main && Number.isFinite(item.main.temp) &&
     Array.isArray(item.weather) && item.weather[0] &&
-    (Number.isFinite(Number(item.weather[0].id)) ||
-      typeof item.weather[0].description === 'string')
+    ((Number.isFinite(item.weather[0].id) && item.weather[0].id > 0) ||
+      (typeof item.weather[0].description === 'string' && item.weather[0].description.trim().length > 0))
   );
 }
 
