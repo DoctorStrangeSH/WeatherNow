@@ -378,6 +378,14 @@ test('weather particle budget scales down on low-resource devices', () => {
 
   context.navigator.connection.saveData = true;
   assert.equal(context.getWeatherEffectScale(), 0.35);
+
+  context.navigator = { deviceMemory: 8, hardwareConcurrency: 8, connection: { saveData: false } };
+  context.window.innerWidth = 700;
+  assert.equal(context.getWeatherEffectScale(), 0.55);
+  context.window.innerWidth = 375;
+  assert.equal(context.getWeatherEffectScale(), 0.4);
+  context.window.innerWidth = 1024;
+  assert.equal(context.getWeatherEffectScale(), 1);
 });
 
 
