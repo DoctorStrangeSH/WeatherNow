@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const themeSource = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
 const chartSource = fs.readFileSync(path.join(__dirname, '../js/charts.js'), 'utf8');
 const searchSource = fs.readFileSync(path.join(__dirname, '../js/search.js'), 'utf8');
+const feelsLikeSource = fs.readFileSync(path.join(__dirname, '../js/feels-like.js'), 'utf8');
 
 function loadInBrowserContext(source, additions = {}) {
   const context = vm.createContext({
@@ -77,4 +78,10 @@ test('closing city search invalidates pending requests and prevents stale sugges
   assert.equal(vm.runInContext("searchRequestIds['search-results-mobile']", context), 3);
   assert.equal(elements['search-results'].style.display, 'none');
   assert.equal(elements['search-results-mobile'].style.display, 'none');
+});
+
+test('all chart scripts use the active theme palette without stale day/night variables', () => {
+  assert.doesNotMatch(chartSource, /\\bisDark\\b/);
+  assert.doesNotMatch(feelsLikeSource, /\\bisDark\\b/);
+  assert.match(feelsLikeSource, /color: palette\\.ticks/);
 });
