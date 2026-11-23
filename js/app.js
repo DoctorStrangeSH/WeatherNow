@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   setupSearch();
-  setupCompareButton();
   setupNetworkStatus();
   if (navigator.onLine === false && restoreCachedWeather()) return;
   initApp();
