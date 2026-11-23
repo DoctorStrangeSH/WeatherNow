@@ -38,7 +38,10 @@ test('local Russian dictionary provides common cities for partial queries', () =
     ['новосиб', 'Novosibirsk'],
     ['екат', 'Yekaterinburg'],
     ['краснод', 'Krasnodar'],
-    ['сочи', 'Sochi'],\n    ['ростов', 'Rostov-on-Don'],\n    ['влад', 'Vladivostok'],\n    ['мурм', 'Murmansk']
+    ['сочи', 'Sochi'],
+    ['ростов', 'Rostov-on-Don'],
+    ['влад', 'Vladivostok'],
+    ['мурм', 'Murmansk']
   ];
   for (const [query, expectedName] of cases) {
     assert.ok(search.searchLocalDictionary(query).some(city => city.name === expectedName), query);
