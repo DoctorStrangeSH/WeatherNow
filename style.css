@@ -3126,7 +3126,6 @@ body {
 /* Суточное движение небесных тел */
 .sun,
 .moon {
-    will-change: left, top, opacity, transform;
     transition:
         left 8s cubic-bezier(.22,.61,.36,1),
         top 8s cubic-bezier(.22,.61,.36,1),
@@ -3417,4 +3416,24 @@ body {
     .notification-dialog { max-height: 92dvh; border-radius: 1rem; }
     .notification-dialog__section { padding: .75rem; }
     .notification-setting { font-size: .84rem; }
+}
+
+
+/* Respect reduced-motion preferences across every animated interface layer. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+}
+
+/* Keep the decorative sky isolated from layout and interaction painting. */
+.sky-background {
+    contain: layout paint style;
+    pointer-events: none;
 }
