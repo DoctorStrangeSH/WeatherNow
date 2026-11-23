@@ -191,7 +191,7 @@ test('last successful weather snapshot survives reload and rejects malformed cac
 test('offline startup restores the cached snapshot instead of starting a fresh geolocation request', () => {
   const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
   assert.match(appSource, /if \(navigator\.onLine === false && restoreCachedWeather\(\)\) return;/);
-  assert.match(appSource, /renderCurrentWeather\(data, \{ cached: true, savedAt: snapshot\.savedAt \}\);/);
+  assert.match(appSource, /renderCurrentWeather\(data, \{ cached: true, savedAt: snapshot\.savedAt, stale: snapshot\.stale \}\);/);
 });
 
 
@@ -343,4 +343,67 @@ test('cache storage quota failures never interrupt weather rendering', () => {
     city: { name: 'Berlin' },
     list: [{ dt: 1 }]
   }));
+});
+
+
+test('network failures fall back only to a cached snapshot for the requested city', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  assert.match(appSource, /if \(!hasPreviousWeather && restoreCachedWeather\(city\)\) return;/);
+  assert.match(appSource, /if \(restoreCachedWeather\(CONFIG\.DEFAULT_CITY\)\) return;/);
+  assert.match(appSource, /function restoreCachedWeather\(expectedCity\)/);
+  assert.match(appSource, /String\(data\.name\).*toLocaleLowerCase\('ru-RU'\)/);
+});
+
+test('private browsing storage access failures are treated as an empty cache', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const context = vm.createContext({
+    get localStorage() {
+      throw new Error('SecurityError: storage is unavailable');
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  assert.equal(context.getLastWeatherSnapshot(), null);
+  assert.equal(context.getLastForecastSnapshot('Berlin'), null);
+  assert.doesNotThrow(() => context.saveLastWeatherSnapshot({
+    name: 'Berlin',
+    coord: { lat: 52.52, lon: 13.405 },
+    main: { temp: 12 },
+    weather: [{ id: 800 }]
+  }));
+  assert.doesNotThrow(() => context.saveLastForecastSnapshot('Berlin', {
+    city: { name: 'Berlin' },
+    list: [{ dt: 1 }]
+  }));
+});
+
+test('forecast cache migration preserves a valid legacy single-city snapshot', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const legacy = {
+    city: 'Berlin',
+    savedAt: '2026-11-23T10:00:00.000Z',
+    data: { city: { name: 'Berlin' }, list: [{ dt: 1 }] }
+  };
+  const values = new Map([['weathernow-last-forecast', JSON.stringify(legacy)]]);
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  assert.equal(context.getLastForecastSnapshot('Berlin').data.city.name, 'Berlin');
+  context.saveLastForecastSnapshot('Paris', {
+    city: { name: 'Paris' },
+    list: [{ dt: 2 }]
+  });
+  const migrated = JSON.parse(values.get('weathernow-last-forecast'));
+  assert.equal(migrated.version, 2);
+  assert.ok(migrated.cities.berlin);
+  assert.ok(migrated.cities.paris);
 });
