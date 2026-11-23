@@ -74,6 +74,11 @@
 }
 
 /* базовые стили */
+html {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
 * {
     box-sizing: border-box;
 }
