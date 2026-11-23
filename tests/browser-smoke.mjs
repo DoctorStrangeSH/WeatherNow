@@ -7,7 +7,7 @@ import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKER_ORIGIN = 'https://openweathermap-6310.sokrat3895.workers.dev';
-const APP_ORIGIN = 'http://localhost:5500';
+const APP_ORIGIN = 'http://127.0.0.1:5500';
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -94,8 +94,13 @@ try {
     viewport: { width: 1440, height: 1000 },
     reducedMotion: 'reduce'
   });
-  await context.grantPermissions([], { origin: APP_ORIGIN });
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition(_success, error) { error({ code: 1, message: 'Permission denied' }); } }
+    });
+  });
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.route(`${WORKER_ORIGIN}/**`, async route => {
