@@ -642,3 +642,13 @@ test('weather scene uses one cloud system and keeps sky layers ordered', () => {
   assert.match(css, /\.weather-cloud-layer\s*\{[^}]*animation:\s*cloudDrift/s);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*animation:\s*none/s);
 });
+
+
+test('mobile weather effects use a reduced particle budget and lighter cloud filters', () => {
+  const themeSource = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+  assert.match(themeSource, /viewportWidth <= 390\) scale = Math\.min\(scale, 0\.4\)/);
+  assert.match(themeSource, /viewportWidth <= 767\) scale = Math\.min\(scale, 0\.55\)/);
+  assert.match(css, /@media\s*\(max-width:\s*767\.98px\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*filter:\s*blur\(11px\)/);
+  assert.match(css, /@media\s*\(max-width:\s*390px\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*filter:\s*blur\(8px\)/);
+});
