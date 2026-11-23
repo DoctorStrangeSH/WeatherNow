@@ -100,7 +100,7 @@ function updateSkyElements(timeOfDay) {
   moon.style.opacity = timeOfDay === 'night' ? '0.88' : '0';
   moon.style.transform = 'translate(-50%, -50%)';
   
-  updateStarsVisibility(timeOfDay === 'night');
+  updateStarsVisibility(timeOfDay === 'night', currentWeatherCode);
 }
 
 function getWeatherMotionProfile(weatherCode, windSpeed = 0) {
@@ -410,11 +410,24 @@ function createStars() {
   }
 }
 
-function updateStarsVisibility(visible) {
+function getNightSkyOpacity(weatherCode) {
+  const code = Number(weatherCode);
+  if (code >= 200 && code < 800) return code >= 700 && code < 800 ? 0.02 : 0.04;
+  if (code === 800) return 0.9;
+  if (code === 801) return 0.62;
+  if (code === 802) return 0.36;
+  if (code === 803) return 0.14;
+  if (code === 804) return 0.04;
+  return 0;
+}
+
+function updateStarsVisibility(visible, weatherCode = currentWeatherCode) {
   const stars = document.getElementById('stars');
-  if (stars) {
-    stars.style.opacity = visible ? '0.9' : '0';
-  }
+  if (!stars) return;
+
+  const opacity = visible ? getNightSkyOpacity(weatherCode) : 0;
+  stars.style.opacity = String(opacity);
+  stars.setAttribute('aria-hidden', opacity === 0 ? 'true' : 'false');
 }
 
 document.addEventListener('DOMContentLoaded', initTheme);
