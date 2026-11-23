@@ -143,8 +143,19 @@ try {
   });
 
   await page.goto(APP_ORIGIN, { waitUntil: 'domcontentloaded' });
-  // Wait for the non-blocking Google Fonts stylesheet to settle before visual snapshots.
-  await page.evaluate(() => document.fonts.ready);
+  // Wait for both asynchronously loaded font stylesheets before visual snapshots.
+  await page.waitForFunction(() => {
+    const fontStylesheet = document.querySelector('link[href*="fonts.googleapis.com/css2"]');
+    const iconStylesheet = document.querySelector('link[href*="bootstrap-icons"]');
+    return Boolean(fontStylesheet?.sheet && iconStylesheet?.sheet);
+  }, null, { timeout: 15000 });
+  await page.evaluate(async () => {
+    await Promise.all([
+      document.fonts.load('400 16px Nunito'),
+      document.fonts.load('1em bootstrap-icons')
+    ]);
+    await document.fonts.ready;
+  });
   await page.waitForFunction(() => {
     const city = document.querySelector('#main-city')?.textContent || '';
     const temperature = document.querySelector('#main-temp')?.textContent || '';
