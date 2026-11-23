@@ -1,6 +1,15 @@
 let tempChartInstance = null;
 let hourlyChartInstance = null;
 
+function getChartThemePalette() {
+  const styles = window.getComputedStyle(document.body);
+  return {
+    legend: styles.getPropertyValue('--text-primary').trim() || '#f3f7fc',
+    ticks: styles.getPropertyValue('--text-muted').trim() || '#a9bbcf',
+    grid: styles.getPropertyValue('--card-border').trim() || 'rgba(255, 255, 255, 0.14)'
+  };
+}
+
 function renderTempChart(days) {
   const canvas = document.getElementById('tempChart');
   if (!canvas || days.length === 0) return;
@@ -18,7 +27,7 @@ function renderTempChart(days) {
   const maxTemps = days.map(d => d.maxTemp);
   const minTemps = days.map(d => d.minTemp);
 
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
 
   tempChartInstance = new Chart(ctx, {
     type: 'line',
@@ -53,7 +62,7 @@ function renderTempChart(days) {
         }
       ]
     },
-    options: getChartOptions(isDark)
+    options: getChartOptions(palette)
   });
 }
 
@@ -63,7 +72,7 @@ function renderHourlyChart(hourlyData) {
   const ctx = canvas.getContext('2d');
   if (hourlyChartInstance) hourlyChartInstance.destroy();
 
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
 
   hourlyChartInstance = new Chart(ctx, {
     type: 'line',
@@ -102,7 +111,7 @@ function renderHourlyChart(hourlyData) {
         legend: {
           labels: {
             usePointStyle: true,
-            color: isDark ? '#fff' : '#1a1a2e'
+            color: palette.legend
           }
         },
         tooltip: {
@@ -112,18 +121,18 @@ function renderHourlyChart(hourlyData) {
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: isDark ? '#aaa' : '#666' } },
+        x: { grid: { display: false }, ticks: { color: palette.ticks } },
         y: {
           position: 'left',
-          grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' },
-          ticks: { callback: v => v + '°', color: isDark ? '#aaa' : '#666' }
+          grid: { color: palette.grid },
+          ticks: { callback: v => v + '°', color: palette.ticks }
         },
         y1: {
           position: 'right',
           min: 0,
           max: 100,
           grid: { display: false },
-          ticks: { callback: v => v + '%', color: isDark ? '#aaa' : '#666' }
+          ticks: { callback: v => v + '%', color: palette.ticks }
         }
       }
     }
@@ -143,13 +152,13 @@ function createGradient(ctx, color1, color2) {
   return gradient;
 }
 
-function getChartOptions(isDark) {
+function getChartOptions(palette) {
   return {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        labels: { usePointStyle: true, padding: 20, color: isDark ? '#fff' : '#1a1a2e' }
+        labels: { usePointStyle: true, padding: 20, color: palette.legend }
       },
       tooltip: {
         backgroundColor: 'rgba(26, 26, 46, 0.9)',
@@ -163,11 +172,11 @@ function getChartOptions(isDark) {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: isDark ? '#aaa' : '#666' }
+        ticks: { color: palette.ticks }
       },
       y: {
-        grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' },
-        ticks: { callback: v => v + '°C', color: isDark ? '#aaa' : '#666' }
+        grid: { color: palette.grid },
+        ticks: { callback: v => v + '°C', color: palette.ticks }
       }
     },
     interaction: { intersect: false, mode: 'index' }
@@ -175,25 +184,25 @@ function getChartOptions(isDark) {
 }
 
 function updateChartTheme() {
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
 
   [tempChartInstance, hourlyChartInstance].forEach(chart => {
     if (chart) {
-      chart.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+      chart.options.scales.y.grid.color = palette.grid;
 
       if (chart.options.scales.x) {
-        chart.options.scales.x.ticks.color = isDark ? '#ccc' : '#666';
+        chart.options.scales.x.ticks.color = palette.ticks;
       }
       if (chart.options.scales.y) {
-        chart.options.scales.y.ticks.color = isDark ? '#ccc' : '#666';
+        chart.options.scales.y.ticks.color = palette.ticks;
       }
       if (chart.options.scales.y1) {
-        chart.options.scales.y1.ticks.color = isDark ? '#ccc' : '#666';
-        chart.options.scales.y1.grid.color = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
+        chart.options.scales.y1.ticks.color = palette.ticks;
+        chart.options.scales.y1.grid.color = palette.grid;
       }
 
       if (chart.options.plugins && chart.options.plugins.legend) {
-        chart.options.plugins.legend.labels.color = isDark ? '#fff' : '#1a1a2e';
+        chart.options.plugins.legend.labels.color = palette.legend;
       }
 
       chart.update();
