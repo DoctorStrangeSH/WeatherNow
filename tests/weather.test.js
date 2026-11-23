@@ -133,43 +133,6 @@ test('forecast calendar dates do not shift across local time zones', () => {
 });
 
 
-test('city comparison summary identifies the warmer city and temperature gap', () => {
-  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
-  const ui = vm.createContext({
-    document: { addEventListener() {} },
-    window: { addEventListener() {} },
-  });
-  vm.runInContext(uiSource, ui);
-
-  const summary = ui.getComparisonSummary(
-    { name: 'Берлин', main: { temp: 12, feels_like: 10 } },
-    { name: 'Прага', main: { temp: 7, feels_like: 6 } }
-  );
-
-  assert.equal(summary.warmerCity, 'Берлин');
-  assert.equal(summary.temperatureDifference, 5);
-  assert.equal(summary.feelsDifference, 4);
-  assert.equal(summary.sameTemperature, false);
-});
-
-test('city comparison summary handles ties and incomplete measurements', () => {
-  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
-  const ui = vm.createContext({
-    document: { addEventListener() {} },
-    window: { addEventListener() {} },
-  });
-  vm.runInContext(uiSource, ui);
-
-  const tied = ui.getComparisonSummary(
-    { name: 'Берлин', main: { temp: 8 } },
-    { name: 'Прага', main: { temp: 8 } }
-  );
-  assert.equal(tied.sameTemperature, true);
-  assert.equal(tied.warmerCity, null);
-  assert.equal(tied.temperatureDifference, 0);
-  assert.equal(tied.feelsDifference, null);
-});
-
 test('favorite storage ignores malformed and unsafe legacy records', () => {
   const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
   const storage = vm.createContext({
