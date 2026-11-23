@@ -156,3 +156,40 @@ test('manual network retry refuses to send requests while browser is offline', (
   assert.equal(banner.hidden, false);
   assert.match(message.textContent, /Нет подключения/);
 });
+
+
+test('last successful weather snapshot survives reload and rejects malformed cache data', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const values = new Map();
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  const weather = {
+    name: 'Berlin',
+    coord: { lat: 52.52, lon: 13.405 },
+    main: { temp: 12, humidity: 70 },
+    weather: [{ id: 800, description: 'ясно' }],
+    sys: { country: 'DE' }
+  };
+  context.saveLastWeatherSnapshot(weather);
+  const restored = context.getLastWeatherSnapshot();
+  assert.equal(restored.data.name, 'Berlin');
+  assert.equal(restored.data.main.temp, 12);
+  assert.ok(Number.isFinite(Date.parse(restored.savedAt)));
+
+  values.set('weathernow-last-weather', '{broken json');
+  assert.equal(context.getLastWeatherSnapshot(), null);
+});
+
+test('offline startup restores the cached snapshot instead of starting a fresh geolocation request', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  assert.match(appSource, /if \(navigator\.onLine === false && restoreCachedWeather\(\)\) return;/);
+  assert.match(appSource, /renderCurrentWeather\(data, \{ cached: true, savedAt: snapshot\.savedAt \}\);/);
+});
