@@ -638,7 +638,7 @@ test('weather effect cleanup removes every stale layer and particle creators enf
     document: {
       addEventListener() {},
       getElementById: id => id === 'sky' ? sky : null,
-      createElement: () => ({ style: {}, children: [], appendChild(child) { this.children.push(child); } })
+      createElement: () => ({ style: { setProperty(name, value) { this[name] = value; } }, children: [], appendChild(child) { this.children.push(child); } })
     },
     window: { matchMedia: () => ({ matches: false }) },
     navigator: { deviceMemory: 8, hardwareConcurrency: 8 }
