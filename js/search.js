@@ -1,6 +1,27 @@
 let searchTimeout;
 const searchRequestIds = Object.create(null);
 
+const RU_CITY_ALIASES = [
+  { aliases: ['санкт-петербург', 'санкт петербург', 'санкт', 'сан', 'петер', 'петербург', 'спб', 'питер'], name: 'Saint Petersburg', localName: 'Санкт-Петербург', country: 'RU' },
+  { aliases: ['москва', 'моск'], name: 'Moscow', localName: 'Москва', country: 'RU' },
+  { aliases: ['казань', 'каз'], name: 'Kazan', localName: 'Казань', country: 'RU' },
+  { aliases: ['новосибирск', 'новосиб'], name: 'Novosibirsk', localName: 'Новосибирск', country: 'RU' },
+  { aliases: ['екатеринбург', 'екат'], name: 'Yekaterinburg', localName: 'Екатеринбург', country: 'RU' },
+  { aliases: ['нижний новгород', 'нижний', 'нижн'], name: 'Nizhny Novgorod', localName: 'Нижний Новгород', country: 'RU' },
+  { aliases: ['краснодар', 'краснод'], name: 'Krasnodar', localName: 'Краснодар', country: 'RU' },
+  { aliases: ['сочи'], name: 'Sochi', localName: 'Сочи', country: 'RU' }
+];
+
+function normalizeCitySearchText(value) {
+  return String(value || '')
+    .toLocaleLowerCase('ru-RU')
+    .replace(/ё/g, 'е')
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[\\s\\u2010-\\u2015-]+/g, '')
+    .replace(/[^\\p{L}\\p{N}]/gu, '');
+}
+
 const US_STATES = {
   'колорадо': 'Denver',
   'калифорния': 'Sacramento',
@@ -131,29 +152,28 @@ async function searchCitiesAndShow(query, resultsId = 'search-results') {
   const resultsEl = document.getElementById(resultsId);
   if (!resultsEl) return;
 
-  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const normalizedQuery = normalizeCitySearchText(query);
   const requestId = (searchRequestIds[resultsId] || 0) + 1;
   searchRequestIds[resultsId] = requestId;
 
-  const localResults = searchLocalDictionary(normalizedQuery);
-  const apiCities = await searchCities(query);
+  const results = searchLocalDictionary(normalizedQuery);
+  if (results.length) renderSearchResults(resultsEl, results.slice(0, 8), query, resultsId);
 
+  const apiCities = await searchCities(query);
   if (searchRequestIds[resultsId] !== requestId) return;
 
-  const results = [...localResults];
-  const seen = new Set(results.map(city => `${city.localName.toLocaleLowerCase()}:${city.country}`));
-
+  const seen = new Set(results.map(city => `${normalizeCitySearchText(city.localName)}:${city.country}`));
   apiCities.forEach(city => {
     const localName = city.local_names?.ru || city.name;
     const englishName = city.name || '';
     const country = city.country || '';
     const matchesQuery =
-      localName.toLocaleLowerCase().includes(normalizedQuery) ||
-      englishName.toLocaleLowerCase().includes(normalizedQuery);
+      normalizeCitySearchText(localName).includes(normalizedQuery) ||
+      normalizeCitySearchText(englishName).includes(normalizedQuery);
 
     if (!matchesQuery) return;
 
-    const key = `${localName.toLocaleLowerCase()}:${country}`;
+    const key = `${normalizeCitySearchText(localName)}:${country}`;
     if (seen.has(key)) return;
 
     seen.add(key);
@@ -239,7 +259,7 @@ function setSearchExpanded(resultsId, expanded) {
 
 function appendHighlightedText(container, value, query) {
   const text = String(value || '');
-  const index = text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
+  const normalizedText = normalizeCitySearchText(text);\n  const normalizedQuery = normalizeCitySearchText(query);\n  const index = normalizedText.indexOf(normalizedQuery);
 
   if (!query || index < 0) {
     container.textContent = text;
@@ -262,9 +282,18 @@ function appendHighlightedText(container, value, query) {
 
 function searchLocalDictionary(query) {
   const results = [];
+  const normalizedQuery = normalizeCitySearchText(query);
+  if (!normalizedQuery) return results;
+
+  RU_CITY_ALIASES.forEach(city => {
+    const matches = city.aliases.some(alias => normalizeCitySearchText(alias).includes(normalizedQuery)
+      || normalizedQuery.includes(normalizeCitySearchText(alias)));
+    if (!matches) return;
+    results.push({ ...city, flag: '🇷🇺' });
+  });
 
   Object.entries(US_STATES).forEach(([state, capital]) => {
-    if (!state.includes(query)) return;
+    if (!normalizeCitySearchText(state).includes(normalizedQuery)) return;
 
     const stateName = state.charAt(0).toLocaleUpperCase() + state.slice(1);
     results.push({
@@ -276,7 +305,7 @@ function searchLocalDictionary(query) {
   });
 
   Object.entries(US_CITIES).forEach(([localName, englishName]) => {
-    if (!localName.includes(query)) return;
+    if (!normalizeCitySearchText(localName).includes(normalizedQuery)) return;
 
     results.push({
       name: englishName,
