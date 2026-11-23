@@ -74,3 +74,75 @@ test('failed city refresh marks retained weather as stale instead of presenting 
   assert.match(appSource, /hero\.dataset\.loadState = hasPreviousWeather \? 'stale' : 'error';/);
   assert.match(appSource, /Не удалось обновить · показаны последние успешные данные/);
 });
+
+
+test('offline mode shows a status banner and disables retry until connection returns', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const listeners = {};
+  const banner = {
+    hidden: true,
+    classes: new Set(),
+    classList: {
+      add(name) { banner.classes.add(name); },
+      remove(name) { banner.classes.delete(name); }
+    }
+  };
+  const message = { textContent: '' };
+  const retryButton = { disabled: false, addEventListener(type, callback) { this.callback = callback; } };
+  const elements = {
+    'network-status': banner,
+    'network-status-message': message,
+    'network-retry-btn': retryButton
+  };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById(id) { return elements[id] || null; },
+      body: { dataset: {} }
+    },
+    window: { addEventListener(type, callback) { listeners[type] = callback; } },
+    navigator: { onLine: false },
+    currentWeatherCityName: 'Berlin',
+    loadCityWeather(city) { context.refreshedCity = city; },
+    initApp() { context.initializedAgain = true; }
+  });
+
+  vm.runInContext(appSource, context);
+  context.setupNetworkStatus();
+  assert.equal(banner.hidden, false);
+  assert.equal(retryButton.disabled, true);
+  assert.match(message.textContent, /Нет подключения/);
+  assert.equal(context.document.body.dataset.network, 'offline');
+
+  listeners.online();
+  assert.equal(retryButton.disabled, false);
+  assert.equal(context.refreshedCity, 'Berlin');
+  assert.match(message.textContent, /Подключение восстановлено/);
+  assert.equal(context.document.body.dataset.network, 'online');
+
+  listeners.offline();
+  assert.equal(retryButton.disabled, true);
+  assert.equal(context.document.body.dataset.network, 'offline');
+});
+
+test('manual network retry refuses to send requests while browser is offline', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const banner = { hidden: true, classList: { add() {}, remove() {} } };
+  const message = { textContent: '' };
+  const retryButton = { disabled: false, addEventListener(type, callback) { this.callback = callback; } };
+  const elements = { 'network-status': banner, 'network-status-message': message, 'network-retry-btn': retryButton };
+  const context = vm.createContext({
+    document: { addEventListener() {}, getElementById(id) { return elements[id] || null; }, body: { dataset: {} } },
+    window: { addEventListener() {} },
+    navigator: { onLine: false },
+    currentWeatherCityName: 'Berlin',
+    loadCityWeather() { context.requested = true; },
+    initApp() { context.requested = true; }
+  });
+  vm.runInContext(appSource, context);
+  context.setupNetworkStatus();
+  retryButton.callback();
+  assert.equal(context.requested, undefined);
+  assert.equal(banner.hidden, false);
+  assert.match(message.textContent, /Нет подключения/);
+});
