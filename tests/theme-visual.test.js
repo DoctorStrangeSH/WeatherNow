@@ -85,3 +85,24 @@ test('all chart scripts use the active theme palette without stale day/night var
   assert.doesNotMatch(feelsLikeSource, /\bisDark\b/);
   assert.match(feelsLikeSource, /color: palette\.ticks/);
 });
+
+
+test('ambient star count scales down on compact and low-resource devices', () => {
+  const compact = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 375, matchMedia: () => ({ matches: false }) }
+  });
+  assert.equal(compact.getStarCount(), 40);
+
+  const lowResource = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 2, hardwareConcurrency: 2 },
+    window: { innerWidth: 1280, matchMedia: () => ({ matches: false }) }
+  });
+  assert.equal(lowResource.getStarCount(), 35);
+
+  const desktop = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 1440, matchMedia: () => ({ matches: false }) }
+  });
+  assert.equal(desktop.getStarCount(), 100);
+});
