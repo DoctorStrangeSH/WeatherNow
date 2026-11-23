@@ -100,7 +100,7 @@ function renderFeelsLikeChart(data) {
   const ctx = canvas.getContext('2d');
   if (feelsLikeChartInstance) feelsLikeChartInstance.destroy();
   
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
   
   feelsLikeChartInstance = new Chart(ctx, {
     type: 'line',
@@ -137,7 +137,7 @@ function renderFeelsLikeChart(data) {
         legend: {
           labels: {
             usePointStyle: true,
-            color: isDark ? '#fff' : '#1a1a2e',
+            color: palette.legend,
             padding: 20,
           }
         },
@@ -151,9 +151,9 @@ function renderFeelsLikeChart(data) {
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: isDark ? '#ccc' : '#666' } },
+        x: { grid: { display: false }, ticks: { color: palette.ticks } },
         y: {
-          grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' },
+          grid: { color: palette.grid },
           ticks: { callback: v => v + '°', color: isDark ? '#ccc' : '#666' }
         }
       }
@@ -166,4 +166,15 @@ function createGradient(ctx, color1, color2) {
   gradient.addColorStop(0, color1);
   gradient.addColorStop(1, color2);
   return gradient;
+}
+
+function updateFeelsLikeChartTheme() {
+  if (!feelsLikeChartInstance) return;
+  const palette = getChartThemePalette();
+  const options = feelsLikeChartInstance.options;
+  if (options.plugins?.legend?.labels) options.plugins.legend.labels.color = palette.legend;
+  if (options.scales?.x?.ticks) options.scales.x.ticks.color = palette.ticks;
+  if (options.scales?.y?.ticks) options.scales.y.ticks.color = palette.ticks;
+  if (options.scales?.y?.grid) options.scales.y.grid.color = palette.grid;
+  feelsLikeChartInstance.update();
 }
