@@ -337,6 +337,8 @@ body {
 /* дождь */
 .rain-container {
     position: absolute;
+    contain: layout paint;
+    isolation: isolate;
     top: 0;
     left: 0;
     width: 100%;
@@ -362,6 +364,8 @@ body {
 /* снег */
 .snow-container {
     position: absolute;
+    contain: layout paint;
+    isolation: isolate;
     top: 0;
     left: 0;
     width: 100%;
@@ -389,6 +393,8 @@ body {
 /* ветер */
 .wind-lines {
     position: absolute;
+    contain: layout paint;
+    isolation: isolate;
     top: 0;
     left: 0;
     width: 100%;
