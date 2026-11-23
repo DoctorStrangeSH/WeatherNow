@@ -118,7 +118,17 @@ function renderCurrentWeather(data, options = {}) {
     updateWeatherTheme(data.weather[0].id, data.timezone, data.wind?.speed);
   }
 
-  loadForecast(data.name);
+  if (options.cached === true) {
+    if (!restoreCachedForecast(data.name)) {
+      const forecastContainer = document.getElementById('forecast-container');
+      if (forecastContainer) {
+        forecastContainer.dataset.state = 'offline';
+        forecastContainer.textContent = 'Прогноз пока недоступен без подключения к интернету.';
+      }
+    }
+  } else {
+    loadForecast(data.name);
+  }
 
   if (typeof renderFeelsLikeSection === 'function' && currentForecastData) {
     renderFeelsLikeSection(currentForecastData);
@@ -157,6 +167,9 @@ async function loadForecast(city) {
     if (requestId !== forecastRequestId) return;
 
     currentForecastData = forecastData;
+    if (typeof saveLastForecastSnapshot === 'function') {
+      saveLastForecastSnapshot(city, forecastData);
+    }
     const forecastContainer = document.getElementById('forecast-container');
     if (forecastContainer) forecastContainer.dataset.state = 'ready';
     const dailyForecast = groupForecastByDay(forecastData);
@@ -566,3 +579,27 @@ function restoreState() {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(restoreState, 50);
 });
+
+
+function restoreCachedForecast(city) {
+  if (typeof getLastForecastSnapshot !== 'function') return false;
+  const snapshot = getLastForecastSnapshot(city);
+  if (!snapshot) return false;
+
+  currentForecastCity = city;
+  currentForecastData = snapshot.data;
+  const container = document.getElementById('forecast-container');
+  if (container) {
+    container.dataset.state = 'cached';
+    renderForecast(groupForecastByDay(snapshot.data));
+    const notice = document.createElement('p');
+    notice.className = 'forecast-cache-note';
+    notice.textContent = `Прогноз сохранён ${new Date(snapshot.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}`;
+    container.prepend(notice);
+  }
+
+  if (typeof renderFeelsLikeSection === 'function') {
+    renderFeelsLikeSection(snapshot.data);
+  }
+  return true;
+}
