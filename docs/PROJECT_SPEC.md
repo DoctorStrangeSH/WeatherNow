@@ -361,13 +361,16 @@
 - [x] Добавить production Worker smoke-сценарии для `/weather`, `/forecast`, `/direct`, CORS и валидации запросов.
 - [x] Получить успешный CI-прогон браузерных и production Worker smoke-сценариев (Browser and production smoke #99: оба job PASS; Quality checks #643: 93/93 PASS).
 - [x] Chromium desktop/mobile smoke: запуск, прогноз, поиск, карта и слои, избранное, сравнение, уведомления, offline/online — Browser and production smoke #99 PASS.
-- [ ] Проверка браузеров Firefox и Safari/WebKit; добавлена матрица Playwright Chromium/Firefox/WebKit в `browser-smoke.yml`, ожидается результат CI.
+- [x] Проверка Playwright в Chromium, Firefox и WebKit: Browser and production smoke #197 — все 5 jobs PASS (Chromium, Firefox, WebKit, Production Worker, Lighthouse) на коммите `73b4c34`.
+- [ ] Повторно подтвердить всю матрицу на актуальном HEAD после оптимизации установки браузеров и публикации Lighthouse summary; новые прогоны пока ожидают CI.
 - [x] Оптимизировать browser matrix CI: каждый job устанавливает только свой движок Playwright, вместо повторной установки Chromium, Firefox и WebKit в каждом из трёх job.
 - [x] Автоматическая проверка адаптивности 320–1440 px в Chromium без горизонтального переполнения.
 - [x] Просмотреть desktop/mobile скриншоты главного экрана: устранено «плавающее» солнце, повышена контрастность легенд всех графиков, исправлено повторное появление подсказки поиска после выбора города.
 - [x] Исправить runtime-ошибку графика «Ощущается как»: оставшаяся ссылка на удалённую переменную `isDark` заменена на токен темы.
 - [ ] Ручная визуальная проверка погодных сцен, карты, сравнения, избранного и уведомлений по сохранённым desktop/mobile скриншотам.
-- [x] Запустить Lighthouse по Performance, Accessibility, Best Practices и SEO против preview-сборки рабочей ветки; job Lighthouse #190 завершился PASS, HTML/JSON отчёты опубликованы как CI artifacts. Численные значения и целевые пороги ещё требуют просмотра.
+- [x] Запустить Lighthouse по Performance, Accessibility, Best Practices и SEO против preview-сборки рабочей ветки; job Lighthouse #197 завершился PASS, HTML/JSON отчёты опубликованы как CI artifacts.
+- [x] Добавить публикацию категорийных баллов и лабораторных метрик Lighthouse в GitHub Actions Step Summary, чтобы результаты были доступны без скачивания ZIP-артефакта.
+- [ ] Просмотреть численные показатели Lighthouse и определить/закрыть замечания по Performance, Accessibility, Best Practices и SEO.
 - [ ] Просмотреть численные показатели Lighthouse и определить/закрыть замечания по Performance, Accessibility, Best Practices и SEO.
 - [x] Добавить axe-core WCAG 2.1 A/AA аудит главного экрана и диалога уведомлений в Chromium smoke; отчёт выводится в CI.
 - [x] axe-core WCAG 2.1 A/AA: главный экран — 0 нарушений (28 passed), диалог уведомлений — 0 нарушений (12 passed); Chromium smoke #125 PASS. CI теперь падает при Critical/Serious нарушениях.
