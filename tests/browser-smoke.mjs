@@ -223,11 +223,30 @@ try {
   assert.equal(await page.locator('[data-layer="temperature"]').getAttribute('aria-pressed'), 'false');
   assert.ok(!(await page.locator('[data-layer="temperature"]').evaluate(button => button.classList.contains('active'))));
   assert.match(await page.locator('#weather-map iframe').getAttribute('src'), /overlay=rain/);
-  await page.locator('[data-layer="wind"]').click();
-  await page.waitForFunction(() => document.querySelector('#weather-map iframe')?.src.includes('overlay=wind'));
-  assert.equal(await page.locator('[data-layer="wind"]').getAttribute('aria-pressed'), 'true');
-  assert.ok(await page.locator('[data-layer="wind"]').evaluate(button => button.classList.contains('active')));
+  for (const [layer, overlay] of [['wind', 'wind'], ['temperature', 'temp'], ['clouds', 'clouds'], ['precipitation', 'rain']]) {
+    await page.locator(`[data-layer="${layer}"]`).click();
+    await page.waitForFunction(expected => document.querySelector('#weather-map iframe')?.src.includes(`overlay=${expected}`), overlay);
+    assert.equal(await page.locator(`[data-layer="${layer}"]`).getAttribute('aria-pressed'), 'true');
+    assert.ok(await page.locator(`[data-layer="${layer}"]`).evaluate(button => button.classList.contains('active')));
+  }
   assert.ok(await page.locator('#weather-map iframe').isVisible(), 'Weather map is visible on mobile');
+  assert.ok(await page.locator('.map-toolbar').isVisible(), 'Map controls remain visible on mobile');
+
+  const fullscreenButton = page.locator('#map-fullscreen-btn');
+  await fullscreenButton.click();
+  await page.waitForFunction(() => {
+    const container = document.querySelector('.weather-map-container');
+    return document.fullscreenElement === container || container?.classList.contains('map-fullscreen-fallback');
+  });
+  assert.ok(await page.locator('.map-toolbar').isVisible(), 'Map controls remain visible in fullscreen');
+  assert.ok(await fullscreenButton.isVisible(), 'Fullscreen exit control remains available');
+  assert.equal(await fullscreenButton.getAttribute('aria-pressed'), 'true');
+  await fullscreenButton.click();
+  await page.waitForFunction(() => {
+    const container = document.querySelector('.weather-map-container');
+    return document.fullscreenElement !== container && !container?.classList.contains('map-fullscreen-fallback');
+  });
+  assert.equal(await fullscreenButton.getAttribute('aria-pressed'), 'false');
   await page.screenshot({ path: path.join(screenshotDir, 'mobile-map-390.png'), fullPage: true });
 
   await page.evaluate(() => showScreen('home'));
