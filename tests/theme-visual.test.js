@@ -143,7 +143,6 @@ test('rain, snow and wind particle containers isolate layout and paint', () => {
 
 
 test('weather effect cleanup is idempotent and preserves permanent sky elements', () => {
-  const removableIds = new Set(['rain-container', 'snow-container', 'wind-lines', 'lightning', 'fog']);
   const sky = {
     children: [],
     querySelectorAll(selector) {
