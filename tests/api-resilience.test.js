@@ -449,3 +449,43 @@ test('forecast cache rejects partially corrupted entries and empty forecast list
   assert.equal(context.getLastForecastSnapshot('Lisbon'), null);
   assert.equal(context.getLastForecastSnapshot('Oslo'), null);
 });
+
+
+test('weather cache rejects incomplete and non-numeric values required by the weather UI', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const base = {
+    name: 'Berlin',
+    coord: { lat: 52.52, lon: 13.405 },
+    main: { temp: 12, feels_like: 11, humidity: 70 },
+    wind: { speed: 3.5 },
+    weather: [{ id: 800, description: 'ясно' }]
+  };
+  const values = new Map();
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  const snapshots = {
+    valid: base,
+    missingFeelsLike: { ...base, main: { temp: 12, humidity: 70 } },
+    missingHumidity: { ...base, main: { temp: 12, feels_like: 11 } },
+    missingWind: { ...base, wind: null },
+    invalidTemperature: { ...base, main: { ...base.main, temp: '' } },
+    invalidCoordinates: { ...base, coord: { lat: '52.52', lon: 13.405 } },
+    missingCondition: { ...base, weather: [] }
+  };
+
+  for (const [name, data] of Object.entries(snapshots)) {
+    values.set('weathernow-last-weather', JSON.stringify({
+      savedAt: '2026-11-23T10:00:00.000Z',
+      data
+    }));
+    assert.equal(Boolean(context.getLastWeatherSnapshot()), name === 'valid', name);
+  }
+});
