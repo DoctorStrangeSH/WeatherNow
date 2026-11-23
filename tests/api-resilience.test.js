@@ -98,12 +98,20 @@ test('offline mode shows a status banner and disables retry until connection ret
     document: {
       addEventListener() {},
       getElementById(id) { return elements[id] || null; },
+      querySelector() { return { dataset: {} }; },
       body: { dataset: {} }
     },
     window: { addEventListener(type, callback) { listeners[type] = callback; } },
     navigator: { onLine: false },
     currentWeatherCityName: 'Berlin',
-    loadCityWeather(city) { context.refreshedCity = city; },
+    fetchWeather(city) {
+      context.refreshedCity = city;
+      return Promise.resolve({ name: city, coord: { lat: 1, lon: 2 } });
+    },
+    renderCurrentWeather() {},
+    updateRainMap() {},
+    closeSearchResults() {},
+    showToast() {},
     initApp() { context.initializedAgain = true; }
   });
 
@@ -132,7 +140,7 @@ test('manual network retry refuses to send requests while browser is offline', (
   const retryButton = { disabled: false, addEventListener(type, callback) { this.callback = callback; } };
   const elements = { 'network-status': banner, 'network-status-message': message, 'network-retry-btn': retryButton };
   const context = vm.createContext({
-    document: { addEventListener() {}, getElementById(id) { return elements[id] || null; }, body: { dataset: {} } },
+    document: { addEventListener() {}, getElementById(id) { return elements[id] || null; }, querySelector() { return { dataset: {} }; }, body: { dataset: {} } },
     window: { addEventListener() {} },
     navigator: { onLine: false },
     currentWeatherCityName: 'Berlin',
