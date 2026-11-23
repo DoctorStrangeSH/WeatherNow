@@ -316,15 +316,10 @@ test('fog uses layered slow atmospheric drift and respects reduced motion', () =
 });
 
 test('storm scene includes a visible lightning bolt with a restrained flash cycle', () => {
-  const lightningStart = styleSource.indexOf('#lightning {');
-  const lightningEnd = styleSource.indexOf('/* туман */', lightningStart);
+  const lightningStart = styleSource.indexOf('#lightning::before');
+  const lightningEnd = styleSource.indexOf('/* стеклянные эффекты */', lightningStart);
   const lightningStyles = styleSource.slice(lightningStart, lightningEnd);
-  assert.match(lightningStyles, /#lightning::before/);
   assert.match(lightningStyles, /clip-path:\s*polygon/);
   assert.match(lightningStyles, /@keyframes lightningBolt/);
-  assert.match(lightlightningStylesFallback(lightningStyles), /91%\s*\{/);
+  assert.match(lightningStyles, /91%\s*\{/);
 });
-
-function lightlightningStylesFallback(styles) {
-  return styles;
-}
