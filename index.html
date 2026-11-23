@@ -71,7 +71,7 @@
                             title="Избранное">
                             <i class="bi bi-heart me-1"></i>Избранное
                         </button>
-                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="requestNotificationPermission()"
+                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="openWeatherNotificationSettings()"
                             title="Уведомления">
                             <i class="bi bi-bell"></i>
                         </button>
@@ -343,6 +343,41 @@
                     </div>
                 </div>
         </main>
+
+
+        <dialog class="notification-dialog" id="notification-settings-dialog" aria-labelledby="notification-dialog-title">
+            <form class="notification-dialog__form" method="dialog" onsubmit="event.preventDefault(); saveWeatherNotificationSettings();">
+                <div class="notification-dialog__header">
+                    <div>
+                        <p class="notification-dialog__eyebrow">Персональные предупреждения</p>
+                        <h2 id="notification-dialog-title">Погодные уведомления</h2>
+                        <p>Выберите события, о которых приложение сообщит при проверке погоды.</p>
+                    </div>
+                    <button class="notification-dialog__close" type="button" aria-label="Закрыть настройки" onclick="document.getElementById('notification-settings-dialog').close()">×</button>
+                </div>
+                <label class="notification-setting notification-setting--master">
+                    <span><strong>Включить уведомления</strong><small>Пока WeatherNow открыт</small></span>
+                    <input id="notification-enabled" type="checkbox">
+                </label>
+                <div class="notification-dialog__section">
+                    <h3>Погодные события</h3>
+                    <label class="notification-setting"><span>Дождь</span><input id="notification-rain" type="checkbox" checked></label>
+                    <label class="notification-setting"><span>Гроза</span><input id="notification-storms" type="checkbox" checked></label>
+                    <label class="notification-setting"><span>Снег</span><input id="notification-snow" type="checkbox" checked></label>
+                    <label class="notification-setting"><span>Сильный ветер</span><span class="notification-setting__control"><input id="notification-wind-threshold" type="number" min="1" max="40" step="1" value="12" aria-label="Порог ветра в метрах в секунду"><small>м/с</small><input id="notification-wind" type="checkbox" checked aria-label="Уведомлять о сильном ветре"></span></label>
+                </div>
+                <div class="notification-dialog__section">
+                    <h3>Температура</h3>
+                    <label class="notification-setting"><span>Холоднее чем</span><span class="notification-setting__control"><input id="notification-cold-threshold" type="number" min="-50" max="20" step="1" value="0" aria-label="Порог низкой температуры"><small>°C</small><input id="notification-cold" type="checkbox" aria-label="Уведомлять о холоде"></span></label>
+                    <label class="notification-setting"><span>Жарче чем</span><span class="notification-setting__control"><input id="notification-heat-threshold" type="number" min="15" max="55" step="1" value="32" aria-label="Порог высокой температуры"><small>°C</small><input id="notification-heat" type="checkbox" aria-label="Уведомлять о жаре"></span></label>
+                </div>
+                <p class="notification-dialog__note">Браузер показывает предупреждения, пока приложение открыто и проверяет актуальную погоду. Для уведомлений в закрытом приложении нужен отдельный push-сервис.</p>
+                <div class="notification-dialog__actions">
+                    <button class="btn btn-glass rounded-pill" type="button" onclick="document.getElementById('notification-settings-dialog').close()">Отмена</button>
+                    <button class="btn btn-accent rounded-pill" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </dialog>
 
         <!-- ФУТЕР -->
         <footer class="app-footer glass">
