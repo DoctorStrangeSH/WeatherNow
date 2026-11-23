@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: weathernow-browser-smoke-${{ matrix.browser }}
-          path: artifacts/browser-smoke/*.png
+          path: artifacts/browser-smoke/**/*.png
           if-no-files-found: ignore
 
   production-worker-smoke:
