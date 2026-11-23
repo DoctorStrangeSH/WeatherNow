@@ -375,6 +375,9 @@
 - [x] Перевести Lighthouse preview server на `127.0.0.1:5500`, уже присутствующий в allowlist Worker, чтобы аудит мог загружать реальные погодные данные без ложных CORS-ошибок.
 - [x] Сделать Google Fonts stylesheet неблокирующим рендер: `media="print"` с переключением на `all` после загрузки и `<noscript>` fallback; сохранить `display=swap`.
 - [x] Обновить browser smoke: дождаться `document.fonts.ready` перед визуальными снимками, чтобы не сравнивать fallback-шрифт с загруженным Nunito.
+- [x] Сделать Bootstrap Icons CSS неблокирующим для первого отображения через `media="print"`/`onload`, с `<noscript>` fallback; Bootstrap layout CSS оставлен блокирующим, поскольку он формирует первичную геометрию интерфейса.
+- [x] Обновить browser smoke: дождаться доступности таблиц стилей и загрузки Nunito + Bootstrap Icons перед визуальными снимками.
+- [ ] Повторно измерить Lighthouse после оптимизации Bootstrap Icons.
 - [ ] Просмотреть численные показатели Lighthouse и определить/закрыть замечания по Performance, Accessibility, Best Practices и SEO.
 - [x] Добавить axe-core WCAG 2.1 A/AA аудит главного экрана и диалога уведомлений в Chromium smoke; отчёт выводится в CI.
 - [x] axe-core WCAG 2.1 A/AA: главный экран — 0 нарушений (28 passed), диалог уведомлений — 0 нарушений (12 passed); Chromium smoke #125 PASS. CI теперь падает при Critical/Serious нарушениях.
