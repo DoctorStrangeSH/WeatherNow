@@ -303,3 +303,28 @@ test('weather sky has distinct time-of-day palettes for clear, storm, snow and f
   assert.match(sceneStyles, /weather-cloud-layer\[data-weather="storm"\]/);
   assert.match(sceneStyles, /weather-cloud-layer\[data-weather="rain"\]/);
 });
+
+
+test('fog uses layered slow atmospheric drift and respects reduced motion', () => {
+  const fogStart = styleSource.indexOf('#fog {');
+  const fogEnd = styleSource.indexOf('/* стеклянные эффекты */', fogStart);
+  const fogStyles = styleSource.slice(fogStart, fogEnd);
+  assert.match(fogStyles, /#fog::before/);
+  assert.match(fogStyles, /#fog::after/);
+  assert.match(fogStyles, /@keyframes fogDrift/);
+  assert.match(fogStyles, /prefers-reduced-motion:\s*reduce/);
+});
+
+test('storm scene includes a visible lightning bolt with a restrained flash cycle', () => {
+  const lightningStart = styleSource.indexOf('#lightning {');
+  const lightningEnd = styleSource.indexOf('/* туман */', lightningStart);
+  const lightningStyles = styleSource.slice(lightningStart, lightningEnd);
+  assert.match(lightningStyles, /#lightning::before/);
+  assert.match(lightningStyles, /clip-path:\s*polygon/);
+  assert.match(lightningStyles, /@keyframes lightningBolt/);
+  assert.match(lightlightningStylesFallback(lightningStyles), /91%\s*\{/);
+});
+
+function lightlightningStylesFallback(styles) {
+  return styles;
+}
