@@ -106,8 +106,8 @@ function renderCurrentWeather(data, options = {}) {
     if (options.cached === true) {
       const savedLabel = new Date(options.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
       mainDescription.textContent = options.stale === true
-        ? `${weatherDescription} · устаревшие данные, сохранены `${savedLabel}`
-        : `${weatherDescription} · сохранено `${savedLabel}`;
+        ? `${weatherDescription} · устаревшие данные, сохранены ${savedLabel}`
+        : `${weatherDescription} · сохранено ${savedLabel}`;
       mainDescription.classList.toggle('cache-warning', options.stale === true);
     } else {
       mainDescription.textContent = weatherDescription;
