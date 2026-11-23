@@ -40,6 +40,12 @@ The default list in `wrangler.toml` includes the production GitHub Pages origin 
 
 Only the required parameters are accepted. The Worker injects `appid`, `units=metric`, and `lang=ru` server-side. Other routes, methods, and unexpected parameters are rejected.
 
+## Rate limiting
+
+The Worker config declares a Cloudflare Rate Limiting binding named `WEATHER_RATE_LIMITER`: 60 valid API requests per client IP per 60 seconds. The binding is checked before cache reads and upstream requests. If the binding rejects a request, the Worker returns HTTP 429 with `Retry-After: 60`; if the binding is unavailable, requests fail closed with HTTP 503.
+
+After deploying this configuration, verify the binding is active in Cloudflare and test the 429 response. The binding namespace is configured in `wrangler.toml`; do not remove it or deploy an older Worker configuration.
+
 ## Cache policy
 
 - Current weather: 60 seconds.
