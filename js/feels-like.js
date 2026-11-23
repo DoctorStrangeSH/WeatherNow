@@ -98,9 +98,10 @@ function switchFeelsLikeView(view) {
   }
 }
 
-function renderFeelsLikeChart(data) {
+async function renderFeelsLikeChart(data) {
   const canvas = document.getElementById('feelsLikeChart');
   if (!canvas || !data) return;
+  try { await ensureChartLibrary(); } catch (error) { console.warn(error.message); return; }
   
   const ctx = canvas.getContext('2d');
   if (feelsLikeChartInstance) feelsLikeChartInstance.destroy();
