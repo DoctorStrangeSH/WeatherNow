@@ -782,3 +782,28 @@ test('reduced-motion weather changes do not create animated particle containers'
   assert.equal(sky.dataset.motion, 'reduced');
   assert.equal(skyChildren.filter(element => element.className === 'weather-cloud-layers').length, 1);
 });
+
+test('night sky dims stars according to cloud cover and hides them during daytime', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const stars = { style: {}, attributes: {}, setAttribute(name, value) { this.attributes[name] = value; } };
+  const context = vm.createContext({ document: { addEventListener() {}, getElementById: id => id === 'stars' ? stars : null } });
+  vm.runInContext(source, context);
+  assert.equal(context.getNightSkyOpacity(800), 0.9);
+  assert.equal(context.getNightSkyOpacity(801), 0.62);
+  assert.equal(context.getNightSkyOpacity(802), 0.36);
+  assert.equal(context.getNightSkyOpacity(803), 0.14);
+  assert.equal(context.getNightSkyOpacity(804), 0.04);
+  context.updateStarsVisibility(true, 804);
+  assert.equal(stars.style.opacity, '0.04');
+  assert.equal(stars.attributes['aria-hidden'], 'false');
+  context.updateStarsVisibility(false, 800);
+  assert.equal(stars.style.opacity, '0');
+  assert.equal(stars.attributes['aria-hidden'], 'true');
+});
+
+test('cloud layers render in front of sun and moon while remaining behind app UI', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+  assert.match(css, /#sky\s+\.sun,\s*#sky\s+\.moon\s*\{[^}]*z-index:\s*1/s);
+  assert.match(css, /#sky\s+\.weather-cloud-layers\s*\{[^}]*z-index:\s*2/s);
+  assert.match(css, /\.app-container\s*\{[^}]*z-index:\s*2/s);
+});
