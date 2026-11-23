@@ -360,7 +360,7 @@
                     <button class="notification-dialog__close" type="button" aria-label="Закрыть настройки" onclick="document.getElementById('notification-settings-dialog').close()">×</button>
                 </div>
                 <label class="notification-setting notification-setting--master">
-                    <span><strong>Включить уведомления</strong><small>Пока WeatherNow открыт</small></span>
+                    <span><strong>Включить уведомления</strong><small>При загрузке или обновлении погоды</small></span>
                     <input id="notification-enabled" type="checkbox">
                 </label>
                 <div class="notification-dialog__section">
@@ -375,7 +375,7 @@
                     <label class="notification-setting"><span>Холоднее чем</span><span class="notification-setting__control"><input id="notification-cold-threshold" type="number" min="-50" max="20" step="1" value="0" aria-label="Порог низкой температуры"><small>°C</small><input id="notification-cold" type="checkbox" aria-label="Уведомлять о холоде"></span></label>
                     <label class="notification-setting"><span>Жарче чем</span><span class="notification-setting__control"><input id="notification-heat-threshold" type="number" min="15" max="55" step="1" value="32" aria-label="Порог высокой температуры"><small>°C</small><input id="notification-heat" type="checkbox" aria-label="Уведомлять о жаре"></span></label>
                 </div>
-                <p class="notification-dialog__note">Браузер показывает предупреждения, пока приложение открыто и проверяет актуальную погоду. Для уведомлений в закрытом приложении нужен отдельный push-сервис.</p>
+                <p class="notification-dialog__note">Предупреждения проверяются при загрузке погоды и смене города. Для доставки при закрытой вкладке понадобится отдельный push-сервис.</p>
                 <div class="notification-dialog__actions">
                     <button class="btn btn-glass rounded-pill" type="button" onclick="document.getElementById('notification-settings-dialog').close()">Отмена</button>
                     <button class="btn btn-accent rounded-pill" type="submit">Сохранить</button>
