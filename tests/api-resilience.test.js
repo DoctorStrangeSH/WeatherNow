@@ -64,3 +64,13 @@ test('city loading surfaces the actual API error instead of always reporting cit
   const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
   assert.match(appSource, /catch \(error\)[\s\S]*?error\.message[\s\S]*?showToast\(message, 'danger'\)/);
 });
+
+test('failed city refresh marks retained weather as stale instead of presenting it as current', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+  assert.match(uiSource, /let currentWeatherCityName = '';/);
+  assert.match(uiSource, /currentWeatherCityName = data\.name \|\| '';/);
+  assert.match(uiSource, /weatherHero\.dataset\.loadState = 'ready';/);
+  assert.match(appSource, /hero\.dataset\.loadState = hasPreviousWeather \? 'stale' : 'error';/);
+  assert.match(appSource, /Не удалось обновить · показаны последние успешные данные/);
+});
