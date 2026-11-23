@@ -82,7 +82,14 @@ async function toggleMapFullscreen() {
     }
     updateFullscreenButton();
   } catch {
-    setMapStatus('Полноэкранный режим недоступен в этом браузере.', 'error');
+    // Some browsers expose the Fullscreen API but reject it for embedded or
+    // restricted contexts. Keep the map usable with the CSS fullscreen fallback.
+    if (container.classList.contains('map-fullscreen-fallback')) {
+      container.classList.remove('map-fullscreen-fallback');
+    } else {
+      container.classList.add('map-fullscreen-fallback');
+    }
+    updateFullscreenButton();
   }
 }
 
