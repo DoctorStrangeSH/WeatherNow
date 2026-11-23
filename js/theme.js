@@ -311,6 +311,13 @@ function getStarCount() {
   return Math.round(100 * getWeatherEffectScale());
 }
 
+function getActiveCloudLayerCount() {
+  const scale = getWeatherEffectScale();
+  if (scale <= 0.4) return 1;
+  if (scale <= 0.65) return 2;
+  return 3;
+}
+
 function prefersReducedMotion() {
   return typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
@@ -392,10 +399,13 @@ function updateCloudAtmosphere(weatherCode, windSpeed = 0) {
   const snow = code >= 600 && code < 700;
   const fog = code >= 700 && code < 800;
   const coverage = code === 801 ? 0.28 : code === 802 ? 0.48 : code === 803 ? 0.7 : code === 804 ? 0.9 : storm ? 1 : rain ? 0.82 : snow ? 0.76 : fog ? 0.58 : 0;
+  const activeLayerCount = prefersReducedMotion() ? 0 : getActiveCloudLayerCount();
 
   layers.forEach((layer, index) => {
     const depth = index + 1;
-    layer.style.opacity = String(coverage * (0.42 + depth * 0.19));
+    const isActive = index < activeLayerCount;
+    layer.style.display = isActive ? '' : 'none';
+    layer.style.opacity = isActive ? String(coverage * (0.42 + depth * 0.19)) : '0';
     layer.style.setProperty('--cloud-speed', `${Math.max(22, 76 - wind * 2 + index * 15)}s`);
     layer.style.setProperty('--cloud-drift', `${wind >= 10 ? 34 : wind >= 5 ? 22 : 12}px`);
     layer.dataset.weather = storm ? 'storm' : rain ? 'rain' : snow ? 'snow' : fog ? 'fog' : cloudy ? 'cloudy' : 'clear';
