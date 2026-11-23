@@ -3444,3 +3444,17 @@ body {
 .notification-setting small,
 .notification-dialog__note,
 .notification-setting__control small { color: #a8bad0; }
+
+
+/* Accessible primary action contrast in the notification dialog. */
+.notification-dialog__actions .btn-accent {
+    background: #8a3f08;
+    border-color: #8a3f08;
+    color: #ffffff;
+}
+.notification-dialog__actions .btn-accent:hover,
+.notification-dialog__actions .btn-accent:focus-visible {
+    background: #713305;
+    border-color: #713305;
+    color: #ffffff;
+}
