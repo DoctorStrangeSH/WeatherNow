@@ -1,4 +1,4 @@
-let currentMapLayer = 'temp';
+let currentMapLayer = 'rain';
 let mapIframe = null;
 let mapInfoRequestId = 0;
 
