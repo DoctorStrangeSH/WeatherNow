@@ -232,3 +232,42 @@ test('reinitializing sky elements reuses the moon and existing star field', () =
   assert.deepEqual(stars.children, starNodes);
   assert.equal(sky.children.length, skyChildCount);
 });
+
+
+test('reinitializing theme replaces the refresh interval instead of stacking timers', () => {
+  let nextTimerId = 0;
+  const activeTimers = new Set();
+  const clearedTimers = [];
+  const document = {
+    addEventListener() {},
+    body: {
+      classList: {
+        remove() {},
+        add() {},
+        contains: () => false
+      }
+    },
+    getElementById() { return null; }
+  };
+  const context = loadInBrowserContext(themeSource, {
+    document,
+    setInterval(callback, delay) {
+      const id = ++nextTimerId;
+      activeTimers.add(id);
+      return id;
+    },
+    clearInterval(id) {
+      activeTimers.delete(id);
+      clearedTimers.push(id);
+    },
+    Date,
+    window: { innerWidth: 1440, matchMedia: () => ({ matches: false }) },
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 }
+  });
+
+  vm.runInContext('initTheme(); initTheme(); initTheme();', context);
+
+  assert.equal(nextTimerId, 3);
+  assert.deepEqual(clearedTimers, [1, 2]);
+  assert.deepEqual([...activeTimers], [3]);
+});
