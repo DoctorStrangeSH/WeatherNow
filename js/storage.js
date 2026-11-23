@@ -233,3 +233,34 @@ function getLastWeatherSnapshot() {
     return null;
   }
 }
+
+
+const LAST_FORECAST_CACHE_KEY = 'weathernow-last-forecast';
+
+function saveLastForecastSnapshot(city, data) {
+  if (!city || !data || !Array.isArray(data.list) || !data.city) return;
+  try {
+    localStorage.setItem(LAST_FORECAST_CACHE_KEY, JSON.stringify({
+      city: String(city).trim().toLowerCase(),
+      savedAt: new Date().toISOString(),
+      data
+    }));
+  } catch {
+    // Forecast caching is optional; do not interrupt live rendering.
+  }
+}
+
+function getLastForecastSnapshot(city) {
+  try {
+    const raw = localStorage.getItem(LAST_FORECAST_CACHE_KEY);
+    if (!raw) return null;
+    const snapshot = JSON.parse(raw);
+    const savedAt = Date.parse(snapshot?.savedAt || '');
+    if (!snapshot || snapshot.city !== String(city || '').trim().toLowerCase() ||
+        !snapshot.data || !Array.isArray(snapshot.data.list) ||
+        !snapshot.data.city || !Number.isFinite(savedAt)) return null;
+    return { data: snapshot.data, savedAt: new Date(savedAt).toISOString() };
+  } catch {
+    return null;
+  }
+}
