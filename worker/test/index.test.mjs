@@ -90,6 +90,42 @@ test('geocoding endpoint accepts a bounded result count', async () => {
   }
 });
 
+test('upstream requests have a bounded timeout', async () => {
+  const originalFetch = globalThis.fetch;
+  let timeoutSignal;
+
+  globalThis.fetch = async (_url, options = {}) => {
+    timeoutSignal = options.signal;
+    return new Response(JSON.stringify({ name: 'Berlin' }), { status: 200 });
+  };
+
+  try {
+    const response = await worker.fetch(request('/weather?q=Berlin'), env);
+    assert.equal(response.status, 200);
+    assert.ok(timeoutSignal instanceof AbortSignal);
+    assert.equal(timeoutSignal.aborted, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('upstream timeout or network failure returns a safe 502 response', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new DOMException('The operation was aborted', 'AbortError');
+  };
+
+  try {
+    const response = await worker.fetch(request('/weather?q=Berlin'), env);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'Weather provider is temporarily unavailable');
+    assert.equal(JSON.stringify(body).includes(env.OPENWEATHER_API_KEY), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('invalid coordinates are rejected before calling upstream', async () => {
   const originalFetch = globalThis.fetch;
   let called = false;
