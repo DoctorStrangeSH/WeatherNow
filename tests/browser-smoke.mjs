@@ -276,16 +276,16 @@ try {
   await page.waitForFunction(() => document.querySelectorAll('.favorite-city-card').length === 0);
 
   assert.equal(await page.locator('#screen-compare').count(), 0, 'Removed comparison screen must not return');
-  assert.equal(await page.locator('button[onclick*="showScreen(\\'compare\\')"]').count(), 0, 'No navigation button should target the removed screen');
+  assert.equal(await page.locator('button[onclick*="compare"]').count(), 0, 'No navigation button should target the removed screen');
 
   await page.evaluate(() => showScreen('home'));
-  const citySearch = page.locator('#header-search');
+  const citySearch = page.locator('#mobile-search');
   await citySearch.fill('петер');
   await page.waitForFunction(() => {
-    const results = document.querySelector('#search-results');
+    const results = document.querySelector('#search-results-mobile');
     return results && results.textContent.includes('Санкт-Петербург');
   });
-  assert.match(await page.locator('#search-results').innerText(), /Санкт-Петербург/);
+  assert.match(await page.locator('#search-results-mobile').innerText(), /Санкт-Петербург/);
   await page.screenshot({ path: path.join(screenshotDir, 'city-search-390.png'), fullPage: true });
 
   await page.evaluate(() => openWeatherNotificationSettings());
@@ -323,7 +323,7 @@ try {
   assert.ok(workerRequests.every(url => !url.searchParams.has('appid')), 'Browser requests must never expose an upstream API key');
 
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`);
-  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, favorites add/remove, city comparison, configurable weather notifications, offline/online recovery, and API-key isolation. Screenshots saved.');
+  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, favorites add/remove, instant Russian city search, configurable weather notifications, offline/online recovery, and API-key isolation. Screenshots saved.');
   await context.close();
 } finally {
   await browser.close();
