@@ -103,9 +103,16 @@ function renderCurrentWeather(data, options = {}) {
   const weatherDescription = capitalize(data.weather[0].description);
   const mainDescription = document.getElementById('main-desc');
   if (mainDescription) {
-    mainDescription.textContent = options.cached === true
-      ? `${weatherDescription} · сохранено ${new Date(options.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}`
-      : weatherDescription;
+    if (options.cached === true) {
+      const savedLabel = new Date(options.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+      mainDescription.textContent = options.stale === true
+        ? `${weatherDescription} · устаревшие данные, сохранены `${savedLabel}`
+        : `${weatherDescription} · сохранено `${savedLabel}`;
+      mainDescription.classList.toggle('cache-warning', options.stale === true);
+    } else {
+      mainDescription.textContent = weatherDescription;
+      mainDescription.classList.remove('cache-warning');
+    }
   }
   document.getElementById('detail-humidity').textContent = `${data.main.humidity}%`;
   document.getElementById('detail-wind').textContent = `${data.wind.speed} м/с`;
@@ -593,8 +600,11 @@ function restoreCachedForecast(city) {
     container.dataset.state = 'cached';
     renderForecast(groupForecastByDay(snapshot.data));
     const notice = document.createElement('p');
-    notice.className = 'forecast-cache-note';
-    notice.textContent = `Прогноз сохранён ${new Date(snapshot.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}`;
+    notice.className = snapshot.stale ? 'forecast-cache-note is-stale' : 'forecast-cache-note';
+    const savedLabel = new Date(snapshot.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+    notice.textContent = snapshot.stale
+      ? `Устаревший прогноз · сохранён ${savedLabel}`
+      : `Прогноз сохранён ${savedLabel}`;
     container.prepend(notice);
   }
 
