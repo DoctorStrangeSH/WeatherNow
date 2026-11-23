@@ -130,7 +130,7 @@ try {
   await page.waitForFunction(() => {
     const city = document.querySelector('#main-city')?.textContent || '';
     const temperature = document.querySelector('#main-temp')?.textContent || '';
-    return city.includes(',') && /^-?\\d+°C$/.test(temperature);
+    return city.includes(',') && /^-?[0-9]+°C$/.test(temperature);
   }, null, { timeout: 20000 });
 
   assert.match(await page.locator('#main-city').innerText(), /Москва, RU/);
