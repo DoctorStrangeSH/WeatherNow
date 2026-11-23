@@ -3584,3 +3584,143 @@ body {
 @media (max-width: 640px) {
     #sky .moon { width: 68px; height: 68px; }
 }
+
+
+/* Distinct cinematic palettes for every weather condition and local time of day. */
+body.theme-morning #sky[data-weather="clear"] {
+    background:
+        radial-gradient(ellipse at 78% 22%, rgba(255, 231, 184, .46), transparent 27rem),
+        radial-gradient(ellipse at 12% 74%, rgba(255, 174, 157, .28), transparent 32rem),
+        linear-gradient(155deg, #f3a58e 0%, #f7c5a6 42%, #b9d5e7 100%);
+}
+body.theme-day #sky[data-weather="clear"] {
+    background:
+        radial-gradient(ellipse at 78% 12%, rgba(255, 239, 177, .38), transparent 29rem),
+        radial-gradient(ellipse at 18% 78%, rgba(113, 190, 226, .3), transparent 34rem),
+        linear-gradient(155deg, #2585c8 0%, #54a9dc 48%, #b6dff0 100%);
+}
+body.theme-evening #sky[data-weather="clear"] {
+    background:
+        radial-gradient(ellipse at 78% 26%, rgba(255, 203, 143, .48), transparent 28rem),
+        radial-gradient(ellipse at 18% 76%, rgba(193, 125, 167, .32), transparent 34rem),
+        linear-gradient(155deg, #574c79 0%, #bd7180 48%, #f0b17f 100%);
+}
+body.theme-night #sky[data-weather="clear"] {
+    background:
+        radial-gradient(ellipse at 76% 20%, rgba(112, 149, 206, .2), transparent 26rem),
+        radial-gradient(ellipse at 16% 78%, rgba(54, 89, 145, .2), transparent 34rem),
+        linear-gradient(155deg, #070f26 0%, #111f42 54%, #1b3154 100%);
+}
+
+body.theme-morning #sky[data-weather="partly-cloudy"],
+body.theme-morning #sky[data-weather="cloudy"] {
+    background:
+        radial-gradient(ellipse at 76% 18%, rgba(255, 210, 183, .3), transparent 30rem),
+        linear-gradient(155deg, #8b9eb6 0%, #b8c4d2 52%, #e5c9bd 100%);
+}
+body.theme-day #sky[data-weather="partly-cloudy"],
+body.theme-day #sky[data-weather="cloudy"] {
+    background:
+        radial-gradient(ellipse at 74% 14%, rgba(242, 247, 250, .28), transparent 30rem),
+        linear-gradient(155deg, #477da7 0%, #739bb8 52%, #a9c2d0 100%);
+}
+body.theme-evening #sky[data-weather="partly-cloudy"],
+body.theme-evening #sky[data-weather="cloudy"] {
+    background:
+        radial-gradient(ellipse at 74% 22%, rgba(255, 190, 157, .3), transparent 30rem),
+        linear-gradient(155deg, #4a4b6c 0%, #80677b 54%, #c08a82 100%);
+}
+body.theme-night #sky[data-weather="partly-cloudy"],
+body.theme-night #sky[data-weather="cloudy"] {
+    background:
+        radial-gradient(ellipse at 72% 18%, rgba(126, 153, 194, .13), transparent 28rem),
+        linear-gradient(155deg, #0d1830 0%, #1c2b47 54%, #2a405c 100%);
+}
+
+body.theme-morning #sky[data-weather="rain"],
+body.theme-morning #sky[data-weather="thunder"] {
+    background: linear-gradient(155deg, #343c58 0%, #5b6178 55%, #8a7880 100%);
+}
+body.theme-day #sky[data-weather="rain"] {
+    background:
+        radial-gradient(ellipse at 70% 12%, rgba(159, 193, 216, .16), transparent 28rem),
+        linear-gradient(155deg, #172d46 0%, #2d4d67 54%, #506b7d 100%);
+}
+body.theme-evening #sky[data-weather="rain"],
+body.theme-evening #sky[data-weather="thunder"] {
+    background:
+        radial-gradient(ellipse at 72% 18%, rgba(183, 129, 151, .16), transparent 28rem),
+        linear-gradient(155deg, #25253f 0%, #44364f 55%, #705363 100%);
+}
+body.theme-night #sky[data-weather="rain"] {
+    background:
+        radial-gradient(ellipse at 72% 16%, rgba(94, 129, 174, .14), transparent 28rem),
+        linear-gradient(155deg, #080f20 0%, #14263e 55%, #233d56 100%);
+}
+body.theme-day #sky[data-weather="thunder"],
+body.theme-night #sky[data-weather="thunder"] {
+    background:
+        radial-gradient(ellipse at 74% 20%, rgba(118, 125, 170, .18), transparent 26rem),
+        linear-gradient(155deg, #0b1022 0%, #1c2540 52%, #303b57 100%);
+}
+
+body.theme-morning #sky[data-weather="snow"],
+body.theme-day #sky[data-weather="snow"] {
+    background:
+        radial-gradient(ellipse at 76% 14%, rgba(255, 255, 255, .48), transparent 28rem),
+        linear-gradient(155deg, #729bb9 0%, #a8c8dc 52%, #e2edf2 100%);
+}
+body.theme-evening #sky[data-weather="snow"] {
+    background:
+        radial-gradient(ellipse at 76% 16%, rgba(255, 221, 207, .28), transparent 28rem),
+        linear-gradient(155deg, #53627f 0%, #8797ad 54%, #c5c4ca 100%);
+}
+body.theme-night #sky[data-weather="snow"] {
+    background:
+        radial-gradient(ellipse at 76% 14%, rgba(196, 221, 255, .16), transparent 28rem),
+        linear-gradient(155deg, #101d35 0%, #263d5b 54%, #3c5873 100%);
+}
+
+body.theme-morning #sky[data-weather="fog"],
+body.theme-day #sky[data-weather="fog"] {
+    background:
+        radial-gradient(ellipse at 50% 34%, rgba(248, 250, 246, .38), transparent 30rem),
+        linear-gradient(155deg, #788e9b 0%, #aab9bb 55%, #d1d7d2 100%);
+}
+body.theme-evening #sky[data-weather="fog"] {
+    background:
+        radial-gradient(ellipse at 50% 34%, rgba(255, 220, 196, .22), transparent 30rem),
+        linear-gradient(155deg, #596477 0%, #8b8790 55%, #c4a49a 100%);
+}
+body.theme-night #sky[data-weather="fog"] {
+    background:
+        radial-gradient(ellipse at 50% 34%, rgba(186, 206, 222, .13), transparent 30rem),
+        linear-gradient(155deg, #1c2a3b 0%, #344757 55%, #536775 100%);
+}
+
+/* Cloud banks gain depth and weather-specific highlights instead of one flat haze. */
+.weather-cloud-layer[data-weather="storm"] {
+    background:
+        radial-gradient(ellipse 38% 27% at 18% 28%, rgba(101, 113, 139, .78), transparent 76%),
+        radial-gradient(ellipse 42% 32% at 48% 20%, rgba(34, 43, 67, .88), transparent 74%),
+        radial-gradient(ellipse 36% 28% at 82% 34%, rgba(83, 97, 124, .76), transparent 76%),
+        linear-gradient(180deg, rgba(13, 19, 37, .2), transparent 72%);
+}
+.weather-cloud-layer[data-weather="rain"] {
+    background:
+        radial-gradient(ellipse 38% 25% at 18% 28%, rgba(112, 135, 155, .56), transparent 76%),
+        radial-gradient(ellipse 42% 30% at 50% 20%, rgba(54, 75, 97, .72), transparent 74%),
+        radial-gradient(ellipse 36% 26% at 82% 34%, rgba(117, 139, 157, .52), transparent 76%);
+}
+.weather-cloud-layer[data-weather="cloudy"] {
+    background:
+        radial-gradient(ellipse 30% 20% at 18% 28%, rgba(226, 237, 245, .5), transparent 76%),
+        radial-gradient(ellipse 38% 25% at 50% 22%, rgba(190, 210, 225, .42), transparent 74%),
+        radial-gradient(ellipse 34% 22% at 82% 34%, rgba(218, 230, 239, .48), transparent 76%);
+}
+.weather-cloud-layer[data-weather="snow"] {
+    background:
+        radial-gradient(ellipse 32% 24% at 18% 28%, rgba(244, 250, 255, .72), transparent 76%),
+        radial-gradient(ellipse 40% 28% at 50% 22%, rgba(204, 225, 241, .62), transparent 74%),
+        radial-gradient(ellipse 34% 24% at 82% 34%, rgba(237, 246, 252, .68), transparent 76%);
+}
