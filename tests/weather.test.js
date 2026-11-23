@@ -653,3 +653,65 @@ test('mobile weather effects use a reduced particle budget and lighter cloud fil
   assert.match(css, /@media\s*\(max-width:\s*390px\)[\s\S]*?\.weather-cloud-layer\s*\{[^}]*filter:\s*blur\(8px\)/);
   assert.match(css, /\.weather-cloud-layer\[data-weather="fog"\]\s*\{\s*filter:\s*blur\(16px\)/);
 });
+
+
+test('weather effect cleanup removes every stale layer and particle creators enforce safe caps', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const removed = [];
+  const appended = [];
+  const sky = {
+    querySelectorAll(selector) {
+      return selector.startsWith('#') ? [{ remove() { removed.push(selector); } }, { remove() { removed.push(selector); } }] : [];
+    },
+    appendChild(element) { appended.push(element); }
+  };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById: id => id === 'sky' ? sky : null,
+      createElement: () => ({ style: {}, children: [], appendChild(child) { this.children.push(child); } })
+    },
+    window: { matchMedia: () => ({ matches: false }) },
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 }
+  });
+  vm.runInContext(source, context);
+
+  context.clearWeatherEffects();
+  assert.equal(removed.length, 10);
+  context.createRain(500);
+  context.createSnow(-5);
+  context.createWindLines(500);
+  assert.equal(appended.length, 3);
+  assert.equal(appended[0].children.length, 100);
+  assert.equal(appended[1].children.length, 0);
+  assert.equal(appended[2].children.length, 40);
+});
+
+test('theme initialization keeps only one refresh interval', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  let intervalId = 0;
+  const cleared = [];
+  const sky = {
+    querySelector() { return null; },
+    appendChild() {},
+    querySelectorAll() { return []; }
+  };
+  const body = { classList: { remove() {}, add() {} } };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById: id => id === 'sky' ? sky : null,
+      createElement: () => ({ style: {}, dataset: {}, setAttribute() {}, appendChild() {}, classList: { add() {} } }),
+      body
+    },
+    window: { matchMedia: () => ({ matches: true }) },
+    setInterval() { intervalId += 1; return intervalId; },
+    clearInterval(id) { cleared.push(id); },
+    Date
+  });
+  vm.runInContext(source, context);
+  context.initTheme();
+  context.initTheme();
+  assert.equal(intervalId, 2);
+  assert.deepEqual(cleared, [1]);
+});
