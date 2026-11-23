@@ -3225,3 +3225,13 @@ body {
     .weather-cloud-layer--front { filter: blur(5px); }
     .weather-cloud-layer[data-weather="fog"] { filter: blur(16px); }
 }
+
+/* Солнце и луна находятся за облаками; интерфейс остаётся поверх неба */
+#sky .sun,
+#sky .moon {
+    z-index: 1;
+}
+
+#sky .weather-cloud-layers {
+    z-index: 2;
+}
