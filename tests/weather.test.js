@@ -933,6 +933,7 @@ test('offline forecast restoration renders cached data and its saved timestamp',
         ? { data: cachedForecast, savedAt: '2026-11-23T08:00:00.000Z' }
         : null;
     },
+    parseForecastDate(value) { return new Date(value * 1000); },
     groupForecastByDay(data) { return [data.city.name]; },
     renderForecast(days) { rendered.push(days); },
     renderFeelsLikeSection() {}
@@ -1054,6 +1055,7 @@ test('failed forecast request restores the cached forecast for the selected city
         ? { data: cachedForecast, savedAt: '2026-11-23T08:00:00.000Z', stale: false }
         : null;
     },
+    parseForecastDate(value) { return new Date(value * 1000); },
     groupForecastByDay(data) { return [data.city.name]; },
     renderForecast(days) { rendered.push(days[0]); },
     renderFeelsLikeSection() {}
@@ -1091,6 +1093,7 @@ test('restoring cached weather also restores its cached forecast and dependent w
       querySelector() { return { dataset: {} }; },
       getElementById: getElement
     },
+    window: { addEventListener() {} },
     capitalize: value => value,
     getWeatherIconMarkup: () => '<svg></svg>',
     renderWeatherInsights() {},
@@ -1120,10 +1123,11 @@ test('restoring cached weather also restores its cached forecast and dependent w
   assert.deepEqual(wardrobeRenders, ['Berlin']);
 });
 
-test('network recovery refreshes the currently selected city without page reload', () => {
+test('network recovery refreshes the currently selected city without page reload', async () => {
   const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
   const listeners = {};
   const calls = [];
+  const rendered = [];
   const banner = { hidden: true, classList: { add() {}, remove() {} } };
   const message = { textContent: '' };
   const retry = { disabled: false, addEventListener(event, callback) { this.callback = callback; } };
@@ -1131,17 +1135,31 @@ test('network recovery refreshes the currently selected city without page reload
     document: {
       addEventListener() {},
       body: { dataset: {} },
+      querySelector() { return { dataset: {} }; },
       getElementById(id) {
         return id === 'network-status' ? banner
           : id === 'network-status-message' ? message
-          : id === 'network-retry-btn' ? retry : null;
+          : id === 'network-retry-btn' ? retry
+          : { textContent: '', dataset: {}, classList: { add() {}, remove() {} } };
       }
     },
     window: { addEventListener(event, callback) { listeners[event] = callback; } },
     navigator: { onLine: true },
+    currentWeatherRequestId: 0,
     currentWeatherCityName: 'Paris',
-    loadCityWeather(city) { calls.push(city); },
-    initApp() { calls.push('init'); }
+    forecastRequestId: 0,
+    fetchWeather: async city => {
+      calls.push(city);
+      return {
+        name: city,
+        coord: { lat: 48.8566, lon: 2.3522 },
+        sys: { country: 'FR' }
+      };
+    },
+    renderCurrentWeather(data) { rendered.push(data.name); },
+    updateRainMap() {},
+    closeSearchResults() {},
+    showToast() {}
   });
   vm.runInContext(appSource, context);
   context.setupNetworkStatus();
@@ -1152,7 +1170,9 @@ test('network recovery refreshes the currently selected city without page reload
   assert.equal(retry.disabled, true);
 
   listeners.online();
+  await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(calls, ['Paris']);
+  assert.deepEqual(rendered, ['Paris']);
   assert.equal(context.document.body.dataset.network, 'online');
   assert.equal(retry.disabled, false);
 });
