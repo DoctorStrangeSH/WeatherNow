@@ -193,3 +193,31 @@ test('offline startup restores the cached snapshot instead of starting a fresh g
   assert.match(appSource, /if \(navigator\.onLine === false && restoreCachedWeather\(\)\) return;/);
   assert.match(appSource, /renderCurrentWeather\(data, \{ cached: true, savedAt: snapshot\.savedAt \}\);/);
 });
+
+
+test('cached forecast is restored only for the matching city', () => {
+  const storageSource = fs.readFileSync(path.join(__dirname, '../js/storage.js'), 'utf8');
+  const values = new Map();
+  const context = vm.createContext({
+    localStorage: {
+      getItem(key) { return values.get(key) ?? null; },
+      setItem(key, value) { values.set(key, value); }
+    },
+    document: { addEventListener() {} },
+    Date
+  });
+  vm.runInContext(storageSource, context);
+
+  const forecast = {
+    city: { name: 'Berlin', country: 'DE' },
+    list: [{ dt: 1795435200, main: { temp: 8 }, weather: [{ description: 'облачно' }] }]
+  };
+  context.saveLastForecastSnapshot('Berlin', forecast);
+  const restored = context.getLastForecastSnapshot('Berlin');
+  assert.equal(restored.data.city.name, 'Berlin');
+  assert.equal(restored.data.list.length, 1);
+  assert.equal(context.getLastForecastSnapshot('Paris'), null);
+
+  values.set('weathernow-last-forecast', '{invalid');
+  assert.equal(context.getLastForecastSnapshot('Berlin'), null);
+});
