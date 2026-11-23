@@ -129,7 +129,9 @@ function setupSearch() {
 
       if (event.key !== 'Enter' || !input.value.trim()) return;
       event.preventDefault();
-      loadCityWeather(input.value.trim());
+      const query = input.value.trim();
+      const localMatch = searchLocalDictionary(query)[0];
+      loadCityWeather(localMatch ? localMatch.name : query);
       input.value = '';
       closeSearchResults();
     });
