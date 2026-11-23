@@ -55,12 +55,17 @@ function getWeatherSceneKey(weatherCode) {
 }
 
 function updateWeatherTheme(weatherCode, timezoneOffset, windSpeed) {
-  currentWeatherCode = weatherCode;
-  if (timezoneOffset !== undefined) currentTimezone = timezoneOffset;
-  if (Number.isFinite(Number(windSpeed))) currentWindSpeed = Number(windSpeed);
+  const parsedCode = Number(weatherCode);
+  currentWeatherCode = Number.isFinite(parsedCode) ? parsedCode : 800;
+
+  // API-поля могут отсутствовать в отдельных ответах: не переносим значения прошлого города.
+  const parsedTimezone = Number(timezoneOffset);
+  currentTimezone = timezoneOffset !== undefined && Number.isFinite(parsedTimezone) ? parsedTimezone : 0;
+  const parsedWind = Number(windSpeed);
+  currentWindSpeed = windSpeed !== undefined && Number.isFinite(parsedWind) ? Math.max(0, parsedWind) : 0;
 
   const hero = document.querySelector('.weather-hero');
-  if (hero) hero.dataset.weather = getWeatherSceneKey(weatherCode);
+  if (hero) hero.dataset.weather = getWeatherSceneKey(currentWeatherCode);
 
   applyTimeTheme(currentTimezone);
 }
