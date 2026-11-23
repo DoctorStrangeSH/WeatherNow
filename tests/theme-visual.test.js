@@ -323,3 +323,24 @@ test('storm scene includes a visible lightning bolt with a restrained flash cycl
   assert.match(lightningStyles, /@keyframes lightningBolt/);
   assert.match(lightningStyles, /91%\s*\{/);
 });
+
+
+test('precipitation wind profile is bounded for calm and extreme wind', () => {
+  const context = loadInBrowserContext(themeSource);
+  const calm = vm.runInContext('getPrecipitationWindProfile(0)', context);
+  const windy = vm.runInContext('getPrecipitationWindProfile(12)', context);
+  const storm = vm.runInContext('getPrecipitationWindProfile(1000)', context);
+  assert.equal(calm.rainAngle, 0);
+  assert.equal(calm.snowDrift, 0);
+  assert.equal(windy.rainAngle, 20);
+  assert.equal(windy.snowDrift, 29);
+  assert.equal(storm.rainAngle, 30);
+  assert.equal(storm.snowDrift, 48);
+});
+
+test('rain and snow preserve reduced-motion support and use wind-aware transforms', () => {
+  assert.match(styleSource, /rotate\(var\(--rain-angle, 0deg\)\)/);
+  assert.match(styleSource, /translate3d\(var\(--snow-drift, 0px\), 100vh, 0\)/);
+  assert.match(themeSource, /createRain\(Math\.round\(motionProfile\.rainCount \* effectScale\), true, precipitationWind\)/);
+  assert.match(themeSource, /createSnow\(Math\.round\(motionProfile\.snowCount \* effectScale\), precipitationWind\)/);
+});
