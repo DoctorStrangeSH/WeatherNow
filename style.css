@@ -133,7 +133,7 @@ body {
     height: 100%;
     background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
     z-index: 0;
-    transition: all 1.5s ease;
+    transition: background 1.5s ease;
     overflow: hidden;
 }
 
@@ -155,7 +155,7 @@ body {
         0 0 40px rgba(255, 215, 0, 0.5),
         0 0 80px rgba(255, 180, 0, 0.3),
         0 0 120px rgba(255, 150, 0, 0.2);
-    transition: all 1.5s ease;
+    transition: background 1.5s ease, box-shadow 1.5s ease;
     animation: sunGlow 3s ease-in-out infinite;
     z-index: 1;
 }
@@ -228,7 +228,7 @@ body {
         inset -10px -5px 25px rgba(0, 0, 0, 0.2),
         inset 5px 5px 15px rgba(255, 255, 255, 0.6),
         inset -3px -3px 8px rgba(0, 0, 0, 0.1);
-    transition: all 1.5s ease;
+    transition: box-shadow 1.5s ease;
     z-index: 1;
     animation: moonGlow 4s ease-in-out infinite;
 }
@@ -297,7 +297,7 @@ body {
     background: white;
     border-radius: 50%;
     box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
-    transition: all 0.8s ease;
+    transition: box-shadow 0.8s ease;
     z-index: 3;
 }
 
