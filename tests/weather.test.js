@@ -874,16 +874,20 @@ test('a stale forecast response cannot overwrite the forecast for the latest cit
   const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
   const pending = new Map();
   const renderedForecasts = [];
+  const forecastContainer = {
+    dataset: {},
+    textContent: '',
+    children: [],
+    replaceChildren(...children) { this.children = children; }
+  };
   const context = vm.createContext({
     document: {
       addEventListener() {},
       getElementById() {
-        return {
-          dataset: {},
-          textContent: '',
-          replaceChildren() {},
-          querySelector() { return null; }
-        };
+        return forecastContainer;
+      },
+      createElement(tag) {
+        return { tagName: tag, className: '', textContent: '', addEventListener() {} };
       }
     },
     window: { addEventListener() {} },
