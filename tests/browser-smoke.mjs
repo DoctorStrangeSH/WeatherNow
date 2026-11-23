@@ -151,6 +151,9 @@ try {
   assert.equal(await page.locator('.weather-hero').getAttribute('data-load-state'), 'ready');
   await page.waitForFunction(() => document.querySelector('#forecast-container')?.children.length > 0);
   assert.ok(await page.locator('#hourly-container').count() === 1, 'hourly forecast container is present');
+  await page.waitForFunction(() => window.Chart && Chart.getChart('tempChart') && Chart.getChart('hourlyChart'), { timeout: 15000 });
+  assert.ok(await page.evaluate(() => Boolean(Chart.getChart('tempChart'))), 'Daily temperature chart renders after lazy loading');
+  assert.ok(await page.evaluate(() => Boolean(Chart.getChart('hourlyChart'))), 'Hourly chart renders after lazy loading');
 
   await page.addScriptTag({ path: path.join(ROOT, 'node_modules', 'axe-core', 'axe.min.js') });
   const homeA11y = await page.evaluate(async () => {
