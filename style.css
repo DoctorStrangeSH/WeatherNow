@@ -753,10 +753,22 @@ body {
 
 /* почасовой прогноз */
 .hourly-scroll {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
+}
+
+#hourly-container {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .hourly-scroll > * {
