@@ -136,7 +136,7 @@ test('rain, snow and wind particle containers isolate layout and paint', () => {
     assert.notEqual(start, -1, selector + ' rule should exist');
     const end = styleSource.indexOf('}', start);
     const rule = styleSource.slice(start, end);
-    assert.match(rule, /contain:\\s*layout paint;/);
-    assert.match(rule, /isolation:\\s*isolate;/);
+    assert.match(rule, /contain:\s*layout paint;/);
+    assert.match(rule, /isolation:\s*isolate;/);
   }
 });
