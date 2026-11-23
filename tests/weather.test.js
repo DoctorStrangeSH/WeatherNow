@@ -987,3 +987,73 @@ test('a late failed weather request cannot replace the latest selected city stat
   assert.equal(context.currentLat, 48.8566);
   assert.equal(context.currentLon, 2.3522);
 });
+
+
+test('failed city switch restores the cached snapshot for the newly requested city', async () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  const rendered = [];
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      querySelector() { return { dataset: {} }; },
+      getElementById() { return { textContent: '', dataset: {}, classList: { add() {}, remove() {} } }; }
+    },
+    currentWeatherRequestId: 0,
+    currentWeatherCityName: 'Berlin',
+    forecastRequestId: 0,
+    fetchWeather: async () => { throw new Error('Network unavailable'); },
+    restoreCachedWeather(city) {
+      if (city !== 'Paris') return false;
+      rendered.push(city);
+      return true;
+    },
+    renderCurrentWeather() {},
+    updateRainMap() {},
+    closeSearchResults() {},
+    showToast() {}
+  });
+  vm.runInContext(appSource, context);
+  context.currentWeatherCityName = 'Berlin';
+
+  await context.loadCityWeather('Paris');
+  assert.deepEqual(rendered, ['Paris']);
+});
+
+test('failed forecast request restores the cached forecast for the selected city', async () => {
+  const uiSource = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+  const container = {
+    dataset: {},
+    textContent: '',
+    children: [],
+    prepend(node) { this.children.unshift(node); },
+    replaceChildren(...nodes) { this.children = nodes; }
+  };
+  const rendered = [];
+  const cachedForecast = {
+    city: { name: 'Paris' },
+    list: [{ dt: 1795435200, main: { temp: 12 }, weather: [{ id: 800, description: 'ясно' }] }]
+  };
+  const context = vm.createContext({
+    document: {
+      addEventListener() {},
+      getElementById(id) { return id === 'forecast-container' ? container : null; },
+      createElement(tag) { return { tagName: tag, className: '', textContent: '', addEventListener() {} }; }
+    },
+    window: { addEventListener() {} },
+    fetchForecast: async () => { throw new Error('Network unavailable'); },
+    getLastForecastSnapshot(city) {
+      return city === 'Paris'
+        ? { data: cachedForecast, savedAt: '2026-11-23T08:00:00.000Z', stale: false }
+        : null;
+    },
+    groupForecastByDay(data) { return [data.city.name]; },
+    renderForecast(days) { rendered.push(days[0]); },
+    renderFeelsLikeSection() {}
+  });
+  vm.runInContext(uiSource, context);
+
+  await context.loadForecast('Paris');
+  assert.deepEqual(rendered, ['Paris']);
+  assert.equal(container.dataset.state, 'cached');
+  assert.equal(container.children[0].className, 'forecast-cache-note');
+});
