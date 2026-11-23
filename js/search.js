@@ -17,11 +17,10 @@ function normalizeCitySearchText(value) {
     .toLocaleLowerCase('ru-RU')
     .replace(/ё/g, 'е')
     .normalize('NFD')
-    .replace(/[\\u0300-\\u036f]/g, '')
-    .replace(/[\\s\\u2010-\\u2015-]+/g, '')
-    .replace(/[^\\p{L}\\p{N}]/gu, '');
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s\u2010-\u2015-]+/g, '')
+    .replace(/[^\p{L}\p{N}]/gu, '');
 }
-
 const US_STATES = {
   'колорадо': 'Denver',
   'калифорния': 'Sacramento',
