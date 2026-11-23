@@ -25,6 +25,7 @@ function createAppHarness() {
       },
     },
     document: {
+      addEventListener() {},
       getElementById(id) {
         if (id === 'main-city') return cityLabel;
         if (id === 'retry-geo-btn') return retryButton;
