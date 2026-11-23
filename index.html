@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="WeatherNow — текущая погода, прогноз на неделю, почасовые графики и погодные сцены для выбранного города.">
-    <meta name="theme-color" content="#4facfe">
+    <meta name="theme-color" content="#101b35">
     <title>WeatherNow — Погода, которую хочется открыть</title>
 
     <!-- Favicon -->
@@ -68,11 +68,11 @@
                             <i class="bi bi-layout-split me-1"></i>Сравнить
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('favorites')"
-                            title="Избранное">
+                            title="Избранное" aria-label="Избранные города">
                             <i class="bi bi-heart me-1"></i>Избранное
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="openWeatherNotificationSettings()"
-                            title="Уведомления">
+                            title="Уведомления" aria-label="Настройки уведомлений">
                             <i class="bi bi-bell"></i>
                         </button>
                     </div>
@@ -80,15 +80,15 @@
                     <!-- Мобильное меню -->
                     <div class="d-lg-none d-flex align-items-center gap-1">
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('home')"
-                            title="Главная">
+                            title="Главная" aria-label="Главная">
                             <i class="bi bi-house"></i>
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('rainmap')"
-                            title="Карта">
+                            title="Карта" aria-label="Карта осадков">
                             <i class="bi bi-map"></i>
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('compare')"
-                            title="Сравнить">
+                            title="Сравнить" aria-label="Сравнить города">
                             <i class="bi bi-layout-split"></i>
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('favorites')"
