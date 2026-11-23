@@ -189,6 +189,9 @@ async function loadForecast(city) {
   } catch (error) {
     if (requestId !== forecastRequestId) return;
 
+    // Keep a usable forecast for this city when the network request fails.
+    if (restoreCachedForecast(city)) return;
+
     const forecastContainer = document.getElementById('forecast-container');
     if (forecastContainer) {
       forecastContainer.dataset.state = 'error';
