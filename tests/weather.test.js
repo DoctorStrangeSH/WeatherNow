@@ -215,8 +215,13 @@ test('latest city request wins when weather responses arrive out of order', asyn
   const pending = new Map();
   const renderedCities = [];
   const context = vm.createContext({
-    document: { addEventListener() {} },
+    document: {
+      addEventListener() {},
+      querySelector() { return { dataset: {} }; },
+      getElementById(id) { return { textContent: '', dataset: {}, classList: { add() {}, remove() {} } }; }
+    },
     currentWeatherRequestId: 0,
+    currentWeatherCityName: '',
     forecastRequestId: 0,
     fetchWeather: city => new Promise(resolve => pending.set(city, resolve)),
     renderCurrentWeather: data => renderedCities.push(data.name),
@@ -841,8 +846,13 @@ test('rapid city selection ignores a slower response from the previously selecte
   const pending = new Map();
   const renderedCities = [];
   const context = vm.createContext({
-    document: { addEventListener() {} },
+    document: {
+      addEventListener() {},
+      querySelector() { return { dataset: {} }; },
+      getElementById() { return { textContent: '', dataset: {}, classList: { add() {}, remove() {} } }; }
+    },
     navigator: {},
+    currentWeatherCityName: '',
     currentWeatherRequestId: 0, forecastRequestId: 0, currentLat: null, currentLon: null,
     fetchWeather(city) { return new Promise((resolve, reject) => pending.set(city, { resolve, reject })); },
     renderCurrentWeather(data) { renderedCities.push(data.name); },
