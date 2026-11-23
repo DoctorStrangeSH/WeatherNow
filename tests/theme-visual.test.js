@@ -81,7 +81,7 @@ test('closing city search invalidates pending requests and prevents stale sugges
 });
 
 test('all chart scripts use the active theme palette without stale day/night variables', () => {
-  assert.doesNotMatch(chartSource, /\\bisDark\\b/);
-  assert.doesNotMatch(feelsLikeSource, /\\bisDark\\b/);
-  assert.match(feelsLikeSource, /color: palette\\.ticks/);
+  assert.doesNotMatch(chartSource, /\bisDark\b/);
+  assert.doesNotMatch(feelsLikeSource, /\bisDark\b/);
+  assert.match(feelsLikeSource, /color: palette\.ticks/);
 });
