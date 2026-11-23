@@ -284,8 +284,7 @@ function saveLastForecastSnapshot(city, data) {
 
     // Keep the most recently updated cities and bound local storage usage.
     const recentCities = Object.entries(cities)
-      .slice(-MAX_CACHED_FORECAST_CITIES)
-      .reverse();
+      .slice(-MAX_CACHED_FORECAST_CITIES);
 
     localStorage.setItem(LAST_FORECAST_CACHE_KEY, JSON.stringify({
       version: 2,
