@@ -32,10 +32,10 @@ function renderFeelsLikeSection(forecastData) {
           <i class="bi bi-thermometer-sun me-2"></i>Температура и ощущения · 24 часа
         </h5>
         <div class="btn-group btn-group-sm">
-          <button class="btn btn-glass active" onclick="switchFeelsLikeView('chart')">
+          <button class="btn btn-glass active" type="button" aria-label="Показать график ощущаемой температуры" aria-pressed="true" onclick="switchFeelsLikeView('chart')">
             <i class="bi bi-graph-up"></i>
           </button>
-          <button class="btn btn-glass" onclick="switchFeelsLikeView('cards')">
+          <button class="btn btn-glass" type="button" aria-label="Показать карточки ощущаемой температуры" aria-pressed="false" onclick="switchFeelsLikeView('cards')">
             <i class="bi bi-grid-3x3-gap"></i>
           </button>
         </div>
