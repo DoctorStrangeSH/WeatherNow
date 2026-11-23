@@ -105,6 +105,12 @@ try {
   });
   page.on('pageerror', error => pageErrors.push(error.message));
 
+  await page.route('https://embed.windy.com/**', route => route.fulfill({
+    status: 200,
+    contentType: 'text/html',
+    body: '<!doctype html><html><body>Mock Windy map</body></html>'
+  }));
+
   await page.route(`${WORKER_ORIGIN}/**`, async route => {
     const url = new URL(route.request().url());
     workerRequests.push(url);
@@ -191,6 +197,18 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(screenshotDir, 'mobile-390.png'), fullPage: true });
 
+  await page.evaluate(() => showScreen('rainmap'));
+  await page.waitForFunction(() => document.querySelector('#screen-rainmap')?.classList.contains('active'));
+  await page.waitForSelector('#weather-map iframe');
+  assert.equal(await page.locator('[data-layer="precipitation"]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('[data-layer="temperature"]').getAttribute('aria-pressed'), 'false');
+  assert.match(await page.locator('#weather-map iframe').getAttribute('src'), /overlay=rain/);
+  await page.locator('[data-layer="wind"]').click();
+  await page.waitForFunction(() => document.querySelector('#weather-map iframe')?.src.includes('overlay=wind'));
+  assert.equal(await page.locator('[data-layer="wind"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(await page.locator('#weather-map iframe').isVisible(), 'Weather map is visible on mobile');
+  await page.screenshot({ path: path.join(screenshotDir, 'mobile-map-390.png'), fullPage: true });
+
   await context.setOffline(true);
   await page.waitForFunction(() => document.body.dataset.network === 'offline');
   assert.equal(await page.locator('#network-status').isVisible(), true);
@@ -207,7 +225,7 @@ try {
   assert.ok(workerRequests.every(url => !url.searchParams.has('appid')), 'Browser requests must never expose an upstream API key');
 
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`);
-  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, offline/online recovery, and API-key isolation. Screenshots saved.');
+  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, offline/online recovery, and API-key isolation. Screenshots saved.');
   await context.close();
 } finally {
   await browser.close();
