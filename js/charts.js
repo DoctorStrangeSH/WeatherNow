@@ -1,3 +1,23 @@
+let chartLibraryPromise = null;
+
+function ensureChartLibrary() {
+  if (typeof window.Chart !== 'undefined') return Promise.resolve(window.Chart);
+  if (chartLibraryPromise) return chartLibraryPromise;
+
+  chartLibraryPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    script.async = true;
+    script.onload = () => resolve(window.Chart);
+    script.onerror = () => {
+      chartLibraryPromise = null;
+      reject(new Error('Не удалось загрузить библиотеку графиков'));
+    };
+    document.head.appendChild(script);
+  });
+  return chartLibraryPromise;
+}
+
 let tempChartInstance = null;
 let hourlyChartInstance = null;
 
@@ -10,9 +30,10 @@ function getChartThemePalette() {
   };
 }
 
-function renderTempChart(days) {
+async function renderTempChart(days) {
   const canvas = document.getElementById('tempChart');
   if (!canvas || days.length === 0) return;
+  try { await ensureChartLibrary(); } catch (error) { console.warn(error.message); return; }
   const ctx = canvas.getContext('2d');
   if (tempChartInstance) tempChartInstance.destroy();
 
@@ -66,9 +87,10 @@ function renderTempChart(days) {
   });
 }
 
-function renderHourlyChart(hourlyData) {
+async function renderHourlyChart(hourlyData) {
   const canvas = document.getElementById('hourlyChart');
   if (!canvas || !Array.isArray(hourlyData) || hourlyData.length === 0) return;
+  try { await ensureChartLibrary(); } catch (error) { console.warn(error.message); return; }
   const ctx = canvas.getContext('2d');
   if (hourlyChartInstance) hourlyChartInstance.destroy();
 
