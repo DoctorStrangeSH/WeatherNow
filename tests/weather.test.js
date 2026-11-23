@@ -715,3 +715,70 @@ test('theme initialization keeps only one refresh interval', () => {
   assert.equal(intervalId, 2);
   assert.deepEqual(cleared, [1]);
 });
+
+test('repeated weather changes keep a single active effect container per type', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const skyChildren = [];
+  const makeElement = () => ({
+    id: '', className: '', style: { setProperty(name, value) { this[name] = value; } },
+    dataset: {}, children: [], setAttribute() {},
+    appendChild(child) { this.children.push(child); },
+    remove() { const index = skyChildren.indexOf(this); if (index >= 0) skyChildren.splice(index, 1); }
+  });
+  const sky = {
+    dataset: {}, appendChild(element) { skyChildren.push(element); },
+    querySelector(selector) {
+      return selector === '.weather-cloud-layers' ? skyChildren.find(element => element.className === 'weather-cloud-layers') || null : null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.weather-cloud-layer') { const root = skyChildren.find(element => element.className === 'weather-cloud-layers'); return root ? root.children : []; }
+      if (selector === '.cloud') return [];
+      if (selector.startsWith('#')) return skyChildren.filter(element => element.id === selector.slice(1));
+      return [];
+    }
+  };
+  const context = vm.createContext({
+    document: { addEventListener() {}, getElementById: id => id === 'sky' ? sky : null, createElement: makeElement },
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 1440, matchMedia: () => ({ matches: false }) }, Math
+  });
+  vm.runInContext(source, context);
+  const sequence = [800, 500, 601, 202, 741, 300, 804, 800, 602, 211, 701, 501, 800, 600, 804, 200, 300, 800, 802, 600];
+  for (const code of sequence) context.applyWeatherEffects(code, 'day', 8);
+  for (const id of ['rain-container', 'snow-container', 'wind-lines', 'lightning', 'fog']) {
+    assert.ok(skyChildren.filter(element => element.id === id).length <= 1, 'duplicate ' + id);
+  }
+  assert.equal(skyChildren.filter(element => element.className === 'weather-cloud-layers').length, 1);
+  assert.equal(skyChildren.length, 2, 'only cloud layers and final weather effect should remain');
+});
+
+test('reduced-motion weather changes do not create animated particle containers', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const skyChildren = [];
+  const makeElement = () => ({
+    id: '', className: '', style: { setProperty(name, value) { this[name] = value; } },
+    dataset: {}, children: [], setAttribute() {},
+    appendChild(child) { this.children.push(child); },
+    remove() { const index = skyChildren.indexOf(this); if (index >= 0) skyChildren.splice(index, 1); }
+  });
+  const sky = {
+    dataset: {}, appendChild(element) { skyChildren.push(element); },
+    querySelector(selector) { return selector === '.weather-cloud-layers' ? skyChildren.find(element => element.className === 'weather-cloud-layers') || null : null; },
+    querySelectorAll(selector) {
+      if (selector === '.weather-cloud-layer') { const root = skyChildren.find(element => element.className === 'weather-cloud-layers'); return root ? root.children : []; }
+      if (selector === '.cloud') return [];
+      if (selector.startsWith('#')) return skyChildren.filter(element => element.id === selector.slice(1));
+      return [];
+    }
+  };
+  const context = vm.createContext({
+    document: { addEventListener() {}, getElementById: id => id === 'sky' ? sky : null, createElement: makeElement },
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 375, matchMedia: () => ({ matches: true }) }, Math
+  });
+  vm.runInContext(source, context);
+  [500, 601, 202, 741, 800].forEach(code => context.applyWeatherEffects(code, 'day', 12));
+  assert.equal(skyChildren.filter(element => ['rain-container', 'snow-container', 'wind-lines', 'lightning', 'fog'].includes(element.id)).length, 0);
+  assert.equal(sky.dataset.motion, 'reduced');
+  assert.equal(skyChildren.filter(element => element.className === 'weather-cloud-layers').length, 1);
+});
