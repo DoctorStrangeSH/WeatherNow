@@ -250,7 +250,7 @@ try {
   const dialogA11y = await page.evaluate(async () => {
     const dialog = document.querySelector('#notification-settings-dialog');
     const result = await axe.run(dialog, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } });
-    return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.length })), passes: result.passes.length };
+    return { violations: result.violations.map(item => ({ id: item.id, impact: item.impact, description: item.help, nodes: item.nodes.map(node => ({ target: node.target, html: node.html, summary: node.failureSummary })) })), passes: result.passes.length };
   });
   console.log('axe-core notification dialog audit:', JSON.stringify(dialogA11y));
   assert.equal(await page.locator('#notification-enabled').isChecked(), false);
