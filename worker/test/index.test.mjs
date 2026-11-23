@@ -90,6 +90,60 @@ test('geocoding endpoint accepts a bounded result count', async () => {
   }
 });
 
+test('rate limiter rejects clients over the configured limit', async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamCalled = false;
+  globalThis.fetch = async () => {
+    upstreamCalled = true;
+    return new Response(JSON.stringify({ name: 'Berlin' }), { status: 200 });
+  };
+
+  const limitedEnv = {
+    ...env,
+    WEATHER_RATE_LIMITER: {
+      limit: async ({ key }) => {
+        assert.equal(key, '203.0.113.10');
+        return { success: false };
+      }
+    }
+  };
+
+  try {
+    const response = await worker.fetch(new Request(
+      'https://weather-worker.test/weather?q=Berlin',
+      { headers: { Origin: allowedOrigin, 'CF-Connecting-IP': '203.0.113.10' } }
+    ), limitedEnv);
+    const body = await response.json();
+
+    assert.equal(response.status, 429);
+    assert.equal(response.headers.get('Retry-After'), '60');
+    assert.equal(body.error, 'Слишком много запросов. Попробуйте позже');
+    assert.equal(upstreamCalled, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('rate limiter failures fail closed without contacting upstream', async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamCalled = false;
+  globalThis.fetch = async () => {
+    upstreamCalled = true;
+    return new Response('{}');
+  };
+
+  try {
+    const response = await worker.fetch(request('/weather?q=Berlin'), {
+      ...env,
+      WEATHER_RATE_LIMITER: { limit: async () => { throw new Error('binding unavailable'); } }
+    });
+    assert.equal(response.status, 503);
+    assert.equal(upstreamCalled, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('upstream requests have a bounded timeout', async () => {
   const originalFetch = globalThis.fetch;
   let timeoutSignal;
