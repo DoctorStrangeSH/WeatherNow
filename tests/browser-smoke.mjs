@@ -98,6 +98,13 @@ try {
   });
   const page = await context.newPage();
   await page.addInitScript(() => {
+    window.__weatherNotifications = [];
+    class TestNotification {
+      static permission = 'granted';
+      static async requestPermission() { return 'granted'; }
+      constructor(title, options) { window.__weatherNotifications.push({ title, options }); }
+    }
+    Object.defineProperty(window, 'Notification', { configurable: true, value: TestNotification });
     Object.defineProperty(navigator, 'geolocation', {
       configurable: true,
       value: { getCurrentPosition(_success, error) { error({ code: 1, message: 'Permission denied' }); } }
@@ -231,6 +238,18 @@ try {
   assert.match(await page.locator('.compare-city-name').nth(1).innerText(), /Москва/);
   await page.screenshot({ path: path.join(screenshotDir, 'compare-390.png'), fullPage: true });
 
+  await page.evaluate(() => openWeatherNotificationSettings());
+  await page.waitForSelector('#notification-settings-dialog[open]');
+  assert.equal(await page.locator('#notification-enabled').isChecked(), false);
+  await page.locator('#notification-enabled').check();
+  await page.locator('#notification-wind-threshold').fill('2');
+  await page.locator('#notification-wind').check();
+  await page.locator('#notification-settings-dialog button[type="submit"]').click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('weathernow-notification-settings') || '{}').enabled === true);
+  await page.waitForFunction(() => window.__weatherNotifications.length > 0);
+  assert.match(await page.evaluate(() => window.__weatherNotifications[0].title), /ветер/i);
+  await page.screenshot({ path: path.join(screenshotDir, 'notifications-390.png'), fullPage: true });
+
   await context.setOffline(true);
   await page.waitForFunction(() => document.body.dataset.network === 'offline');
   assert.equal(await page.locator('#network-status').isVisible(), true);
@@ -247,7 +266,7 @@ try {
   assert.ok(workerRequests.every(url => !url.searchParams.has('appid')), 'Browser requests must never expose an upstream API key');
 
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`);
-  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, favorites add/remove, city comparison, offline/online recovery, and API-key isolation. Screenshots saved.');
+  console.log('Browser smoke passed: startup, forecast, city search, 320–1440px layouts, precipitation map and layer switching, favorites add/remove, city comparison, configurable weather notifications, offline/online recovery, and API-key isolation. Screenshots saved.');
   await context.close();
 } finally {
   await browser.close();
