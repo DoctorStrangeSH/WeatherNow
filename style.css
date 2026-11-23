@@ -3235,3 +3235,78 @@ body {
 #sky .weather-cloud-layers {
     z-index: 2;
 }
+
+
+/* Network connectivity banner */
+.network-status {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: min(100% - 2rem, 980px);
+    margin: .75rem auto 0;
+    padding: .75rem 1rem;
+    border: 1px solid rgba(255, 190, 90, .28);
+    border-radius: 1rem;
+    background: rgba(70, 48, 24, .76);
+    color: #fff4df;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-size: .9rem;
+}
+
+.network-status[hidden] { display: none; }
+
+.network-status__copy {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+}
+
+.network-status__copy > i {
+    flex: 0 0 auto;
+    font-size: 1.1rem;
+}
+
+.network-status__retry {
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 999px;
+    padding: .4rem .8rem;
+    background: rgba(255, 255, 255, .1);
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    transition: background .2s ease, opacity .2s ease;
+}
+
+.network-status__retry:hover:not(:disabled) { background: rgba(255, 255, 255, .2); }
+.network-status__retry:disabled { cursor: not-allowed; opacity: .48; }
+.network-status.is-online {
+    border-color: rgba(100, 220, 160, .3);
+    background: rgba(24, 74, 56, .82);
+    color: #e4fff0;
+}
+
+@media (max-width: 575.98px) {
+    .network-status {
+        align-items: flex-start;
+        width: calc(100% - 1.25rem);
+        margin-top: .5rem;
+        padding: .7rem .8rem;
+        font-size: .82rem;
+    }
+
+    .network-status__retry {
+        padding: .35rem .65rem;
+        font-size: .78rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .network-status__retry { transition: none; }
+}
