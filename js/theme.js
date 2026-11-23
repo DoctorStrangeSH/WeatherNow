@@ -254,7 +254,11 @@ function createSnow(intensity, wind = getPrecipitationWindProfile(currentWindSpe
     flake.style.width = size + 'px';
     flake.style.height = size + 'px';
     flake.style.left = Math.random() * 100 + '%';
-    flake.style.setProperty('--snow-drift', (foreground ? wind.snowDrift : Math.round(wind.snowDrift * 0.55)) + 'px');
+    const drift = foreground ? wind.snowDrift : Math.round(wind.snowDrift * 0.55);
+    flake.style.setProperty('--snow-drift', drift + 'px');
+    flake.style.setProperty('--snow-drift-q1', Math.round(drift * .25) + 'px');
+    flake.style.setProperty('--snow-drift-half', Math.round(drift * .5) + 'px');
+    flake.style.setProperty('--snow-drift-q3', Math.round(drift * .75) + 'px');
     flake.style.animationDuration = (Math.random() * 3 + (foreground ? 3 : 5)) + 's';
     flake.style.animationDelay = Math.random() * 5 + 's';
     flake.style.opacity = foreground ? '0.85' : '0.48';
