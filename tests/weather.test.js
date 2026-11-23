@@ -807,3 +807,29 @@ test('cloud layers render in front of sun and moon while remaining behind app UI
   assert.match(css, /#sky\s+\.weather-cloud-layers\s*\{[^}]*z-index:\s*2/s);
   assert.match(css, /\.app-container\s*\{[^}]*z-index:\s*2/s);
 });
+
+test('switching cities resets missing timezone and wind instead of reusing previous city values', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
+  const hero = { dataset: {} };
+  const context = vm.createContext({ document: { addEventListener() {}, querySelector: () => hero } });
+  vm.runInContext(source, context);
+  const appliedTimezones = [];
+  context.applyTimeTheme = timezone => appliedTimezones.push(timezone);
+  context.updateWeatherTheme(500, 7200, 14);
+  assert.equal(context.currentWeatherCode, 500);
+  assert.equal(context.currentTimezone, 7200);
+  assert.equal(context.currentWindSpeed, 14);
+  context.updateWeatherTheme(801, undefined, undefined);
+  assert.equal(context.currentWeatherCode, 801);
+  assert.equal(context.currentTimezone, 0);
+  assert.equal(context.currentWindSpeed, 0);
+  assert.deepEqual(appliedTimezones, [7200, 0]);
+  assert.equal(hero.dataset.weather, 'partly-cloudy');
+});
+
+test('new city and geolocation requests invalidate pending forecasts immediately', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  assert.match(source, /async function initApp\(\)\s*\{\s*const requestId = \+\+currentWeatherRequestId;\s*forecastRequestId \+= 1;/);
+  assert.match(source, /async function loadCityWeather\(city\)\s*\{\s*const requestId = \+\+currentWeatherRequestId;\s*forecastRequestId \+= 1;/);
+  assert.match(source, /if \(requestId !== currentWeatherRequestId\) return;/);
+});
