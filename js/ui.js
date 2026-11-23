@@ -2,6 +2,7 @@ let currentLat = null;
 let currentLon = null;
 let currentForecastData = null;
 let currentForecastCity = '';
+let currentWeatherCityName = '';
 let currentWeatherRequestId = 0;
 let forecastRequestId = 0;
 
@@ -90,6 +91,7 @@ function renderWeatherInsights(data) {
 
 function renderCurrentWeather(data) {
   currentForecastData = null;
+  currentWeatherCityName = data.name || '';
   document.getElementById('main-city').textContent = `${data.name}, ${data.sys.country}`;
   document.getElementById('main-temp').textContent = `${Math.round(data.main.temp)}°C`;
   document.getElementById('main-desc').textContent = capitalize(data.weather[0].description);
