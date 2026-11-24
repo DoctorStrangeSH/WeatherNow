@@ -5,6 +5,7 @@ let themeRefreshInterval = null;
 
 function initTheme() {
   createSkyElements();
+  syncWeatherAnimationVisibility();
   applyTimeTheme();
   if (themeRefreshInterval !== null) clearInterval(themeRefreshInterval);
   themeRefreshInterval = setInterval(applyTimeTheme, 600000);
@@ -528,5 +529,15 @@ function updateStarsVisibility(transitionFactor, weatherCode = currentWeatherCod
   stars.style.opacity = String(opacity);
   stars.setAttribute('aria-hidden', opacity <= 0.005 ? 'true' : 'false');
 }
+
+function syncWeatherAnimationVisibility(isVisible = !document.hidden) {
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+  sky.dataset.pageVisible = isVisible ? 'true' : 'false';
+}
+
+document.addEventListener('visibilitychange', () => {
+  syncWeatherAnimationVisibility();
+});
 
 document.addEventListener('DOMContentLoaded', initTheme);
