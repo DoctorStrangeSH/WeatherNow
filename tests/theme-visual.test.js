@@ -471,3 +471,13 @@ test('storm cloud highlights flash in sync with the lightning and stop for reduc
   assert.match(styleSource, /93%\s*\{\s*filter:\s*blur\(7px\) brightness\(2\.15\)/);
   assert.match(styleSource, /prefers-reduced-motion:\s*reduce\)\s*\{\s*#sky \.weather-cloud-layer\[data-weather="storm"\]::before/);
 });
+
+test('rain and snow particles expose four depth bands with restrained foreground effects', () => {
+  assert.match(themeSource, /const depth = i % 4;[\\s\\S]*?drop\\.dataset\\.depth = String\\(depth\\)/);
+  assert.match(themeSource, /flake\\.dataset\\.depth = String\\(depth\\)/);
+  for (const depth of ['0', '1', '2', '3']) {
+    assert.ok(styleSource.includes(`.raindrop[data-depth="${depth}"]`), `Rain depth ${depth} has a visual profile`);
+    assert.ok(styleSource.includes(`.snowflake[data-depth="${depth}"]`), `Snow depth ${depth} has a visual profile`);
+  }
+  assert.match(styleSource, /\.snowflake\[data-depth="3"\][\\s\\S]*?radial-gradient/);
+});
