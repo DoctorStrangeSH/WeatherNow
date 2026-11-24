@@ -547,15 +547,18 @@ test('weather background crossfade snapshots the old scene and respects reduced 
     }
   };
   const document = {
+    getElementById(id) { return id === 'sky' ? sky : null; },
     createElement() {
       return {
         style: {},
         className: '',
         attributes: {},
+        listeners: {},
+        listenerOptions: {},
         setAttribute(name, value) { this.attributes[name] = value; },
         addEventListener(name, callback, options) {
-          this.animationEnd = callback;
-          this.animationEndOptions = options;
+          this.listeners[name] = callback;
+          this.listenerOptions[name] = options;
         },
         remove() {
           const index = sky.children.indexOf(this);
@@ -584,9 +587,15 @@ test('weather background crossfade snapshots the old scene and respects reduced 
   assert.equal(layer.className, 'sky-scene-transition');
   assert.equal(layer.style.backgroundImage, 'linear-gradient(rgb(1, 2, 3), rgb(4, 5, 6))');
   assert.equal(layer.attributes['aria-hidden'], 'true');
-  assert.equal(layer.animationEndOptions.once, true);
-  layer.animationEnd();
+  assert.equal(layer.listenerOptions.animationend.once, true);
+  assert.equal(layer.listenerOptions.animationcancel.once, true);
+  layer.listeners.animationend();
   assert.equal(sky.children.length, 0, 'the old background layer is removed after its fade');
+
+  vm.runInContext('startSkyBackgroundTransition(sky, "snow", "night")', context);
+  const cancelledLayer = sky.children[0];
+  cancelledLayer.listeners.animationcancel();
+  assert.equal(sky.children.length, 0, 'cancelled CSS animations also clean up their background layer');
 
   const reducedContext = loadInBrowserContext(themeSource, {
     document,
@@ -603,4 +612,80 @@ test('weather background crossfade CSS stays behind scene layers and pauses in h
   assert.match(transitionStyles, /@keyframes skySceneCrossfade/);
   assert.match(transitionStyles, /animation-play-state:\s*paused\s*!important/);
   assert.match(transitionStyles, /prefers-reduced-motion:\s*reduce/);
+});
+
+
+test('switching to reduced motion removes in-flight sky transitions and prevents duplicate listeners', () => {
+  const sky = {
+    dataset: { weather: 'clear', timeOfDay: 'day' },
+    children: [],
+    firstChild: null,
+    querySelector(selector) {
+      return selector === '.sky-scene-transition'
+        ? this.children.find(node => node.className === 'sky-scene-transition') || null
+        : null;
+    },
+    querySelectorAll(selector) {
+      return selector === '.sky-scene-transition'
+        ? this.children.filter(node => node.className === 'sky-scene-transition')
+        : [];
+    },
+    insertBefore(node) {
+      this.children.unshift(node);
+      node.parentNode = this;
+    }
+  };
+  const listeners = new Set();
+  let registrations = 0;
+  const mediaQuery = {
+    matches: false,
+    addEventListener(name, callback) {
+      if (name === 'change') {
+        registrations += 1;
+        listeners.add(callback);
+      }
+    }
+  };
+  const document = {
+    getElementById(id) { return id === 'sky' ? sky : null; },
+    createElement() {
+      return {
+        style: {},
+        className: '',
+        setAttribute() {},
+        addEventListener() {},
+        remove() {
+          const index = sky.children.indexOf(this);
+          if (index !== -1) sky.children.splice(index, 1);
+        }
+      };
+    }
+  };
+  const window = {
+    matchMedia: () => mediaQuery,
+    getComputedStyle: () => ({
+      backgroundImage: 'linear-gradient(#123, #456)',
+      backgroundColor: 'transparent',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    })
+  };
+  const context = loadInBrowserContext(themeSource, { document, window, sky });
+
+  vm.runInContext('watchReducedMotionPreference(); watchReducedMotionPreference()', context);
+  assert.equal(registrations, 1, 'the preference listener is registered only once');
+
+  vm.runInContext(
+    'startSkyBackgroundTransition(sky, "rain", "day"); startSkyBackgroundTransition(sky, "snow", "night")',
+    context
+  );
+  assert.equal(sky.children.length, 1, 'rapid weather changes never stack transition layers');
+
+  mediaQuery.matches = true;
+  listeners.forEach(listener => listener({ matches: true }));
+  assert.equal(sky.children.length, 0, 'enabling reduced motion removes the in-flight transition immediately');
+
+  vm.runInContext('startSkyBackgroundTransition(sky, "clear", "night")', context);
+  assert.equal(sky.children.length, 0, 'future transitions remain disabled while reduced motion is active');
 });

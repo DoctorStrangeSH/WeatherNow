@@ -369,6 +369,27 @@ try {
   });
   assert.equal(reducedSceneTransition, false, 'Reduced motion skips the background crossfade');
 
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const rapidSceneTransitions = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    updateWeatherTheme(800, 0, 8);
+    updateWeatherTheme(502, 0, 8);
+    return sky.querySelectorAll('.sky-scene-transition').length;
+  });
+  assert.equal(rapidSceneTransitions, 1, 'Rapid weather changes keep at most one crossfade layer');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForFunction(
+    () => !document.querySelector('#sky .sky-scene-transition'),
+    null,
+    { timeout: 1500 }
+  );
+  const midFlightReducedMotionCleanup = await page.evaluate(
+    () => !document.querySelector('#sky .sky-scene-transition')
+  );
+  assert.equal(midFlightReducedMotionCleanup, true,
+    'Enabling reduced motion mid-transition removes the old scene layer immediately');
+
   const reducedStormFlash = await page.evaluate(() => {
     const sky = document.getElementById('sky');
     currentWeatherCode = 211;

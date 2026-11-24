@@ -2,8 +2,11 @@ let currentWeatherCode = 800;
 let currentTimezone = 0;
 let currentWindSpeed = 0;
 let themeRefreshInterval = null;
+let reducedMotionMediaQuery = null;
+let reducedMotionChangeHandler = null;
 
 function initTheme() {
+  watchReducedMotionPreference();
   createSkyElements();
   syncWeatherAnimationVisibility();
   applyTimeTheme();
@@ -46,6 +49,47 @@ function applyTimeTheme(timezoneOffset = currentTimezone) {
   
 }
 
+function removeSkySceneTransition(sky = document.getElementById('sky')) {
+  if (!sky) return;
+
+  const layers = typeof sky.querySelectorAll === 'function'
+    ? Array.from(sky.querySelectorAll('.sky-scene-transition'))
+    : [typeof sky.querySelector === 'function' ? sky.querySelector('.sky-scene-transition') : null].filter(Boolean);
+
+  layers.forEach(layer => {
+    if (typeof layer.remove === 'function') {
+      layer.remove();
+    } else if (layer.parentNode && typeof layer.parentNode.removeChild === 'function') {
+      layer.parentNode.removeChild(layer);
+    }
+  });
+}
+
+function watchReducedMotionPreference() {
+  if (typeof window === 'undefined'
+    || typeof window.matchMedia !== 'function'
+    || reducedMotionMediaQuery) return;
+
+  const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (!mediaQuery) return;
+
+  reducedMotionMediaQuery = mediaQuery;
+  reducedMotionChangeHandler = event => {
+    const shouldReduceMotion = event && typeof event.matches === 'boolean'
+      ? event.matches
+      : mediaQuery.matches;
+    if (shouldReduceMotion) removeSkySceneTransition();
+  };
+
+  if (typeof mediaQuery.addEventListener === 'function') {
+    mediaQuery.addEventListener('change', reducedMotionChangeHandler);
+  } else if (typeof mediaQuery.addListener === 'function') {
+    mediaQuery.addListener(reducedMotionChangeHandler);
+  }
+
+  if (mediaQuery.matches) removeSkySceneTransition();
+}
+
 function startSkyBackgroundTransition(sky, nextScene, nextTimeOfDay) {
   if (!sky || !sky.dataset || !sky.dataset.weather) return;
 
@@ -57,9 +101,7 @@ function startSkyBackgroundTransition(sky, nextScene, nextTimeOfDay) {
     ? sky.querySelector('.sky-scene-transition')
     : null;
   if (activeTransition) {
-    if (prefersReducedMotion() && typeof activeTransition.remove === 'function') {
-      activeTransition.remove();
-    }
+    if (prefersReducedMotion()) removeSkySceneTransition(sky);
     return;
   }
 
@@ -81,13 +123,16 @@ function startSkyBackgroundTransition(sky, nextScene, nextTimeOfDay) {
   layer.style.backgroundSize = previousBackground.backgroundSize;
   layer.style.backgroundPosition = previousBackground.backgroundPosition;
   layer.style.backgroundRepeat = previousBackground.backgroundRepeat;
-  layer.addEventListener('animationend', () => {
+
+  const removeLayer = () => {
     if (typeof layer.remove === 'function') {
       layer.remove();
     } else if (layer.parentNode && typeof layer.parentNode.removeChild === 'function') {
       layer.parentNode.removeChild(layer);
     }
-  }, { once: true });
+  };
+  layer.addEventListener('animationend', removeLayer, { once: true });
+  layer.addEventListener('animationcancel', removeLayer, { once: true });
 
   // Keep the previous sky below stars, the sun/moon and the weather-effect layers.
   sky.insertBefore(layer, sky.firstChild || null);
