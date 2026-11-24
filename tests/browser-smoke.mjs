@@ -309,6 +309,83 @@ try {
   });
   assert.equal(resumedRain.visible, 'true');
   assert.equal(resumedRain.animation, 'running', 'Rain animation resumes when the tab is visible');
+
+  // Pseudo-elements own independent animations and must pause with their scene.
+  const pausedStorm = await page.evaluate(() => {
+    updateWeatherTheme(211, 0, 8);
+    syncWeatherAnimationVisibility(false);
+    const sky = document.getElementById('sky');
+    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
+    const read = (element, pseudo = '') => {
+      if (!element) return 'missing';
+      return (pseudo ? getComputedStyle(element, pseudo) : getComputedStyle(element)).animationPlayState;
+    };
+    return {
+      lightning: read(sky.querySelector('#lightning')),
+      lightningBolt: read(sky.querySelector('#lightning'), '::before'),
+      stormCloud: read(cloud),
+      stormCloudLight: read(cloud, '::before'),
+      wind: read(sky.querySelector('.wind-line')),
+      sunAura: read(sky.querySelector('#sun'), '::after'),
+      starTwinkle: read(sky.querySelector('#stars .star'))
+    };
+  });
+  assert.ok(Object.values(pausedStorm).every(state => state === 'paused'),
+    `Storm, cloud, wind, sun and star motion pauses in background: ${JSON.stringify(pausedStorm)}`);
+
+  const resumedStorm = await page.evaluate(() => {
+    syncWeatherAnimationVisibility(true);
+    const sky = document.getElementById('sky');
+    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
+    const read = (element, pseudo = '') => {
+      if (!element) return 'missing';
+      return (pseudo ? getComputedStyle(element, pseudo) : getComputedStyle(element)).animationPlayState;
+    };
+    return [
+      read(sky.querySelector('#lightning')),
+      read(sky.querySelector('#lightning'), '::before'),
+      read(cloud),
+      read(cloud, '::before'),
+      read(sky.querySelector('.wind-line')),
+      read(sky.querySelector('#sun'), '::after'),
+      read(sky.querySelector('#stars .star'))
+    ];
+  });
+  assert.ok(resumedStorm.every(state => state === 'running'),
+    `Storm scene motion resumes when visible: ${JSON.stringify(resumedStorm)}`);
+
+  const pausedFog = await page.evaluate(() => {
+    updateWeatherTheme(741, 0, 2);
+    syncWeatherAnimationVisibility(false);
+    const fog = document.getElementById('fog');
+    return fog ? [
+      getComputedStyle(fog, '::before').animationPlayState,
+      getComputedStyle(fog, '::after').animationPlayState
+    ] : ['missing', 'missing'];
+  });
+  assert.deepEqual(pausedFog, ['paused', 'paused'], 'Both volumetric fog layers pause in background');
+
+  const resumedFog = await page.evaluate(() => {
+    syncWeatherAnimationVisibility(true);
+    const fog = document.getElementById('fog');
+    return fog ? [
+      getComputedStyle(fog, '::before').animationPlayState,
+      getComputedStyle(fog, '::after').animationPlayState
+    ] : ['missing', 'missing'];
+  });
+  assert.deepEqual(resumedFog, ['running', 'running'], 'Both volumetric fog layers resume on return');
+
+  const pausedSnow = await page.evaluate(() => {
+    updateWeatherTheme(601, 0, 2);
+    syncWeatherAnimationVisibility(false);
+    return getComputedStyle(document.querySelector('#sky .snowflake')).animationPlayState;
+  });
+  assert.equal(pausedSnow, 'paused', 'Snow particles pause in background');
+  const resumedSnow = await page.evaluate(() => {
+    syncWeatherAnimationVisibility(true);
+    return getComputedStyle(document.querySelector('#sky .snowflake')).animationPlayState;
+  });
+  assert.equal(resumedSnow, 'running', 'Snow particles resume on return');
   await page.evaluate(() => updateWeatherTheme(800, 0, 2));
 
   // Restore the API-backed city scene before the rest of browser smoke.
