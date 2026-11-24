@@ -222,6 +222,8 @@ function updateSkyElements(timeOfDay) {
   moon.style.transform = 'translate(-50%, -50%)';
   const lunarPhase = getMoonPhase();
   moon.dataset.phase = lunarPhase.name;
+  moon.setAttribute('role', 'img');
+  moon.setAttribute('aria-hidden', timeOfDay === 'night' ? 'false' : 'true');
   moon.setAttribute('aria-label', 'Луна: ' + lunarPhase.name);
   const shadowShift = (lunarPhase.illumination * (lunarPhase.waxing ? -100 : 100)).toFixed(1);
   moon.style.setProperty('--moon-shadow-shift', shadowShift + '%');

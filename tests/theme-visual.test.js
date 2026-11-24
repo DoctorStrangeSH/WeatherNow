@@ -426,9 +426,42 @@ test('lunar phase calculation covers new moon, first quarter, full moon and wani
 
 test('moon phase overlay is accessible, direction-aware and motion-safe', () => {
   assert.ok(themeSource.includes("moon.setAttribute('aria-label', 'Луна: ' + lunarPhase.name)"));
+  assert.ok(themeSource.includes("moon.setAttribute('role', 'img')"));
+  assert.ok(themeSource.includes("moon.setAttribute('aria-hidden', timeOfDay === 'night' ? 'false' : 'true')"));
   assert.ok(themeSource.includes('--moon-shadow-shift'));
   assert.ok(styleSource.includes('#sky .moon::before'));
   assert.ok(styleSource.includes('@media (prefers-reduced-motion: reduce)'));
+});
+
+test('moon accessibility follows visibility and exposes the current lunar phase', () => {
+  const makeElement = () => ({
+    style: { setProperty() {} },
+    dataset: {},
+    attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; }
+  });
+  const sky = { dataset: {} };
+  const sun = makeElement();
+  const moon = makeElement();
+  const stars = {
+    style: {},
+    attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; }
+  };
+  const document = {
+    getElementById(id) {
+      return ({ sky, sun, moon, stars })[id] || null;
+    }
+  };
+  const context = loadInBrowserContext(themeSource, { document });
+  vm.runInContext('updateSkyElements("day")', context);
+  assert.equal(moon.attributes.role, 'img');
+  assert.equal(moon.attributes['aria-hidden'], 'true', 'The hidden daytime moon is not announced');
+  assert.match(moon.attributes['aria-label'], /^Луна: /);
+
+  vm.runInContext('updateSkyElements("night")', context);
+  assert.equal(moon.attributes['aria-hidden'], 'false', 'The visible night moon is exposed to assistive technology');
+  assert.match(moon.attributes['aria-label'], /^Луна: /);
 });
 
 test('stars fade in at dusk and fade out at dawn with smooth endpoints', () => {

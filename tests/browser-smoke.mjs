@@ -438,6 +438,85 @@ try {
   assert.equal(await page.evaluate(() => document.getElementById('sky').children.length), stableSkyChildren,
     'Twenty additional weather changes do not accumulate DOM nodes');
 
+  const starVisibilityProfiles = await page.evaluate(() => {
+    const stars = document.getElementById('stars');
+    const samples = [
+      { label: 'dusk-clear', hour: 17, code: 800, expected: 0 },
+      { label: 'twilight-clear', hour: 19, code: 800, expected: 0.45 },
+      { label: 'night-clear', hour: 23, code: 800, expected: 0.9 },
+      { label: 'dawn-clear', hour: 6.5, code: 800, expected: 0.45 },
+      { label: 'day-clear', hour: 12, code: 800, expected: 0 },
+      { label: 'night-partly-cloudy', hour: 23, code: 801, expected: 0.62 },
+      { label: 'night-cloudy', hour: 23, code: 802, expected: 0.36 },
+      { label: 'night-overcast', hour: 23, code: 804, expected: 0.04 },
+      { label: 'night-rain', hour: 23, code: 502, expected: 0.04 },
+      { label: 'night-fog', hour: 23, code: 741, expected: 0.02 }
+    ];
+
+    return samples.map(sample => {
+      updateStarsVisibility(getNightTransitionFactor(sample.hour), sample.code);
+      return {
+        ...sample,
+        actual: Number(stars.style.opacity),
+        ariaHidden: stars.getAttribute('aria-hidden')
+      };
+    });
+  });
+  for (const sample of starVisibilityProfiles) {
+    assert.ok(Math.abs(sample.actual - sample.expected) < 0.001,
+      `Star visibility for ${sample.label}: expected ${sample.expected}, got ${sample.actual}`);
+    assert.equal(sample.ariaHidden, sample.expected <= 0.005 ? 'true' : 'false',
+      `Star accessibility state for ${sample.label}`);
+  }
+
+  const celestialAccessibility = await page.evaluate(() => {
+    const moon = document.getElementById('moon');
+    const stars = document.getElementById('stars');
+    const previousStarsOpacity = stars.style.opacity;
+    updateSkyElements('day');
+    const day = {
+      moonRole: moon.getAttribute('role'),
+      moonHidden: moon.getAttribute('aria-hidden'),
+      moonLabel: moon.getAttribute('aria-label')
+    };
+    updateSkyElements('night');
+    const night = {
+      moonRole: moon.getAttribute('role'),
+      moonHidden: moon.getAttribute('aria-hidden'),
+      moonLabel: moon.getAttribute('aria-label')
+    };
+    stars.style.opacity = previousStarsOpacity;
+    return { day, night };
+  });
+  assert.equal(celestialAccessibility.day.moonRole, 'img');
+  assert.equal(celestialAccessibility.day.moonHidden, 'true',
+    'The invisible daytime moon is hidden from assistive technology');
+  assert.equal(celestialAccessibility.night.moonRole, 'img');
+  assert.equal(celestialAccessibility.night.moonHidden, 'false',
+    'The visible nighttime moon is announced');
+  assert.match(celestialAccessibility.night.moonLabel, /^Луна: /);
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const celestialMotion = await page.evaluate(() => ({
+    starsTransition: getComputedStyle(document.getElementById('stars')).transitionDuration,
+    moonTransition: getComputedStyle(document.getElementById('moon')).transitionDuration,
+    starAnimation: getComputedStyle(document.querySelector('#stars .star')).animationName
+  }));
+  assert.notEqual(celestialMotion.starsTransition, '0s',
+    'Stars use a gradual opacity transition when motion is allowed');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedCelestialMotion = await page.evaluate(() => ({
+    starsTransition: getComputedStyle(document.getElementById('stars')).transitionDuration,
+    moonTransition: getComputedStyle(document.getElementById('moon')).transitionDuration,
+    starAnimation: getComputedStyle(document.querySelector('#stars .star')).animationName
+  }));
+  assert.equal(reducedCelestialMotion.starsTransition, '0s',
+    'Reduced motion disables star fade transitions');
+  assert.equal(reducedCelestialMotion.moonTransition, '0s',
+    'Reduced motion disables moon movement transitions');
+  assert.equal(reducedCelestialMotion.starAnimation, 'none',
+    'Reduced motion disables star twinkle animations');
+
   const lightingProfiles = await page.evaluate(() => {
     const sky = document.getElementById('sky');
     return ['morning', 'day', 'evening', 'night'].map(timeOfDay => {
