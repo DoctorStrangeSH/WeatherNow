@@ -361,11 +361,11 @@ body {
     100% { transform: translate3d(0, 100vh, 0) rotate(var(--rain-angle, 0deg)); }
 }
 
-/* Rain depth: distant streaks stay fine; foreground drops catch more light. */
-.raindrop[data-depth="0"] { filter: blur(.65px); opacity: .48; box-shadow: 0 0 1px rgba(190, 215, 255, .18); }
-.raindrop[data-depth="1"] { filter: blur(.35px); box-shadow: 0 0 2px rgba(190, 215, 255, .24); }
-.raindrop[data-depth="2"] { filter: blur(.12px); box-shadow: 0 0 3px rgba(190, 215, 255, .34); }
-.raindrop[data-depth="3"] { filter: drop-shadow(0 0 3px rgba(205, 225, 255, .42)); }
+/* Four rain planes: distant streaks are short, soft and slow; foreground is crisp and bright. */
+.raindrop[data-depth="0"] { filter: blur(var(--rain-blur, .75px)); box-shadow: 0 0 1px var(--rain-glow, rgba(190, 215, 255, .16)); }
+.raindrop[data-depth="1"] { filter: blur(var(--rain-blur, .45px)); box-shadow: 0 0 2px var(--rain-glow, rgba(190, 215, 255, .22)); }
+.raindrop[data-depth="2"] { filter: blur(var(--rain-blur, .2px)); box-shadow: 0 0 3px var(--rain-glow, rgba(190, 215, 255, .3)); }
+.raindrop[data-depth="3"] { filter: blur(var(--rain-blur, .05px)) drop-shadow(0 0 3px var(--rain-glow, rgba(205, 225, 255, .42))); }
 
 /* снег */
 .snow-container {
@@ -396,12 +396,12 @@ body {
     100% { transform: translate3d(var(--snow-drift, 0px), 100vh, 0) rotate(360deg); }
 }
 
-/* Snow depth: soft distant flakes contrast with crisp, softly glowing foreground flakes. */
-.snowflake[data-depth="0"] { filter: blur(1.15px); opacity: .28 !important; box-shadow: none !important; }
-.snowflake[data-depth="1"] { filter: blur(.65px); opacity: .4 !important; }
-.snowflake[data-depth="2"] { filter: blur(.2px); opacity: .62 !important; }
+/* Four snow planes: size, softness, glow and drift increase toward the viewer. */
+.snowflake[data-depth="0"] { filter: blur(var(--snow-blur, 1.2px)); box-shadow: none !important; }
+.snowflake[data-depth="1"] { filter: blur(var(--snow-blur, .7px)); }
+.snowflake[data-depth="2"] { filter: blur(var(--snow-blur, .25px)); }
 .snowflake[data-depth="3"] {
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, .68));
+    filter: blur(var(--snow-blur, .05px)) drop-shadow(0 0 5px var(--snow-foreground-glow, rgba(255, 255, 255, .68)));
     background: radial-gradient(circle at 35% 30%, #fff 0%, #edf6ff 58%, rgba(210, 230, 255, .76) 100%);
 }
 
@@ -3940,15 +3940,18 @@ body.theme-evening #sky .sun::after {
         transparent
     );
 }
-#sky .raindrop[data-depth="0"] { box-shadow: 0 0 1px var(--rain-glow, rgba(190, 215, 255, .18)); }
-#sky .raindrop[data-depth="1"] { box-shadow: 0 0 2px var(--rain-glow, rgba(190, 215, 255, .24)); }
-#sky .raindrop[data-depth="2"] { box-shadow: 0 0 3px var(--rain-glow, rgba(190, 215, 255, .34)); }
-#sky .raindrop[data-depth="3"] { filter: drop-shadow(0 0 3px var(--rain-glow, rgba(205, 225, 255, .42))); }
+#sky .raindrop[data-depth="0"] { filter: blur(var(--rain-blur, .75px)); box-shadow: 0 0 1px var(--rain-glow, rgba(190, 215, 255, .16)); }
+#sky .raindrop[data-depth="1"] { filter: blur(var(--rain-blur, .45px)); box-shadow: 0 0 2px var(--rain-glow, rgba(190, 215, 255, .22)); }
+#sky .raindrop[data-depth="2"] { filter: blur(var(--rain-blur, .2px)); box-shadow: 0 0 3px var(--rain-glow, rgba(190, 215, 255, .3)); }
+#sky .raindrop[data-depth="3"] { filter: blur(var(--rain-blur, .05px)) drop-shadow(0 0 3px var(--rain-glow, rgba(205, 225, 255, .42))); }
 #sky .snowflake {
     background: var(--snow-fill, #ffffff);
     box-shadow: 0 0 4px var(--snow-glow, rgba(255, 255, 255, .55));
 }
 #sky .snowflake[data-depth="0"] { box-shadow: none !important; }
+#sky .snowflake[data-depth="0"] { filter: blur(var(--snow-blur, 1.2px)); }
+#sky .snowflake[data-depth="1"] { filter: blur(var(--snow-blur, .7px)); }
+#sky .snowflake[data-depth="2"] { filter: blur(var(--snow-blur, .25px)); }
 #sky .snowflake[data-depth="3"] {
     background: radial-gradient(
         circle at 35% 30%,
@@ -3956,7 +3959,7 @@ body.theme-evening #sky .sun::after {
         var(--snow-fill, #edf6ff) 58%,
         var(--snow-edge, rgba(210, 230, 255, .76)) 100%
     );
-    filter: drop-shadow(0 0 5px var(--snow-foreground-glow, rgba(255, 255, 255, .68)));
+    filter: blur(var(--snow-blur, .05px)) drop-shadow(0 0 5px var(--snow-foreground-glow, rgba(255, 255, 255, .68)));
 }
 
 /* Keep each major weather scene distinct across all four local-time periods. */
