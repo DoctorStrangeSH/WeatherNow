@@ -576,6 +576,7 @@ function applyLightningFlashStage(lightning, stage, profile) {
         sky.querySelectorAll('.weather-cloud-layer[data-weather="storm"]').forEach(cloud => {
           if (cloud.style && typeof cloud.style.removeProperty === 'function') {
             cloud.style.removeProperty('--storm-flash-brightness');
+            cloud.style.removeProperty('filter');
           }
         });
       }
@@ -594,7 +595,7 @@ function applyLightningFlashStage(lightning, stage, profile) {
   const properties = {
     '--lightning-overlay-opacity': String(Number((profile.overlayOpacity * overlayScale).toFixed(3))),
     '--lightning-bolt-opacity': String(Number((profile.boltOpacity * boltScale).toFixed(3))),
-    '--lightning-secondary-opacity': String(Number((profile.boltOpacity * boltScale * 0.62).toFixed(3))),
+    '--lightning-secondary-opacity': String(Number((profile.secondary ? profile.boltOpacity * boltScale * 0.62 : 0).toFixed(3))),
     '--lightning-bolt-x': profile.boltX + '%',
     '--lightning-bolt-top': profile.boltTop + '%',
     '--lightning-bolt-width': profile.boltWidth + 'px',
@@ -606,8 +607,8 @@ function applyLightningFlashStage(lightning, stage, profile) {
     : stage === 'peak'
       ? 'var(--lightning-flash-strong, rgba(255,255,255,.64))'
       : 'var(--lightning-flash-fade, rgba(255,255,255,.22))';
-  lightning.style.setProperty('opacity', properties['--lightning-overlay-opacity']);
-  lightning.style.setProperty('background-color', overlayColor);
+  lightning.style.setProperty('opacity', properties['--lightning-overlay-opacity'], 'important');
+  lightning.style.setProperty('background-color', overlayColor, 'important');
   if (sky && sky.dataset) {
     sky.dataset.stormFlash = stage;
     const brightness = 1 + (profile.cloudBrightness - 1) * cloudScale;
@@ -619,6 +620,7 @@ function applyLightningFlashStage(lightning, stage, profile) {
       sky.querySelectorAll('.weather-cloud-layer[data-weather="storm"]').forEach(cloud => {
         if (cloud.style && typeof cloud.style.setProperty === 'function') {
           cloud.style.setProperty('--storm-flash-brightness', brightnessValue);
+          cloud.style.setProperty('filter', `blur(7px) brightness(${brightnessValue})`, 'important');
         }
       });
     }
