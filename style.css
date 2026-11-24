@@ -3958,3 +3958,35 @@ body.theme-evening #sky .sun::after {
     );
     filter: drop-shadow(0 0 5px var(--snow-foreground-glow, rgba(255, 255, 255, .68)));
 }
+
+/* Keep each major weather scene distinct across all four local-time periods. */
+body.theme-morning #sky[data-weather="thunder"] {
+    background:
+        radial-gradient(ellipse at 76% 18%, rgba(255, 190, 151, .2), transparent 26rem),
+        linear-gradient(155deg, #29334b 0%, #50576d 54%, #806f7c 100%);
+}
+body.theme-day #sky[data-weather="thunder"] {
+    background:
+        radial-gradient(ellipse at 74% 16%, rgba(157, 190, 218, .18), transparent 26rem),
+        linear-gradient(155deg, #182b42 0%, #30465e 52%, #4b6074 100%);
+}
+body.theme-evening #sky[data-weather="thunder"] {
+    background:
+        radial-gradient(ellipse at 76% 20%, rgba(226, 151, 151, .18), transparent 26rem),
+        linear-gradient(155deg, #28233f 0%, #4b3a55 54%, #79576b 100%);
+}
+body.theme-night #sky[data-weather="thunder"] {
+    background:
+        radial-gradient(ellipse at 72% 18%, rgba(104, 128, 184, .16), transparent 25rem),
+        linear-gradient(155deg, #080f22 0%, #17213d 54%, #293956 100%);
+}
+body.theme-day #sky[data-weather="snow"] {
+    background:
+        radial-gradient(ellipse at 76% 12%, rgba(255, 255, 255, .56), transparent 28rem),
+        linear-gradient(155deg, #6595b8 0%, #a3c5dc 52%, #edf5f7 100%);
+}
+body.theme-day #sky[data-weather="fog"] {
+    background:
+        radial-gradient(ellipse at 52% 30%, rgba(246, 250, 249, .34), transparent 30rem),
+        linear-gradient(155deg, #6e8794 0%, #a1b3b9 55%, #c8d2d0 100%);
+}
