@@ -3696,3 +3696,29 @@ body.theme-evening #sky .sun::after {
 @media (prefers-reduced-motion: reduce) {
     .star { animation: none !important; }
 }
+
+/* Approximate lunar phases driven by the current UTC date. */
+#sky .moon {
+    overflow: hidden;
+    isolation: isolate;
+}
+#sky .moon::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: var(--moon-shadow-left, 0%);
+    right: var(--moon-shadow-right, auto);
+    width: var(--moon-shadow-width, 0%);
+    height: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+    background: linear-gradient(110deg, rgba(12, 20, 37, .96), rgba(25, 36, 56, .86));
+    box-shadow: inset 0 0 12px rgba(4, 10, 24, .42), 0 0 5px rgba(9, 17, 32, .22);
+    opacity: var(--moon-shadow-opacity, 0);
+    transition: width 1.2s ease, opacity 1.2s ease;
+    z-index: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+    #sky .moon::before { transition: none !important; }
+}
