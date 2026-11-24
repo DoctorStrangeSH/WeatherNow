@@ -332,8 +332,43 @@ try {
     assert.equal(new Set(scene.palettes.map(palette => palette.background)).size, 4,
       `${scene.scene} has four distinct morning/day/evening/night palettes`);
   }
-  await page.evaluate(() => updateWeatherTheme(800, 0, 2));
+  const sceneTransition = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    sky.querySelector('.sky-scene-transition')?.remove();
+    document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
+    document.body.classList.add('theme-day');
+    sky.dataset.weather = 'clear';
+    sky.dataset.timeOfDay = 'day';
+    const previousBackground = getComputedStyle(sky).backgroundImage;
+
+    updateWeatherTheme(502, 0, 8);
+    const layer = sky.querySelector('.sky-scene-transition');
+    const result = layer ? {
+      previousBackground,
+      capturedBackground: layer.style.backgroundImage,
+      animation: getComputedStyle(layer).animationName,
+      zIndex: getComputedStyle(layer).zIndex,
+      targetScene: sky.dataset.weather
+    } : null;
+    layer?.dispatchEvent(new Event('animationend'));
+    return { ...result, removedAfterFade: !sky.querySelector('.sky-scene-transition') };
+  });
+  assert.ok(sceneTransition, 'A weather change creates a background crossfade layer');
+  assert.equal(sceneTransition.capturedBackground, sceneTransition.previousBackground,
+    'The transition layer preserves the exact previous atmospheric gradient');
+  assert.equal(sceneTransition.animation, 'skySceneCrossfade');
+  assert.equal(sceneTransition.zIndex, '0', 'The crossfade remains behind stars, celestial bodies and clouds');
+  assert.equal(sceneTransition.targetScene, 'rain');
+  assert.equal(sceneTransition.removedAfterFade, true, 'The previous scene layer is cleaned up after the fade');
+
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedSceneTransition = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    updateWeatherTheme(601, 0, 8);
+    return Boolean(sky.querySelector('.sky-scene-transition'));
+  });
+  assert.equal(reducedSceneTransition, false, 'Reduced motion skips the background crossfade');
+
   const reducedStormFlash = await page.evaluate(() => {
     const sky = document.getElementById('sky');
     currentWeatherCode = 211;

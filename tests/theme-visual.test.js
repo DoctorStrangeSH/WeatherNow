@@ -529,3 +529,78 @@ test('weather animation visibility can pause and resume decorative layers', () =
   assert.ok(styleSource.includes('#sky[data-page-visible="false"] .snowflake'));
   assert.ok(styleSource.includes('#sky[data-page-visible="false"] .weather-cloud-layer'));
 });
+
+
+test('weather background crossfade snapshots the old scene and respects reduced motion', () => {
+  const sky = {
+    dataset: { weather: 'clear', timeOfDay: 'day' },
+    children: [],
+    firstChild: { id: 'stars' },
+    querySelector(selector) {
+      return selector === '.sky-scene-transition'
+        ? this.children.find(node => node.className === 'sky-scene-transition') || null
+        : null;
+    },
+    insertBefore(node) {
+      this.children.unshift(node);
+      node.parentNode = this;
+    }
+  };
+  const document = {
+    createElement() {
+      return {
+        style: {},
+        className: '',
+        attributes: {},
+        setAttribute(name, value) { this.attributes[name] = value; },
+        addEventListener(name, callback, options) {
+          this.animationEnd = callback;
+          this.animationEndOptions = options;
+        },
+        remove() {
+          const index = sky.children.indexOf(this);
+          if (index !== -1) sky.children.splice(index, 1);
+        }
+      };
+    }
+  };
+  const window = {
+    matchMedia: () => ({ matches: false }),
+    getComputedStyle: () => ({
+      backgroundImage: 'linear-gradient(rgb(1, 2, 3), rgb(4, 5, 6))',
+      backgroundColor: 'rgb(0, 0, 0)',
+      backgroundSize: 'auto',
+      backgroundPosition: '0% 0%',
+      backgroundRepeat: 'repeat'
+    })
+  };
+  const context = loadInBrowserContext(themeSource, { document, window, sky });
+
+  vm.runInContext('startSkyBackgroundTransition(sky, "clear", "day")', context);
+  assert.equal(sky.children.length, 0, 'unchanged scenes do not create a transition layer');
+
+  vm.runInContext('startSkyBackgroundTransition(sky, "rain", "night")', context);
+  const layer = sky.children[0];
+  assert.equal(layer.className, 'sky-scene-transition');
+  assert.equal(layer.style.backgroundImage, 'linear-gradient(rgb(1, 2, 3), rgb(4, 5, 6))');
+  assert.equal(layer.attributes['aria-hidden'], 'true');
+  assert.equal(layer.animationEndOptions.once, true);
+  layer.animationEnd();
+  assert.equal(sky.children.length, 0, 'the old background layer is removed after its fade');
+
+  const reducedContext = loadInBrowserContext(themeSource, {
+    document,
+    window: { matchMedia: () => ({ matches: true }), getComputedStyle: window.getComputedStyle },
+    sky
+  });
+  vm.runInContext('startSkyBackgroundTransition(sky, "snow", "night")', reducedContext);
+  assert.equal(sky.children.length, 0, 'reduced-motion does not create an animated background layer');
+});
+
+test('weather background crossfade CSS stays behind scene layers and pauses in hidden tabs', () => {
+  const transitionStyles = styleSource.slice(styleSource.lastIndexOf('/* Crossfade the previous atmospheric background'));
+  assert.match(transitionStyles, /#sky \.sky-scene-transition\s*\{[^}]*z-index:\s*0/s);
+  assert.match(transitionStyles, /@keyframes skySceneCrossfade/);
+  assert.match(transitionStyles, /animation-play-state:\s*paused\s*!important/);
+  assert.match(transitionStyles, /prefers-reduced-motion:\s*reduce/);
+});

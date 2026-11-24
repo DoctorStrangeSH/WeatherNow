@@ -3993,3 +3993,28 @@ body.theme-day #sky[data-weather="fog"] {
         radial-gradient(ellipse at 52% 30%, rgba(246, 250, 249, .34), transparent 30rem),
         linear-gradient(155deg, #6e8794 0%, #a1b3b9 55%, #c8d2d0 100%);
 }
+
+
+/* Crossfade the previous atmospheric background without covering celestial or weather layers. */
+#sky .sky-scene-transition {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    animation: skySceneCrossfade 1.35s cubic-bezier(.22, .61, .36, 1) forwards;
+}
+
+@keyframes skySceneCrossfade {
+    to { opacity: 0; }
+}
+
+#sky[data-page-visible="false"] .sky-scene-transition {
+    animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #sky .sky-scene-transition {
+        display: none !important;
+        animation: none !important;
+    }
+}
