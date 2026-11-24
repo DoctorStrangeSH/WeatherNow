@@ -265,6 +265,27 @@ try {
       }
     }
   }
+
+  const lightingProfiles = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    return ['morning', 'day', 'evening', 'night'].map(timeOfDay => {
+      sky.dataset.timeOfDay = timeOfDay;
+      const style = getComputedStyle(sky);
+      return {
+        timeOfDay,
+        rain: style.getPropertyValue('--rain-streak-core').trim(),
+        snow: style.getPropertyValue('--snow-fill').trim(),
+        lightning: style.getPropertyValue('--lightning-flash-strong').trim(),
+        storm: style.getPropertyValue('--storm-flash-peak').trim()
+      };
+    });
+  });
+  for (const key of ['rain', 'snow', 'lightning', 'storm']) {
+    assert.ok(lightingProfiles.every(profile => profile[key]), `Missing ${key} lighting profile`);
+    assert.equal(new Set(lightingProfiles.map(profile => profile[key])).size, 4,
+      `${key} lighting changes across morning, day, evening and night`);
+  }
+  await page.evaluate(() => updateWeatherTheme(800, 0, 2));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const reducedStormFlash = await page.evaluate(() => {
     const sky = document.getElementById('sky');

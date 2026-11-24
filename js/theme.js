@@ -296,7 +296,6 @@ function createSnow(intensity, wind = getPrecipitationWindProfile(currentWindSpe
     flake.style.animationDuration = (Math.random() * 3 + (foreground ? 3 : 5)) + 's';
     flake.style.animationDelay = Math.random() * 5 + 's';
     flake.style.opacity = foreground ? '0.85' : '0.48';
-    flake.style.boxShadow = foreground ? '0 0 5px rgba(255,255,255,0.55)' : 'none';
     container.appendChild(flake);
   }
 
