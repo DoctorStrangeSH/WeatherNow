@@ -388,8 +388,8 @@ test('cloud layers build volume from highlight and shadow pseudo-elements withou
   assert.match(volumeStyles, /\.weather-cloud-layer::before/);
   assert.match(volumeStyles, /\.weather-cloud-layer::after/);
   assert.match(volumeStyles, /radial-gradient\(ellipse/);
-  assert.match(volumeStyles, /data-weather="storm"\)::after/);
-  assert.match(volumeStyles, /data-weather="snow"\)::before/);
+  assert.match(volumeStyles, /\[data-weather="storm"\]::after/);
+  assert.match(volumeStyles, /\[data-weather="snow"\]::before/);
   assert.match(volumeStyles, /prefers-reduced-motion:\s*reduce/);
 });
 
