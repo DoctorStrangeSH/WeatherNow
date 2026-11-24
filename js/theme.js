@@ -448,8 +448,16 @@ function createStars() {
     star.style.height = size + 'px';
     star.style.left = Math.random() * 100 + '%';
     star.style.top = Math.random() * 60 + '%';
-    star.style.animationDelay = Math.random() * 4 + 's';
-    star.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    const depth = i % 5;
+    star.dataset.depth = String(depth);
+    star.style.opacity = String([0.34, 0.48, 0.62, 0.78, 0.94][depth]);
+    // Twinkle only a small foreground subset; the rest stay crisp and static.
+    if (i % 5 === 0) {
+      star.style.animationDelay = Math.random() * 4 + 's';
+      star.style.animationDuration = (Math.random() * 2 + 3.5) + 's';
+    } else {
+      star.style.animation = 'none';
+    }
     container.appendChild(star);
   }
 }
