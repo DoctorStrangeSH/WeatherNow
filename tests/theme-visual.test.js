@@ -401,3 +401,32 @@ test('star field uses five depth levels and limits twinkle to a subset', () => {
   assert.match(themeSource, /star\.style\.animation = 'none'/);
   assert.match(styleSource, /\.star\[data-depth="4"\]/);
 });
+
+test('lunar phase calculation covers new moon, first quarter, full moon and waning phases', () => {
+  const context = loadInBrowserContext(themeSource);
+  const phases = vm.runInContext(`(() => {
+    const epoch = Date.UTC(2000, 0, 6, 18, 14);
+    const synodic = 29.530588853 * 86400000;
+    return [
+      getMoonPhase(new Date(epoch)),
+      getMoonPhase(new Date(epoch + synodic * .25)),
+      getMoonPhase(new Date(epoch + synodic * .5)),
+      getMoonPhase(new Date(epoch + synodic * .75))
+    ];
+  })()`, context);
+  assert.equal(phases[0].name, 'новолуние');
+  assert.equal(phases[1].name, 'первая четверть');
+  assert.equal(phases[2].name, 'полнолуние');
+  assert.equal(phases[3].name, 'последняя четверть');
+  assert.ok(phases[0].illumination < .01);
+  assert.ok(phases[2].illumination > .99);
+  assert.equal(phases[1].waxing, true);
+  assert.equal(phases[3].waxing, false);
+});
+
+test('moon phase overlay is accessible, direction-aware and motion-safe', () => {
+  assert.match(themeSource, /moon\\.setAttribute\\('aria-label', 'Луна: ' \+ lunarPhase\\.name\\)/);
+  assert.match(themeSource, /--moon-shadow-width/);
+  assert.match(styleSource, /#sky \\.moon::before/);
+  assert.match(styleSource, /prefers-reduced-motion:\\s*reduce/);
+});
