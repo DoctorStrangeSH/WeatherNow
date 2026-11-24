@@ -125,15 +125,13 @@ function updateSkyElements(timeOfDay) {
   moon.style.opacity = timeOfDay === 'night' ? '0.94' : '0';
   moon.style.transform = 'translate(-50%, -50%)';
   const lunarPhase = getMoonPhase();
-  const shadowWidth = ((1 - lunarPhase.illumination) * 100).toFixed(1);
   moon.dataset.phase = lunarPhase.name;
   moon.setAttribute('aria-label', 'Луна: ' + lunarPhase.name);
-  moon.style.setProperty('--moon-shadow-width', shadowWidth + '%');
-  moon.style.setProperty('--moon-shadow-left', lunarPhase.waxing ? '0%' : 'auto');
-  moon.style.setProperty('--moon-shadow-right', lunarPhase.waxing ? 'auto' : '0%');
+  const shadowShift = (lunarPhase.illumination * (lunarPhase.waxing ? -100 : 100)).toFixed(1);
+  moon.style.setProperty('--moon-shadow-shift', shadowShift + '%');
   moon.style.setProperty('--moon-shadow-opacity', lunarPhase.illumination > 0.985 ? '0' : '0.92');
   
-  updateStarsVisibility(timeOfDay === 'night', currentWeatherCode);
+  updateStarsVisibility(getNightTransitionFactor(hour), currentWeatherCode);
   if (typeof updateChartTheme === 'function') updateChartTheme();
   if (typeof updateFeelsLikeChartTheme === 'function') updateFeelsLikeChartTheme();
 }
@@ -501,13 +499,27 @@ function getNightSkyOpacity(weatherCode) {
   return 0;
 }
 
-function updateStarsVisibility(visible, weatherCode = currentWeatherCode) {
+function getNightTransitionFactor(hour) {
+  const normalizedHour = ((Number(hour) % 24) + 24) % 24;
+  const smoothstep = (value) => {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+  };
+
+  if (normalizedHour >= 21 || normalizedHour < 5) return 1;
+  if (normalizedHour >= 17) return smoothstep((normalizedHour - 17) / 4);
+  if (normalizedHour >= 5 && normalizedHour < 8) return 1 - smoothstep((normalizedHour - 5) / 3);
+  return 0;
+}
+
+function updateStarsVisibility(transitionFactor, weatherCode = currentWeatherCode) {
   const stars = document.getElementById('stars');
   if (!stars) return;
 
-  const opacity = visible ? getNightSkyOpacity(weatherCode) : 0;
+  const factor = Math.max(0, Math.min(1, Number(transitionFactor) || 0));
+  const opacity = factor * getNightSkyOpacity(weatherCode);
   stars.style.opacity = String(opacity);
-  stars.setAttribute('aria-hidden', opacity === 0 ? 'true' : 'false');
+  stars.setAttribute('aria-hidden', opacity <= 0.005 ? 'true' : 'false');
 }
 
 document.addEventListener('DOMContentLoaded', initTheme);
