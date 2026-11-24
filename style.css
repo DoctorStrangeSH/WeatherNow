@@ -361,6 +361,12 @@ body {
     100% { transform: translate3d(0, 100vh, 0) rotate(var(--rain-angle, 0deg)); }
 }
 
+/* Rain depth: distant streaks stay fine; foreground drops catch more light. */
+.raindrop[data-depth="0"] { filter: blur(.65px); opacity: .48; box-shadow: 0 0 1px rgba(190, 215, 255, .18); }
+.raindrop[data-depth="1"] { filter: blur(.35px); box-shadow: 0 0 2px rgba(190, 215, 255, .24); }
+.raindrop[data-depth="2"] { filter: blur(.12px); box-shadow: 0 0 3px rgba(190, 215, 255, .34); }
+.raindrop[data-depth="3"] { filter: drop-shadow(0 0 3px rgba(205, 225, 255, .42)); }
+
 /* снег */
 .snow-container {
     position: absolute;
@@ -388,6 +394,15 @@ body {
     50% { transform: translate3d(calc(var(--snow-drift-half, 0px) - 10px), 50vh, 0) rotate(180deg); }
     75% { transform: translate3d(calc(var(--snow-drift-q3, 0px) + 10px), 75vh, 0) rotate(270deg); }
     100% { transform: translate3d(var(--snow-drift, 0px), 100vh, 0) rotate(360deg); }
+}
+
+/* Snow depth: soft distant flakes contrast with crisp, softly glowing foreground flakes. */
+.snowflake[data-depth="0"] { filter: blur(1.15px); opacity: .28 !important; box-shadow: none !important; }
+.snowflake[data-depth="1"] { filter: blur(.65px); opacity: .4 !important; }
+.snowflake[data-depth="2"] { filter: blur(.2px); opacity: .62 !important; }
+.snowflake[data-depth="3"] {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, .68));
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #edf6ff 58%, rgba(210, 230, 255, .76) 100%);
 }
 
 /* ветер */
