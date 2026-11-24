@@ -336,10 +336,7 @@ try {
       skyStage: sky.dataset.stormFlash,
       cloudFilter: getComputedStyle(cloud, '::before').filter,
       boltOpacity: Number(getComputedStyle(lightning, '::before').opacity),
-      boltOpacityVar: getComputedStyle(lightning, '::before').getPropertyValue('--lightning-bolt-opacity'),
-      boltInlineOpacityVar: lightning.style.getPropertyValue('--lightning-bolt-opacity'),
-      boltContent: getComputedStyle(lightning, '::before').content,
-      parentOpacity: getComputedStyle(lightning).opacity,
+      parentOpacity: Number(getComputedStyle(lightning).opacity),
       boltX: lightning.style.getPropertyValue('--lightning-bolt-x'),
       secondary: lightning.dataset.secondary
     };
@@ -353,8 +350,8 @@ try {
   assert.equal(dynamicStormFlash.skyStage, 'peak');
   assert.match(dynamicStormFlash.cloudFilter, /brightness\(/,
     'Cloud volume brightens during the same lightning strike');
-  console.log('Dynamic storm flash diagnostic:', JSON.stringify(dynamicStormFlash));
-  assert.ok(dynamicStormFlash.boltInlineOpacityVar, 'The strike sets a bounded bolt intensity');
+  assert.ok(dynamicStormFlash.parentOpacity > 0.2, 'The flash overlay reaches visible peak intensity');
+  assert.ok(dynamicStormFlash.boltOpacity > 0.5, 'The bolt becomes visible at peak intensity');
   assert.match(dynamicStormFlash.boltX, /%$/, 'Bolt position changes between strikes');
   assert.equal(dynamicStormFlash.cleared, true, 'Flash state is cleared after the strike');
 
@@ -591,6 +588,7 @@ try {
   assert.match(celestialAccessibility.night.moonLabel, /^Луна: /);
 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.evaluate(() => updateWeatherTheme(800, 0, 8));
   const celestialMotion = await page.evaluate(() => ({
     starsTransition: getComputedStyle(document.getElementById('stars')).transitionDuration,
     moonTransition: getComputedStyle(document.getElementById('moon')).transitionDuration,

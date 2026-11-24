@@ -560,10 +560,24 @@ function applyLightningFlashStage(lightning, stage, profile) {
     lightning.removeAttribute('data-flash');
     lightning.removeAttribute('data-bolt-shape');
     lightning.removeAttribute('data-secondary');
+    if (typeof lightning.style.removeProperty === 'function') {
+      lightning.style.removeProperty('opacity');
+      lightning.style.removeProperty('background-color');
+      lightning.style.removeProperty('--lightning-overlay-opacity');
+      lightning.style.removeProperty('--lightning-bolt-opacity');
+      lightning.style.removeProperty('--lightning-secondary-opacity');
+    }
     if (sky && sky.dataset) {
       delete sky.dataset.stormFlash;
       if (sky.style && typeof sky.style.removeProperty === 'function') {
         sky.style.removeProperty('--storm-flash-brightness');
+      }
+      if (typeof sky.querySelectorAll === 'function') {
+        sky.querySelectorAll('.weather-cloud-layer[data-weather="storm"]').forEach(cloud => {
+          if (cloud.style && typeof cloud.style.removeProperty === 'function') {
+            cloud.style.removeProperty('--storm-flash-brightness');
+          }
+        });
       }
     }
     return true;
@@ -587,11 +601,26 @@ function applyLightningFlashStage(lightning, stage, profile) {
     '--lightning-bolt-height': profile.boltHeight + 'vh'
   };
   Object.entries(properties).forEach(([property, value]) => lightning.style.setProperty(property, value));
+  const overlayColor = stage === 'soft'
+    ? 'var(--lightning-flash-soft, rgba(255,255,255,.36))'
+    : stage === 'peak'
+      ? 'var(--lightning-flash-strong, rgba(255,255,255,.64))'
+      : 'var(--lightning-flash-fade, rgba(255,255,255,.22))';
+  lightning.style.setProperty('opacity', properties['--lightning-overlay-opacity']);
+  lightning.style.setProperty('background-color', overlayColor);
   if (sky && sky.dataset) {
     sky.dataset.stormFlash = stage;
+    const brightness = 1 + (profile.cloudBrightness - 1) * cloudScale;
+    const brightnessValue = String(Number(brightness.toFixed(3)));
     if (sky.style && typeof sky.style.setProperty === 'function') {
-      const brightness = 1 + (profile.cloudBrightness - 1) * cloudScale;
-      sky.style.setProperty('--storm-flash-brightness', String(Number(brightness.toFixed(3))));
+      sky.style.setProperty('--storm-flash-brightness', brightnessValue);
+    }
+    if (typeof sky.querySelectorAll === 'function') {
+      sky.querySelectorAll('.weather-cloud-layer[data-weather="storm"]').forEach(cloud => {
+        if (cloud.style && typeof cloud.style.setProperty === 'function') {
+          cloud.style.setProperty('--storm-flash-brightness', brightnessValue);
+        }
+      });
     }
   }
   return true;

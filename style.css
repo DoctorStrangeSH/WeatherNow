@@ -548,19 +548,8 @@ body {
 }
 
 #sky .weather-cloud-layer[data-weather="storm"]::before {
+    filter: blur(7px) brightness(var(--storm-flash-brightness, 1));
     transition: filter 84ms ease, opacity 120ms ease;
-}
-
-#sky[data-storm-flash="soft"] .weather-cloud-layer[data-weather="storm"]::before {
-    filter: blur(7px) brightness(var(--storm-flash-brightness, 1.35));
-}
-
-#sky[data-storm-flash="peak"] .weather-cloud-layer[data-weather="storm"]::before {
-    filter: blur(7px) brightness(var(--storm-flash-brightness, 2.1));
-}
-
-#sky[data-storm-flash="fade"] .weather-cloud-layer[data-weather="storm"]::before {
-    filter: blur(7px) brightness(var(--storm-flash-brightness, 1.2));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4125,5 +4114,17 @@ body.theme-night #sky .moon {
         animation: none !important;
         transform: none !important;
         will-change: auto;
+    }
+}
+
+
+/* Keep the live storm-light variable above the general cloud shading rules. */
+#sky .weather-cloud-layer[data-weather="storm"]::before {
+    filter: blur(7px) brightness(var(--storm-flash-brightness, 1));
+    transition: filter 84ms ease, opacity 120ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    #sky .weather-cloud-layer[data-weather="storm"]::before {
+        transition: none !important;
     }
 }
