@@ -311,74 +311,34 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
   updateCloudAtmosphere(weatherCode, windSpeed);
   clearWeatherEffects();
 
-  const clouds = sky.querySelectorAll('.cloud');
+  // Cloud coverage, depth, lighting and motion are owned by updateCloudAtmosphere().
+  // Keep this function focused on particles and weather-specific foreground effects.
   if (prefersReducedMotion()) {
     sky.dataset.motion = 'reduced';
-    clouds.forEach(cloud => {
-      cloud.style.animation = 'none';
-      cloud.style.opacity = weatherCode >= 801 ? '0.45' : '0';
-    });
     if (weatherCode >= 700 && weatherCode < 800) {
       createFog(timeOfDay, windSpeed, currentVisibility, currentWindDirection, weatherCode);
     }
     return;
   }
-  
+
   sky.dataset.motion = 'full';
   const effectScale = getWeatherEffectScale();
   const motionProfile = getWeatherMotionProfile(weatherCode, windSpeed);
   const precipitationWind = getPrecipitationWindProfile(windSpeed);
 
   if (weatherCode >= 200 && weatherCode < 300) {
-    clouds.forEach((c, i) => {
-      c.style.background = '#455A64';
-      c.style.opacity = '0.9';
-      c.style.animationDuration = (20 + i * 5) + 's';
-    });
     createRain(Math.round(motionProfile.rainCount * effectScale), true, precipitationWind);
     createLightning();
     createWindLines(Math.round(motionProfile.windCount * effectScale));
   } else if (weatherCode >= 300 && weatherCode < 400) {
-    clouds.forEach((c, i) => {
-      c.style.opacity = '0.7';
-      c.style.background = '#90A4AE';
-    });
     createRain(Math.round(motionProfile.rainCount * effectScale), false, precipitationWind);
   } else if (weatherCode >= 500 && weatherCode < 600) {
-    clouds.forEach((c, i) => {
-      c.style.background = '#78909C';
-      c.style.opacity = '0.85';
-      c.style.animationDuration = (22 + i * 5) + 's';
-    });
     createRain(Math.round(motionProfile.rainCount * effectScale), motionProfile.heavyRain, precipitationWind);
     createWindLines(Math.round(motionProfile.windCount * effectScale));
   } else if (weatherCode >= 600 && weatherCode < 700) {
-    clouds.forEach((c, i) => {
-      c.style.background = '#B0BEC5';
-      c.style.opacity = '0.8';
-    });
     createSnow(Math.round(motionProfile.snowCount * effectScale), precipitationWind);
   } else if (weatherCode >= 700 && weatherCode < 800) {
-    clouds.forEach(c => c.style.opacity = '0.3');
     createFog(timeOfDay, windSpeed, currentVisibility, currentWindDirection, weatherCode);
-  } else if (weatherCode === 800) {
-    clouds.forEach(c => c.style.opacity = '0');
-  } else if (weatherCode === 801) {
-    clouds.forEach((c, i) => {
-      c.style.background = 'white';
-      c.style.opacity = i < 2 ? '0.5' : '0';
-    });
-  } else if (weatherCode === 802) {
-    clouds.forEach((c, i) => {
-      c.style.background = 'white';
-      c.style.opacity = i < 3 ? '0.6' : '0.2';
-    });
-  } else {
-    clouds.forEach(c => {
-      c.style.background = '#B0BEC5';
-      c.style.opacity = '0.8';
-      c.style.animationDuration = '25s';
-    });
   }
 }
 

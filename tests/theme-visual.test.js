@@ -1008,3 +1008,12 @@ test('lightning scheduler pauses on hidden tabs and resumes without duplicate ti
   context.stopLightningSequence();
   assert.equal(timers.size, 0);
 });
+
+
+test('legacy cloud, favorite and display selectors stay removed after the layered scene migration', () => {
+  assert.doesNotMatch(styleSource, /\.cloud(?:-[1-4])?\b|@keyframes cloudFloat/);
+  assert.doesNotMatch(styleSource, /\.favorite-item\b|\.display-3\b/);
+  assert.doesNotMatch(themeSource, /querySelectorAll\(['"]\.cloud['"]\)/);
+  assert.match(themeSource, /createCloudLayers\(\)/);
+  assert.match(themeSource, /updateCloudAtmosphere\(weatherCode, windSpeed\)/);
+});

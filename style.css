@@ -291,48 +291,7 @@ body {
     50% { opacity: 1; transform: scale(1.2); }
 }
 
-/* облака */
-.cloud {
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
-    transition: box-shadow 0.8s ease;
-    z-index: 3;
-}
-
-.theme-night .cloud {
-    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.05);
-}
-
-.cloud::before,
-.cloud::after {
-    content: '';
-    position: absolute;
-    background: inherit;
-    border-radius: 50%;
-}
-
-.cloud-1 { width: 160px; height: 55px; top: 12%; left: -180px; animation: cloudFloat 35s linear infinite; }
-.cloud-1::before { width: 65px; height: 65px; top: -30px; left: 35px; }
-.cloud-1::after { width: 85px; height: 75px; top: -35px; left: 65px; }
-
-.cloud-2 { width: 110px; height: 42px; top: 25%; left: -130px; animation: cloudFloat 28s linear 8s infinite; }
-.cloud-2::before { width: 55px; height: 55px; top: -28px; left: 22px; }
-.cloud-2::after { width: 65px; height: 60px; top: -30px; left: 48px; }
-
-.cloud-3 { width: 130px; height: 48px; top: 18%; left: -170px; animation: cloudFloat 32s linear 15s infinite; }
-.cloud-3::before { width: 60px; height: 60px; top: -30px; left: 28px; }
-.cloud-3::after { width: 75px; height: 70px; top: -33px; left: 60px; }
-
-.cloud-4 { width: 100px; height: 38px; top: 30%; left: -120px; animation: cloudFloat 30s linear 20s infinite; }
-.cloud-4::before { width: 50px; height: 50px; top: -24px; left: 20px; }
-.cloud-4::after { width: 60px; height: 55px; top: -28px; left: 45px; }
-
-@keyframes cloudFloat {
-    from { transform: translateX(0); }
-    to { transform: translateX(calc(100vw + 400px)); }
-}
+/* Atmospheric cloud volume is rendered by .weather-cloud-layer depth planes. */
 
 /* дождь */
 .rain-container {
@@ -955,25 +914,6 @@ body {
     color: var(--text-muted) !important;
 }
 
-/* избранное */
-.favorite-item {
-    transition: all 0.3s ease;
-    color: var(--text-primary);
-}
-
-.favorite-item:hover { 
-    transform: translateX(5px);
-    box-shadow: var(--shadow-sm);
-}
-
-.favorite-item p {
-    color: var(--text-primary);
-}
-
-.favorite-item small {
-    color: var(--text-muted);
-}
-
 #favorite-btn { 
     transition: transform 0.3s ease; 
 }
@@ -1038,7 +978,6 @@ body {
     .glass-card { border-radius: 1.2rem !important; }
     
     h1 { font-size: 2.5rem !important; }
-    .display-3 { font-size: 2.5rem; }
     
     .btn-glass {
         padding: 0.35rem 0.7rem !important;
