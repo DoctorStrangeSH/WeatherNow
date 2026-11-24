@@ -576,6 +576,7 @@ function applyLightningFlashStage(lightning, stage, profile) {
         sky.querySelectorAll('.weather-cloud-layer[data-weather="storm"]').forEach(cloud => {
           if (cloud.style && typeof cloud.style.removeProperty === 'function') {
             cloud.style.removeProperty('--storm-flash-brightness');
+            cloud.style.removeProperty('transition');
             cloud.style.removeProperty('filter');
           }
         });
@@ -607,6 +608,7 @@ function applyLightningFlashStage(lightning, stage, profile) {
     : stage === 'peak'
       ? 'var(--lightning-flash-strong, rgba(255,255,255,.64))'
       : 'var(--lightning-flash-fade, rgba(255,255,255,.22))';
+  lightning.style.setProperty('transition', 'none', 'important');
   lightning.style.setProperty('opacity', properties['--lightning-overlay-opacity'], 'important');
   lightning.style.setProperty('background-color', overlayColor, 'important');
   if (sky && sky.dataset) {
@@ -620,6 +622,7 @@ function applyLightningFlashStage(lightning, stage, profile) {
       sky.querySelectorAll('.weather-cloud-layer[data-weather="storm"]').forEach(cloud => {
         if (cloud.style && typeof cloud.style.setProperty === 'function') {
           cloud.style.setProperty('--storm-flash-brightness', brightnessValue);
+          cloud.style.setProperty('transition', 'none', 'important');
           cloud.style.setProperty('filter', `blur(7px) brightness(${brightnessValue})`, 'important');
         }
       });

@@ -441,7 +441,7 @@ body {
     z-index: 5;
     opacity: 0;
     background: transparent;
-    transition: opacity 42ms linear;
+    transition: none;
 }
 
 #lightning[data-flash="soft"] {
@@ -521,7 +521,7 @@ body {
     clip-path: polygon(52% 0, 100% 0, 67% 38%, 91% 38%, 18% 100%, 38% 52%, 8% 52%);
     background: linear-gradient(180deg, rgba(255,255,255,.98), var(--lightning-bolt-mid, rgba(190,211,255,.82)) 42%, rgba(143,176,255,.08));
     filter: drop-shadow(0 0 12px var(--lightning-bolt-glow, rgba(208,224,255,.95))) drop-shadow(0 0 34px var(--lightning-bolt-glow, rgba(155,183,255,.72)));
-    transition: opacity 34ms linear;
+    transition: none;
 }
 
 #lightning[data-bolt-shape="forked"]::before {

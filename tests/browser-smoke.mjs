@@ -334,14 +334,9 @@ try {
     const peak = {
       lightningStage: lightning.dataset.flash,
       skyStage: sky.dataset.stormFlash,
-      cloudFilter: getComputedStyle(cloud, '::before').filter,
-      cloudBrightnessVar: cloud.style.getPropertyValue('--storm-flash-brightness'),
+      cloudFilter: getComputedStyle(cloud).filter,
       boltOpacity: Number(getComputedStyle(lightning, '::before').opacity),
       parentOpacity: Number(getComputedStyle(lightning).opacity),
-      inlineOpacity: lightning.style.getPropertyValue('opacity'),
-      inlineBackground: lightning.style.getPropertyValue('background-color'),
-      matchesPeak: lightning.matches('#lightning[data-flash="peak"]'),
-      skyMatchesPeak: sky.matches('#sky[data-storm-flash="peak"]'),
       boltX: lightning.style.getPropertyValue('--lightning-bolt-x'),
       secondary: lightning.dataset.secondary
     };
@@ -355,8 +350,7 @@ try {
   assert.equal(dynamicStormFlash.skyStage, 'peak');
   assert.match(dynamicStormFlash.cloudFilter, /brightness\(/,
     'Cloud volume brightens during the same lightning strike');
-  console.log('Storm flash style debug:', JSON.stringify(dynamicStormFlash));
-  assert.ok(dynamicStormFlash.inlineOpacity, 'The flash overlay receives an inline peak opacity');
+  assert.ok(dynamicStormFlash.parentOpacity > 0.2, 'The flash overlay reaches visible peak intensity');
   assert.ok(dynamicStormFlash.boltOpacity > 0.5, 'The bolt becomes visible at peak intensity');
   assert.match(dynamicStormFlash.boltX, /%$/, 'Bolt position changes between strikes');
   assert.equal(dynamicStormFlash.cleared, true, 'Flash state is cleared after the strike');
