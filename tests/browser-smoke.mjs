@@ -285,6 +285,31 @@ try {
     assert.equal(new Set(lightingProfiles.map(profile => profile[key])).size, 4,
       `${key} lighting changes across morning, day, evening and night`);
   }
+
+  const scenePaletteMatrix = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    const periods = ['morning', 'day', 'evening', 'night'];
+    const scenes = ['clear', 'cloudy', 'rain', 'thunder', 'snow', 'fog'];
+    return scenes.map(scene => ({
+      scene,
+      palettes: periods.map(period => {
+        document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
+        document.body.classList.add('theme-' + period);
+        sky.dataset.weather = scene;
+        sky.dataset.timeOfDay = period;
+        return {
+          period,
+          background: getComputedStyle(sky).backgroundImage
+        };
+      })
+    }));
+  });
+  for (const scene of scenePaletteMatrix) {
+    assert.ok(scene.palettes.every(palette => /gradient/i.test(palette.background)),
+      `Every ${scene.scene} time period has an atmospheric background`);
+    assert.equal(new Set(scene.palettes.map(palette => palette.background)).size, 4,
+      `${scene.scene} has four distinct morning/day/evening/night palettes`);
+  }
   await page.evaluate(() => updateWeatherTheme(800, 0, 2));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const reducedStormFlash = await page.evaluate(() => {
