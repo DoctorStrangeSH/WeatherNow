@@ -3827,3 +3827,21 @@ body.theme-evening #sky .sun::after {
 #sky .weather-cloud-layer[data-weather="fog"]::after {
     --cloud-shadow-opacity: .24;
 }
+
+/* Pause decorative weather motion while the document is backgrounded. */
+#sky[data-page-visible="false"] .rain-container,
+#sky[data-page-visible="false"] .raindrop,
+#sky[data-page-visible="false"] .snow-container,
+#sky[data-page-visible="false"] .snowflake,
+#sky[data-page-visible="false"] .wind-lines,
+#sky[data-page-visible="false"] .wind-line,
+#sky[data-page-visible="false"] #lightning,
+#sky[data-page-visible="false"] .weather-cloud-layer,
+#sky[data-page-visible="false"] .weather-cloud-layer::before,
+#sky[data-page-visible="false"] .weather-cloud-layer::after,
+#sky[data-page-visible="false"] .star,
+#sky[data-page-visible="false"] .sun,
+#sky[data-page-visible="false"] .moon,
+#sky[data-page-visible="false"] .fog {
+    animation-play-state: paused !important;
+}
