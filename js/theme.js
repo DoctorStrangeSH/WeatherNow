@@ -726,7 +726,7 @@ function updateCloudAtmosphere(weatherCode, windSpeed = 0) {
     layer.style.setProperty('--cloud-drift', `${wind >= 10 ? 34 : wind >= 5 ? 22 : 12}px`);
     layer.dataset.weather = storm ? 'storm' : rain ? 'rain' : snow ? 'snow' : fog ? 'fog' : cloudy ? 'cloudy' : 'clear';
   });
-  updateCloudLighting(sky.dataset.timeOfDay || 'day', code);
+  updateCloudLighting(sky.dataset?.timeOfDay || 'day', code);
 }
 
 function createStars() {

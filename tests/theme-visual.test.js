@@ -491,7 +491,8 @@ test('star visibility is multiplied by twilight progress and respects weather cl
 });
 
 test('cloud lighting palette follows all four local time-of-day states', () => {
-  assert.ok(themeSource.includes('if (sky) sky.dataset.timeOfDay = timeOfDay;'));
+  assert.ok(themeSource.includes('sky.dataset.timeOfDay = timeOfDay;'));
+  assert.ok(themeSource.includes('updateCloudLighting(timeOfDay, currentWeatherCode);'));
   for (const period of ['morning', 'day', 'evening', 'night']) {
     assert.ok(styleSource.includes(`#sky[data-time-of-day="${period}"]`), `Missing ${period} cloud palette`);
   }
