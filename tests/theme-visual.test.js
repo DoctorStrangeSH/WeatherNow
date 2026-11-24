@@ -482,3 +482,22 @@ test('rain and snow particles expose four depth bands with restrained foreground
   }
   assert.ok(styleSource.includes('background: radial-gradient(circle at 35% 30%'), 'Foreground snow has a softly lit surface');
 });
+
+test('weather animation visibility can pause and resume decorative layers', () => {
+  const sky = { dataset: {} };
+  const context = loadInBrowserContext(themeSource, {
+    document: {
+      hidden: false,
+      addEventListener() {},
+      getElementById(id) { return id === 'sky' ? sky : null; },
+      body: { classList: { contains: () => false } }
+    }
+  });
+  vm.runInContext('syncWeatherAnimationVisibility(false)', context);
+  assert.equal(sky.dataset.pageVisible, 'false');
+  vm.runInContext('syncWeatherAnimationVisibility(true)', context);
+  assert.equal(sky.dataset.pageVisible, 'true');
+  assert.ok(styleSource.includes('#sky[data-page-visible="false"] .raindrop'));
+  assert.ok(styleSource.includes('#sky[data-page-visible="false"] .snowflake'));
+  assert.ok(styleSource.includes('#sky[data-page-visible="false"] .weather-cloud-layer'));
+});
