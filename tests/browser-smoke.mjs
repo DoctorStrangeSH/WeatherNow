@@ -342,6 +342,16 @@ try {
     return cloud ? getComputedStyle(cloud, '::before').animationName : '';
   });
   assert.equal(reducedStormFlash, 'none', 'Storm cloud flashes stop when reduced motion is enabled');
+  const reducedPrecipitation = await page.evaluate(() => {
+    updateWeatherTheme(502, 0, 8);
+    const rainParticles = document.querySelectorAll('#sky .raindrop').length;
+    updateWeatherTheme(601, 0, 8);
+    const snowParticles = document.querySelectorAll('#sky .snowflake').length;
+    return { rainParticles, snowParticles };
+  });
+  assert.equal(reducedPrecipitation.rainParticles, 0, 'Reduced motion does not create animated rain particles');
+  assert.equal(reducedPrecipitation.snowParticles, 0, 'Reduced motion does not create animated snow particles');
+
   const reducedClouds = await page.evaluate(() => {
     updateCloudAtmosphere(804, 8);
     const layers = [...document.querySelectorAll('#sky .weather-cloud-layer')];
