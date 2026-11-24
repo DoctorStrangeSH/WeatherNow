@@ -102,6 +102,8 @@ function getMoonPhase(date = new Date()) {
   return { phase, illumination, waxing: phase < 0.5, name };
 }
 function updateSkyElements(timeOfDay) {
+  const sky = document.getElementById('sky');
+  if (sky) sky.dataset.timeOfDay = timeOfDay;
   const sun = document.getElementById('sun');
   const moon = document.getElementById('moon');
   
