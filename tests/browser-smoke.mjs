@@ -97,7 +97,7 @@ try {
   await new Promise(resolve => server.listen(5500, '127.0.0.1', resolve));
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
-    reducedMotion: 'reduce'
+    reducedMotion: 'no-preference'
   });
   const page = await context.newPage();
   await page.addInitScript(() => {
