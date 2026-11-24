@@ -191,13 +191,15 @@ try {
       ['storm-night', 211, 'night'],
       ['fog-morning', 741, 'morning']
     ]) {
-      const state = await page.evaluate(({ code, hourTheme }) => {
+      const state = await page.evaluate(async ({ code, hourTheme }) => {
         currentWeatherCode = code;
         currentWindSpeed = 8;
         document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
         document.body.classList.add('theme-' + hourTheme);
         updateSkyElements(hourTheme);
         applyWeatherEffects(code, hourTheme, 8);
+        // Let the first paint start the 2.2s cloud opacity transition before sampling.
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const sky = document.getElementById('sky');
         const moon = document.getElementById('moon');
         const sun = document.getElementById('sun');
