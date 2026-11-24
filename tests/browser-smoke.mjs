@@ -229,7 +229,15 @@ try {
           rainDepthCount: sky.querySelectorAll('.raindrop[data-depth]').length,
           snowDepthCount: sky.querySelectorAll('.snowflake[data-depth]').length,
           rainDepthBands: [...new Set([...sky.querySelectorAll('.raindrop')].map(drop => drop.dataset.depth))].length,
-          snowDepthBands: [...new Set([...sky.querySelectorAll('.snowflake')].map(flake => flake.dataset.depth))].length
+          snowDepthBands: [...new Set([...sky.querySelectorAll('.snowflake')].map(flake => flake.dataset.depth))].length,
+          rainProfiles: [0, 1, 2, 3].map(depth => {
+            const drop = sky.querySelector(`.raindrop[data-depth="${depth}"]`);
+            return drop ? { length: parseFloat(drop.style.height), duration: parseFloat(drop.style.animationDuration), opacity: parseFloat(drop.style.opacity), blur: parseFloat(drop.style.getPropertyValue('--rain-blur')) } : null;
+          }),
+          snowProfiles: [0, 1, 2, 3].map(depth => {
+            const flake = sky.querySelector(`.snowflake[data-depth="${depth}"]`);
+            return flake ? { size: parseFloat(flake.style.width), duration: parseFloat(flake.style.animationDuration), opacity: parseFloat(flake.style.opacity), blur: parseFloat(flake.style.getPropertyValue('--snow-blur')) } : null;
+          })
         };
       }, { code, hourTheme });
       assert.equal(state.scene, ({
@@ -251,6 +259,13 @@ try {
       }
       if (code >= 600 && code < 700) {
         assert.ok(state.snowDepthCount > 0 && state.snowDepthBands === 4, 'Snow has four depth bands');
+        assert.ok(state.snowProfiles.every(Boolean), 'All four snow depth profiles are populated');
+        for (let index = 1; index < state.snowProfiles.length; index++) {
+          assert.ok(state.snowProfiles[index].size > state.snowProfiles[index - 1].size, 'Snowflakes grow toward the foreground');
+          assert.ok(state.snowProfiles[index].duration < state.snowProfiles[index - 1].duration, 'Foreground snow falls faster');
+          assert.ok(state.snowProfiles[index].opacity > state.snowProfiles[index - 1].opacity, 'Foreground snow is brighter');
+          assert.ok(state.snowProfiles[index].blur < state.snowProfiles[index - 1].blur, 'Foreground snow is sharper');
+        }
       }
       if (code >= 200 && code < 300) {
         assert.match(state.lightningBolt, /polygon/i, 'Storm contains a shaped lightning bolt');
@@ -259,6 +274,13 @@ try {
       if (code >= 300 && code < 600) {
         assert.match(state.rainAngle, /deg$/, 'Rain angle responds to wind');
         assert.ok(state.rainDepthCount > 0 && state.rainDepthBands === 4, 'Rain has four depth bands');
+        assert.ok(state.rainProfiles.every(Boolean), 'All four rain depth profiles are populated');
+        for (let index = 1; index < state.rainProfiles.length; index++) {
+          assert.ok(state.rainProfiles[index].length > state.rainProfiles[index - 1].length, 'Rain streaks grow toward the foreground');
+          assert.ok(state.rainProfiles[index].duration < state.rainProfiles[index - 1].duration, 'Foreground rain falls faster');
+          assert.ok(state.rainProfiles[index].opacity > state.rainProfiles[index - 1].opacity, 'Foreground rain is brighter');
+          assert.ok(state.rainProfiles[index].blur < state.rainProfiles[index - 1].blur, 'Foreground rain is sharper');
+        }
       }
       if (width === 390) {
         await page.screenshot({ path: path.join(screenshotDir, `scene-${name}-390.png`), fullPage: false });
