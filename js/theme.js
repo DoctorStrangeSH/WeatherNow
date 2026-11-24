@@ -251,13 +251,16 @@ function createRain(intensity, heavy = false, wind = getPrecipitationWindProfile
   for (let i = 0; i < count; i++) {
     const drop = document.createElement('div');
     drop.className = 'raindrop';
+    const depth = i % 4;
+    const foreground = depth === 3;
+    drop.dataset.depth = String(depth);
     drop.style.left = Math.random() * 100 + '%';
     drop.style.setProperty('--rain-angle', wind.rainAngle + 'deg');
-    drop.style.animationDuration = (Math.random() * 0.3 + (heavy ? 0.3 : 0.5)) + 's';
+    drop.style.animationDuration = (Math.random() * 0.22 + (foreground ? 0.28 : heavy ? 0.42 : 0.58)) + 's';
     drop.style.animationDelay = Math.random() * 1 + 's';
-    drop.style.height = (Math.random() * 10 + (heavy ? 15 : 8)) + 'px';
-    drop.style.width = heavy ? '2px' : '1.5px';
-    drop.style.opacity = Math.random() * 0.4 + (heavy ? 0.4 : 0.2);
+    drop.style.height = (Math.random() * (foreground ? 12 : 8) + (foreground ? heavy ? 22 : 17 : heavy ? 12 : 8)) + 'px';
+    drop.style.width = (foreground ? heavy ? 2.4 : 1.9 : heavy ? 1.6 : 1.2) + 'px';
+    drop.style.opacity = String(Math.random() * (foreground ? 0.22 : 0.16) + (foreground ? heavy ? 0.68 : 0.48 : heavy ? 0.34 : 0.2));
     container.appendChild(drop);
   }
 
@@ -276,9 +279,11 @@ function createSnow(intensity, wind = getPrecipitationWindProfile(currentWindSpe
   for (let i = 0; i < count; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
-    // Alternate foreground and background particles to create depth without more DOM nodes.
-    const foreground = i % 3 === 0;
-    const size = foreground ? Math.random() * 2.5 + 4 : Math.random() * 2 + 1.5;
+    // Four depth bands add scale and drift variation without extra particle layers.
+    const depth = i % 4;
+    const foreground = depth === 3;
+    flake.dataset.depth = String(depth);
+    const size = foreground ? Math.random() * 2.5 + 4 : Math.random() * (depth === 0 ? 1.2 : 1.8) + (depth === 0 ? 1.2 : 1.7);
     flake.style.width = size + 'px';
     flake.style.height = size + 'px';
     flake.style.left = Math.random() * 100 + '%';
