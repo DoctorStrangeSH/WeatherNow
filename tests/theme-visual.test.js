@@ -12,7 +12,12 @@ const styleSource = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8'
 
 function loadInBrowserContext(source, additions = {}) {
   const context = vm.createContext({
-    document: { addEventListener() {}, body: { classList: { contains: () => false } } },
+    ...additions,
+    document: {
+      addEventListener() {},
+      body: { classList: { contains: () => false } },
+      ...(additions.document || {})
+    },
     window: {
       getComputedStyle: () => ({
         getPropertyValue(name) {
@@ -22,9 +27,9 @@ function loadInBrowserContext(source, additions = {}) {
             '--card-border': 'rgba(179, 211, 239, 0.14)'
           })[name] || '';
         }
-      })
-    },
-    ...additions
+      }),
+      ...(additions.window || {})
+    }
   });
   vm.runInContext(source, context);
   return context;
