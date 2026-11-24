@@ -381,3 +381,14 @@ test('solar illumination does not animate expensive box shadows', () => {
   assert.match(styles, /#sky \.sun::after\s*\{[^}]*animation:\s*sunAura/s);
   assert.match(styles, /prefers-reduced-motion:\s*reduce/);
 });
+
+
+test('cloud layers build volume from highlight and shadow pseudo-elements without extra nodes', () => {
+  const volumeStyles = styleSource.slice(styleSource.lastIndexOf('/* Sculpted cloud volume:'));
+  assert.match(volumeStyles, /\.weather-cloud-layer::before/);
+  assert.match(volumeStyles, /\.weather-cloud-layer::after/);
+  assert.match(volumeStyles, /radial-gradient\(ellipse/);
+  assert.match(volumeStyles, /data-weather="storm"\)::after/);
+  assert.match(volumeStyles, /data-weather="snow"\)::before/);
+  assert.match(volumeStyles, /prefers-reduced-motion:\s*reduce/);
+});
