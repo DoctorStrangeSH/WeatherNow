@@ -221,7 +221,7 @@ try {
           cloudsStatic: visibleClouds.every(layer => getComputedStyle(layer).animationName === 'none'),
           viewport: document.documentElement.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
-          effectCount: sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog').length,
+          effectLayerIds: [...sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog')].map(layer => layer.id).sort(),
           fogLayer: sky.querySelector('#fog') ? getComputedStyle(sky.querySelector('#fog'), '::before').backgroundImage : '',
           lightningBolt: sky.querySelector('#lightning') ? getComputedStyle(sky.querySelector('#lightning'), '::before').clipPath : '',
           stormCloudAnimation: sky.querySelector('.weather-cloud-layer[data-weather="storm"]') ? getComputedStyle(sky.querySelector('.weather-cloud-layer[data-weather="storm"]'), '::before').animationName : '',
@@ -246,7 +246,17 @@ try {
       })[code], `Scene key for ${name}`);
       assert.match(state.background, /gradient/i, `Background for ${name}`);
       assert.ok(state.documentWidth <= state.viewport + 1, `No overflow for ${name} at ${width}px`);
-      assert.ok(state.effectCount <= 1, `No leftover particle layers for ${name}`);
+      const expectedEffectLayers = code >= 200 && code < 300
+        ? ['lightning', 'rain-container', 'wind-lines']
+        : code >= 500 && code < 600
+          ? ['rain-container', 'wind-lines']
+          : code >= 600 && code < 700
+            ? ['snow-container']
+            : code >= 700 && code < 800
+              ? ['fog']
+              : [];
+      assert.deepEqual(state.effectLayerIds, expectedEffectLayers,
+        `Expected weather effect layers for ${name}, without stale or duplicate containers`);
       if (hourTheme === 'night') {
         assert.ok(state.moonInlineOpacity > 0.85, `Moon receives visible night opacity for ${name}`);
       }
@@ -287,6 +297,146 @@ try {
       }
     }
   }
+
+  const fullSceneMatrix = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    const periods = ['morning', 'day', 'evening', 'night'];
+    const scenes = [
+      { name: 'clear', code: 800, expectedLayers: [] },
+      { name: 'cloudy', code: 804, expectedLayers: [] },
+      { name: 'rain', code: 502, expectedLayers: ['rain-container', 'wind-lines'] },
+      { name: 'thunder', code: 211, expectedLayers: ['lightning', 'rain-container', 'wind-lines'] },
+      { name: 'snow', code: 601, expectedLayers: ['snow-container'] },
+      { name: 'fog', code: 741, expectedLayers: ['fog'] }
+    ];
+    const results = [];
+    let persistentChildCount = null;
+
+    for (const scene of scenes) {
+      for (const period of periods) {
+        document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
+        document.body.classList.add('theme-' + period);
+        currentWeatherCode = scene.code;
+        currentWindSpeed = 8;
+        updateSkyElements(period);
+        applyWeatherEffects(scene.code, period, 8);
+
+        const effectLayerIds = [...sky.querySelectorAll(
+          '#rain-container, #snow-container, #wind-lines, #lightning, #fog'
+        )].map(layer => layer.id).sort();
+        const childCountWithoutEffects = sky.children.length - effectLayerIds.length;
+        if (persistentChildCount === null) persistentChildCount = childCountWithoutEffects;
+
+        results.push({
+          scene: scene.name,
+          period,
+          expectedLayers: [...scene.expectedLayers].sort(),
+          effectLayerIds,
+          childCountWithoutEffects,
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: document.documentElement.clientWidth,
+          sunOpacity: Number(getComputedStyle(document.getElementById('sun')).opacity),
+          moonOpacity: Number(getComputedStyle(document.getElementById('moon')).opacity),
+          cloudLayerCount: sky.querySelectorAll('.weather-cloud-layers').length,
+          visibleCloudCount: [...sky.querySelectorAll('.weather-cloud-layer')]
+            .filter(layer => getComputedStyle(layer).display !== 'none' &&
+              Number(getComputedStyle(layer).opacity) > 0).length,
+          rainParticles: sky.querySelectorAll('#rain-container .raindrop').length,
+          snowParticles: sky.querySelectorAll('#snow-container .snowflake').length
+        });
+      }
+    }
+
+    return {
+      results,
+      persistentChildCount,
+      fixedLayerCounts: {
+        sun: sky.querySelectorAll('#sun').length,
+        moon: sky.querySelectorAll('#moon').length,
+        stars: sky.querySelectorAll('#stars').length,
+        clouds: sky.querySelectorAll('.weather-cloud-layers').length
+      }
+    };
+  });
+
+  assert.equal(fullSceneMatrix.results.length, 24, 'All six weather scenes are tested in all four local-time periods');
+  for (const state of fullSceneMatrix.results) {
+    assert.deepEqual(state.effectLayerIds, state.expectedLayers,
+      `Correct effect layers for ${state.scene} during ${state.period}`);
+    assert.equal(state.childCountWithoutEffects, fullSceneMatrix.persistentChildCount,
+      `Persistent sky DOM remains stable for ${state.scene} during ${state.period}`);
+    assert.ok(state.documentWidth <= state.viewportWidth + 1,
+      `No horizontal overflow for ${state.scene} during ${state.period}`);
+    assert.equal(state.cloudLayerCount, 1, 'Cloud wrapper is never duplicated');
+    if (state.scene === 'clear') {
+      assert.equal(state.sunOpacity > 0, state.period !== 'night',
+        `Sun visibility follows the time period for ${state.period}`);
+    } else {
+      assert.equal(state.sunOpacity, 0, `Sun is hidden in the ${state.scene} scene`);
+      assert.ok(state.visibleCloudCount > 0, `Atmospheric cloud layers remain visible in ${state.scene}`);
+    }
+    assert.equal(state.moonOpacity > 0, state.period === 'night',
+      `Moon visibility follows the time period for ${state.period}`);
+    assert.ok(state.rainParticles <= 100 && state.snowParticles <= 100,
+      'Particle counts stay within their hard caps');
+  }
+  assert.deepEqual(fullSceneMatrix.fixedLayerCounts, { sun: 1, moon: 1, stars: 1, clouds: 1 },
+    'Celestial and cloud roots remain unique after all 24 scene combinations');
+
+  const repeatedSceneCycles = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    const codes = [800, 502, 601, 211, 741, 804];
+    const expected = {
+      800: [],
+      502: ['rain-container', 'wind-lines'],
+      601: ['snow-container'],
+      211: ['lightning', 'rain-container', 'wind-lines'],
+      741: ['fog'],
+      804: []
+    };
+    let persistentChildren = null;
+    const samples = [];
+
+    for (let index = 0; index < 20; index++) {
+      const code = codes[index % codes.length];
+      currentWeatherCode = code;
+      currentWindSpeed = 8;
+      applyWeatherEffects(code, 'day', 8);
+      const ids = [...sky.querySelectorAll(
+        '#rain-container, #snow-container, #wind-lines, #lightning, #fog'
+      )].map(layer => layer.id).sort();
+      const stableChildren = sky.children.length - ids.length;
+      if (persistentChildren === null) persistentChildren = stableChildren;
+      samples.push({
+        ids,
+        expected: [...expected[code]].sort(),
+        stableChildren,
+        rainCount: sky.querySelectorAll('#rain-container .raindrop').length,
+        snowCount: sky.querySelectorAll('#snow-container .snowflake').length
+      });
+    }
+    return { samples, persistentChildren, totalChildren: sky.children.length };
+  });
+
+  for (const [index, sample] of repeatedSceneCycles.samples.entries()) {
+    assert.deepEqual(sample.ids, sample.expected,
+      `Weather cycle ${index + 1} has only its expected effect layers`);
+    assert.equal(sample.stableChildren, repeatedSceneCycles.persistentChildren,
+      `Weather cycle ${index + 1} does not grow persistent sky DOM`);
+    assert.ok(sample.rainCount <= 100 && sample.snowCount <= 100,
+      `Weather cycle ${index + 1} respects particle limits`);
+  }
+
+  const stableSkyChildren = await page.evaluate(() => document.getElementById('sky').children.length);
+  await page.evaluate(() => {
+    for (let index = 0; index < 20; index++) {
+      const code = [800, 502, 601, 211, 741, 804][index % 6];
+      currentWeatherCode = code;
+      applyWeatherEffects(code, 'day', 8);
+    }
+  });
+  assert.equal(await page.evaluate(() => document.getElementById('sky').children.length), stableSkyChildren,
+    'Twenty additional weather changes do not accumulate DOM nodes');
 
   const lightingProfiles = await page.evaluate(() => {
     const sky = document.getElementById('sky');
