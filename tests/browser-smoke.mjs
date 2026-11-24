@@ -215,7 +215,10 @@ try {
           cloudsStatic: visibleClouds.every(layer => getComputedStyle(layer).animationName === 'none'),
           viewport: document.documentElement.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
-          effectCount: sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog').length
+          effectCount: sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog').length,
+          fogLayer: sky.querySelector('#fog') ? getComputedStyle(sky.querySelector('#fog'), '::before').backgroundImage : '',
+          lightningBolt: sky.querySelector('#lightning') ? getComputedStyle(sky.querySelector('#lightning'), '::before').clipPath : '',
+          rainAngle: sky.querySelector('.raindrop')?.style.getPropertyValue('--rain-angle') || ''
         };
       }, { code, hourTheme });
       assert.equal(state.scene, ({
@@ -233,6 +236,15 @@ try {
         assert.ok(state.cloudsStatic, `Cloud layer not animated for ${name}`);
       }
       assert.equal(state.sunAnimation, 'none', `Sun glow is lightweight for ${name}`);
+      if (code >= 700 && code < 800) {
+        assert.match(state.fogLayer, /radial-gradient/i, 'Fog uses layered atmospheric gradients');
+      }
+      if (code >= 200 && code < 300) {
+        assert.match(state.lightningBolt, /polygon/i, 'Storm contains a shaped lightning bolt');
+      }
+      if (code >= 300 && code < 600) {
+        assert.match(state.rainAngle, /deg$/, 'Rain angle responds to wind');
+      }
       if (width === 390) {
         await page.screenshot({ path: path.join(screenshotDir, `scene-${name}-390.png`), fullPage: false });
       }
