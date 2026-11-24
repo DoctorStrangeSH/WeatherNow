@@ -759,3 +759,61 @@ test('moon halo intensity follows lunar illumination and atmospheric visibility'
   assert.match(styleSource, /--moon-halo-spread/);
   assert.match(styleSource, /prefers-reduced-motion:\s*reduce/);
 });
+
+
+test('cloud lighting profiles follow the sun cycle and respond to atmospheric conditions', () => {
+  const context = loadInBrowserContext(themeSource);
+  const profiles = vm.runInContext(`({
+    morning: getCloudLightingProfile('morning', 800),
+    day: getCloudLightingProfile('day', 800),
+    evening: getCloudLightingProfile('evening', 800),
+    night: getCloudLightingProfile('night', 800),
+    storm: getCloudLightingProfile('night', 211),
+    rain: getCloudLightingProfile('day', 502),
+    snow: getCloudLightingProfile('day', 601),
+    fog: getCloudLightingProfile('morning', 741),
+    partlyCloudy: getCloudLightingProfile('day', 801),
+    overcast: getCloudLightingProfile('day', 804)
+  })`, context);
+
+  assert.equal(new Set(['morning', 'day', 'evening', 'night'].map(key => profiles[key].lightA)).size, 4);
+  assert.notEqual(profiles.morning.rim, profiles.evening.rim);
+  assert.notEqual(profiles.day.rim, profiles.night.rim);
+  assert.ok(profiles.storm.lightOpacity < profiles.night.lightOpacity);
+  assert.ok(profiles.rain.lightOpacity < profiles.day.lightOpacity);
+  assert.ok(profiles.fog.lightOpacity < profiles.rain.lightOpacity);
+  assert.ok(profiles.snow.lightOpacity > profiles.day.lightOpacity);
+  assert.ok(profiles.overcast.lightOpacity < profiles.partlyCloudy.lightOpacity);
+  for (const profile of Object.values(profiles)) {
+    assert.ok(profile.lightOpacity >= 0 && profile.lightOpacity <= 1);
+    assert.ok(profile.shadowOpacity >= 0 && profile.shadowOpacity <= 1);
+    assert.ok(profile.rim.startsWith('rgba('));
+  }
+});
+
+test('cloud lighting updates sky custom properties when time or weather changes', () => {
+  const values = {};
+  const sky = {
+    dataset: { timeOfDay: 'day' },
+    style: { setProperty(name, value) { values[name] = value; } }
+  };
+  const context = loadInBrowserContext(themeSource, {
+    document: { getElementById(id) { return id === 'sky' ? sky : null; } }
+  });
+  vm.runInContext('updateCloudLighting("evening", 800)', context);
+  assert.equal(sky.dataset.cloudLighting, 'evening');
+  assert.equal(values['--cloud-light-a'], 'rgba(255, 185, 139, .5)');
+  assert.equal(values['--cloud-rim'], 'rgba(255, 158, 133, .48)');
+  vm.runInContext('updateCloudLighting("night", 211)', context);
+  assert.equal(sky.dataset.cloudLighting, 'night');
+  assert.equal(values['--cloud-light-opacity'], '0.409');
+  assert.equal(values['--cloud-shadow-opacity'], '0.92');
+});
+
+test('cloud rim lighting fades smoothly and respects reduced motion', () => {
+  const styles = styleSource.slice(styleSource.lastIndexOf('/* Time- and weather-aware cloud rim light'));
+  assert.match(styles, /var\(--cloud-rim/);
+  assert.match(styles, /transition:\s*opacity 2\.2s ease/);
+  assert.match(styles, /prefers-reduced-motion:\s*reduce/);
+  assert.match(styles, /transition:\s*none !important/);
+});

@@ -569,6 +569,48 @@ try {
       `${key} lighting changes across morning, day, evening and night`);
   }
 
+  const cloudLightingMatrix = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    const read = () => ({
+      period: sky.dataset.cloudLighting,
+      highlight: sky.style.getPropertyValue('--cloud-light-a').trim(),
+      rim: sky.style.getPropertyValue('--cloud-rim').trim(),
+      lightOpacity: Number(sky.style.getPropertyValue('--cloud-light-opacity')),
+      shadowOpacity: Number(sky.style.getPropertyValue('--cloud-shadow-opacity'))
+    });
+    const profiles = {};
+    for (const [name, period, code] of [
+      ['morning', 'morning', 800],
+      ['day', 'day', 800],
+      ['evening', 'evening', 800],
+      ['night', 'night', 800],
+      ['storm', 'night', 211],
+      ['rain', 'day', 502],
+      ['snow', 'day', 601],
+      ['fog', 'morning', 741],
+      ['overcast', 'day', 804]
+    ]) {
+      currentWeatherCode = code;
+      updateSkyElements(period);
+      updateCloudAtmosphere(code, 5);
+      profiles[name] = read();
+    }
+    return profiles;
+  });
+  assert.equal(new Set(['morning', 'day', 'evening', 'night']
+    .map(key => cloudLightingMatrix[key].highlight)).size, 4,
+  'Cloud highlights use four distinct solar color profiles');
+  assert.notEqual(cloudLightingMatrix.morning.rim, cloudLightingMatrix.evening.rim);
+  assert.ok(cloudLightingMatrix.storm.lightOpacity < cloudLightingMatrix.night.lightOpacity);
+  assert.ok(cloudLightingMatrix.rain.lightOpacity < cloudLightingMatrix.day.lightOpacity);
+  assert.ok(cloudLightingMatrix.fog.lightOpacity < cloudLightingMatrix.rain.lightOpacity);
+  assert.ok(cloudLightingMatrix.snow.lightOpacity > cloudLightingMatrix.day.lightOpacity);
+  assert.ok(cloudLightingMatrix.overcast.lightOpacity < cloudLightingMatrix.day.lightOpacity);
+  for (const profile of Object.values(cloudLightingMatrix)) {
+    assert.ok(profile.lightOpacity >= 0 && profile.lightOpacity <= 1);
+    assert.ok(profile.shadowOpacity >= 0 && profile.shadowOpacity <= 1);
+  }
+
   const scenePaletteMatrix = await page.evaluate(() => {
     const sky = document.getElementById('sky');
     const periods = ['morning', 'day', 'evening', 'night'];

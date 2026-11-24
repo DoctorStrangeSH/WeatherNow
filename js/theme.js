@@ -217,7 +217,10 @@ function getMoonHaloProfile(illumination, weatherCode = currentWeatherCode) {
 
 function updateSkyElements(timeOfDay) {
   const sky = document.getElementById('sky');
-  if (sky) sky.dataset.timeOfDay = timeOfDay;
+  if (sky) {
+    sky.dataset.timeOfDay = timeOfDay;
+    updateCloudLighting(timeOfDay, currentWeatherCode);
+  }
   const sun = document.getElementById('sun');
   const moon = document.getElementById('moon');
   
@@ -587,6 +590,116 @@ function createCloudLayers() {
   sky.appendChild(layers);
 }
 
+function getCloudLightingProfile(timeOfDay = 'day', weatherCode = currentWeatherCode) {
+  const palettes = {
+    morning: {
+      lightA: 'rgba(255, 222, 184, .48)',
+      lightB: 'rgba(255, 239, 218, .38)',
+      lightC: 'rgba(255, 193, 165, .34)',
+      shadowA: 'rgba(81, 66, 78, .18)',
+      shadowB: 'rgba(92, 75, 91, .15)',
+      rim: 'rgba(255, 191, 145, .42)',
+      lightOpacity: 0.86,
+      shadowOpacity: 0.54
+    },
+    day: {
+      lightA: 'rgba(255, 255, 255, .5)',
+      lightB: 'rgba(242, 249, 255, .38)',
+      lightC: 'rgba(222, 239, 255, .32)',
+      shadowA: 'rgba(47, 72, 96, .16)',
+      shadowB: 'rgba(54, 82, 108, .13)',
+      rim: 'rgba(255, 255, 255, .3)',
+      lightOpacity: 0.88,
+      shadowOpacity: 0.48
+    },
+    evening: {
+      lightA: 'rgba(255, 185, 139, .5)',
+      lightB: 'rgba(255, 207, 173, .4)',
+      lightC: 'rgba(239, 151, 157, .34)',
+      shadowA: 'rgba(69, 48, 79, .22)',
+      shadowB: 'rgba(91, 55, 91, .18)',
+      rim: 'rgba(255, 158, 133, .48)',
+      lightOpacity: 0.9,
+      shadowOpacity: 0.62
+    },
+    night: {
+      lightA: 'rgba(177, 207, 246, .32)',
+      lightB: 'rgba(149, 183, 229, .26)',
+      lightC: 'rgba(125, 162, 216, .22)',
+      shadowA: 'rgba(7, 15, 34, .34)',
+      shadowB: 'rgba(9, 20, 43, .3)',
+      rim: 'rgba(166, 198, 244, .28)',
+      lightOpacity: 0.66,
+      shadowOpacity: 0.78
+    }
+  };
+  const profile = { ...(palettes[timeOfDay] || palettes.day) };
+  const code = Number(weatherCode);
+
+  if (code >= 200 && code < 300) {
+    profile.lightA = 'rgba(185, 203, 232, .32)';
+    profile.lightB = 'rgba(157, 181, 218, .28)';
+    profile.lightC = 'rgba(126, 157, 205, .24)';
+    profile.shadowA = 'rgba(8, 15, 34, .42)';
+    profile.shadowB = 'rgba(9, 20, 43, .38)';
+    profile.rim = 'rgba(175, 201, 242, .28)';
+    profile.lightOpacity *= 0.62;
+    profile.shadowOpacity = Math.min(0.94, profile.shadowOpacity + 0.14);
+  } else if ((code >= 300 && code < 600)) {
+    profile.lightA = 'rgba(196, 216, 235, .36)';
+    profile.lightB = 'rgba(171, 197, 221, .3)';
+    profile.lightC = 'rgba(148, 180, 211, .26)';
+    profile.rim = 'rgba(190, 215, 239, .3)';
+    profile.lightOpacity *= 0.76;
+    profile.shadowOpacity = Math.min(0.9, profile.shadowOpacity + 0.1);
+  } else if (code >= 600 && code < 700) {
+    profile.lightA = 'rgba(255, 255, 255, .72)';
+    profile.lightB = 'rgba(245, 250, 255, .62)';
+    profile.lightC = 'rgba(230, 242, 255, .56)';
+    profile.shadowA = 'rgba(80, 105, 132, .16)';
+    profile.shadowB = 'rgba(94, 119, 145, .13)';
+    profile.rim = 'rgba(245, 250, 255, .5)';
+    profile.lightOpacity = 0.96;
+    profile.shadowOpacity = 0.44;
+  } else if (code >= 700 && code < 800) {
+    profile.lightA = 'rgba(220, 232, 238, .3)';
+    profile.lightB = 'rgba(207, 222, 230, .25)';
+    profile.lightC = 'rgba(192, 211, 222, .2)';
+    profile.shadowA = 'rgba(72, 88, 101, .12)';
+    profile.shadowB = 'rgba(82, 99, 112, .1)';
+    profile.rim = 'rgba(220, 232, 238, .18)';
+    profile.lightOpacity = 0.42;
+    profile.shadowOpacity = 0.24;
+  } else if (code >= 801 && code < 900) {
+    const coverage = ({ 801: 0.28, 802: 0.48, 803: 0.7, 804: 0.9 })[code] ?? 0.5;
+    profile.lightOpacity *= 1 - coverage * 0.18;
+    profile.shadowOpacity = Math.min(0.9, profile.shadowOpacity + coverage * 0.1);
+    profile.rim = 'rgba(213, 226, 239, .26)';
+  }
+
+  profile.lightOpacity = Number(profile.lightOpacity.toFixed(3));
+  profile.shadowOpacity = Number(profile.shadowOpacity.toFixed(3));
+  return profile;
+}
+
+function updateCloudLighting(timeOfDay, weatherCode = currentWeatherCode) {
+  const sky = document.getElementById('sky');
+  if (!sky || !sky.style || typeof sky.style.setProperty !== 'function') return null;
+
+  const period = ['morning', 'day', 'evening', 'night'].includes(timeOfDay) ? timeOfDay : 'day';
+  const profile = getCloudLightingProfile(period, weatherCode);
+  sky.style.setProperty('--cloud-light-a', profile.lightA);
+  sky.style.setProperty('--cloud-light-b', profile.lightB);
+  sky.style.setProperty('--cloud-light-c', profile.lightC);
+  sky.style.setProperty('--cloud-shadow-a', profile.shadowA);
+  sky.style.setProperty('--cloud-shadow-b', profile.shadowB);
+  sky.style.setProperty('--cloud-rim', profile.rim);
+  sky.style.setProperty('--cloud-light-opacity', String(profile.lightOpacity));
+  sky.style.setProperty('--cloud-shadow-opacity', String(profile.shadowOpacity));
+  sky.dataset.cloudLighting = period;
+  return profile;
+}
+
 function updateCloudAtmosphere(weatherCode, windSpeed = 0) {
   const sky = document.getElementById('sky');
   if (!sky) return;
@@ -613,6 +726,7 @@ function updateCloudAtmosphere(weatherCode, windSpeed = 0) {
     layer.style.setProperty('--cloud-drift', `${wind >= 10 ? 34 : wind >= 5 ? 22 : 12}px`);
     layer.dataset.weather = storm ? 'storm' : rain ? 'rain' : snow ? 'snow' : fog ? 'fog' : cloudy ? 'cloudy' : 'clear';
   });
+  updateCloudLighting(sky.dataset.timeOfDay || 'day', code);
 }
 
 function createStars() {

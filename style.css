@@ -4039,3 +4039,26 @@ body.theme-night #sky .moon {
         transition: none !important;
     }
 }
+
+
+/* Time- and weather-aware cloud rim light, applied by updateCloudLighting(). */
+#sky .weather-cloud-layer::before {
+    background:
+        radial-gradient(ellipse 42% 12% at 50% 8%, var(--cloud-rim, rgba(255,255,255,.18)), transparent 80%),
+        radial-gradient(ellipse 17% 42% at 17% 62%, var(--cloud-light-a, rgba(255,255,255,.42)), transparent 78%),
+        radial-gradient(ellipse 19% 48% at 39% 48%, var(--cloud-light-b, rgba(255,255,255,.34)), transparent 78%),
+        radial-gradient(ellipse 16% 40% at 66% 58%, var(--cloud-light-c, rgba(255,255,255,.38)), transparent 78%),
+        radial-gradient(ellipse 18% 44% at 88% 50%, var(--cloud-light-b, rgba(255,255,255,.3)), transparent 78%);
+    opacity: var(--cloud-light-opacity, .82);
+    transition: opacity 2.2s ease, filter 2.2s ease;
+}
+#sky .weather-cloud-layer::after {
+    transition: opacity 2.2s ease, filter 2.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #sky .weather-cloud-layer::before,
+    #sky .weather-cloud-layer::after {
+        transition: none !important;
+    }
+}
