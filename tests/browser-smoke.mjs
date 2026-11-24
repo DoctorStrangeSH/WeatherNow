@@ -224,6 +224,7 @@ try {
           effectCount: sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog').length,
           fogLayer: sky.querySelector('#fog') ? getComputedStyle(sky.querySelector('#fog'), '::before').backgroundImage : '',
           lightningBolt: sky.querySelector('#lightning') ? getComputedStyle(sky.querySelector('#lightning'), '::before').clipPath : '',
+          stormCloudAnimation: sky.querySelector('.weather-cloud-layer[data-weather="storm"]') ? getComputedStyle(sky.querySelector('.weather-cloud-layer[data-weather="storm"]'), '::before').animationName : '',
           rainAngle: sky.querySelector('.raindrop')?.style.getPropertyValue('--rain-angle') || ''
         };
       }, { code, hourTheme });
@@ -246,6 +247,7 @@ try {
       }
       if (code >= 200 && code < 300) {
         assert.match(state.lightningBolt, /polygon/i, 'Storm contains a shaped lightning bolt');
+        assert.equal(state.stormCloudAnimation, 'stormCloudIllumination', 'Storm cloud highlights flash in sync with lightning');
       }
       if (code >= 300 && code < 600) {
         assert.match(state.rainAngle, /deg$/, 'Rain angle responds to wind');
@@ -256,6 +258,14 @@ try {
     }
   }
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedStormFlash = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    currentWeatherCode = 211;
+    updateCloudAtmosphere(211, 8);
+    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
+    return cloud ? getComputedStyle(cloud, '::before').animationName : '';
+  });
+  assert.equal(reducedStormFlash, 'none', 'Storm cloud flashes stop when reduced motion is enabled');
   const reducedClouds = await page.evaluate(() => {
     updateCloudAtmosphere(804, 8);
     const layers = [...document.querySelectorAll('#sky .weather-cloud-layer')];
