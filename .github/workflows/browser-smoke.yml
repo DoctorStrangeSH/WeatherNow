@@ -1,10 +1,10 @@
 name: Browser and production smoke
 
 on:
+  # PR branches are tested by pull_request; push is reserved for main to avoid duplicate runs.
   push:
     branches:
       - main
-      - "project/**"
   pull_request:
     branches:
       - main
@@ -12,6 +12,11 @@ on:
 
 permissions:
   contents: read
+
+
+concurrency:
+  group: weathernow-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   browser-smoke:
