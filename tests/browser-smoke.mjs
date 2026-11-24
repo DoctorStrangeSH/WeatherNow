@@ -714,6 +714,8 @@ try {
         document.body.classList.add('theme-' + period);
         sky.dataset.weather = scene;
         sky.dataset.timeOfDay = period;
+        // Flush WebKit's pending body-class/data-attribute style recalculation.
+        void sky.offsetHeight;
         return {
           period,
           background: getComputedStyle(sky).backgroundImage
