@@ -451,3 +451,15 @@ test('star visibility is multiplied by twilight progress and respects weather cl
   assert.equal(opacity, 0.45);
   assert.ok(themeSource.includes('updateStarsVisibility(getNightTransitionFactor(hour), currentWeatherCode)'));
 });
+
+test('cloud lighting palette follows all four local time-of-day states', () => {
+  assert.ok(themeSource.includes('if (sky) sky.dataset.timeOfDay = timeOfDay;'));
+  for (const period of ['morning', 'day', 'evening', 'night']) {
+    assert.ok(styleSource.includes(`#sky[data-time-of-day="${period}"]`), `Missing ${period} cloud palette`);
+  }
+  assert.ok(styleSource.includes('--cloud-light-a'));
+  assert.ok(styleSource.includes('--cloud-shadow-a'));
+  assert.ok(styleSource.includes('#sky .weather-cloud-layer[data-weather="storm"]::after'));
+  assert.ok(styleSource.includes('#sky .weather-cloud-layer[data-weather="snow"]::before'));
+  assert.ok(styleSource.includes('#sky .weather-cloud-layer[data-weather="fog"]::before'));
+});
