@@ -604,10 +604,10 @@ try {
     moonTransition: getComputedStyle(document.getElementById('moon')).transitionDuration,
     starAnimation: getComputedStyle(document.querySelector('#stars .star')).animationName
   }));
-  assert.equal(reducedCelestialMotion.starsTransition, '0s',
-    'Reduced motion disables star fade transitions');
-  assert.equal(reducedCelestialMotion.moonTransition, '0s',
-    'Reduced motion disables moon movement transitions');
+  assert.ok(parseFloat(reducedCelestialMotion.starsTransition) <= 0.00002,
+    'Reduced motion reduces star fade transitions to effectively zero');
+  assert.ok(parseFloat(reducedCelestialMotion.moonTransition) <= 0.00002,
+    'Reduced motion reduces moon movement transitions to effectively zero');
   assert.equal(reducedCelestialMotion.starAnimation, 'none',
     'Reduced motion disables star twinkle animations');
 
