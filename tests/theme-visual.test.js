@@ -520,6 +520,12 @@ test('cloud lighting palette follows all four local time-of-day states', () => {
   assert.ok(styleSource.includes('#sky .weather-cloud-layer[data-weather="fog"]::before'));
 });
 
+test('star layer keeps a gradual fade by default and disables it for reduced motion', () => {
+  assert.match(styleSource, /\.stars-container\s*\{[^}]*transition:\s*opacity 2\.4s ease/s);
+  assert.match(styleSource, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.stars-container[\s\S]*transition:\s*none !important/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.star\s*\{[^}]*animation:\s*none !important/s);
+});
+
 test('storm cloud volume reacts to the same flash stage as the lightning overlay', () => {
   assert.match(styleSource, /#sky \.weather-cloud-layer\[data-weather="storm"\]::before\s*\{[^}]*filter:\s*blur\(7px\) brightness\(var\(--storm-flash-brightness,\s*1\)\)/s);
   assert.match(themeSource, /cloud\.style\.setProperty\('--storm-flash-brightness', brightnessValue\)/);
