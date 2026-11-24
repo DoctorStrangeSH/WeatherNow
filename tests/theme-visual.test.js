@@ -472,15 +472,43 @@ test('storm cloud highlights flash in sync with the lightning and stop for reduc
   assert.match(styleSource, /prefers-reduced-motion:\s*reduce\)\s*\{\s*#sky \.weather-cloud-layer\[data-weather="storm"\]::before/);
 });
 
-test('rain and snow particles expose four depth bands with restrained foreground effects', () => {
-  assert.ok(themeSource.includes('const depth = i % 4;'));
-  assert.ok(themeSource.includes('drop.dataset.depth = String(depth);'));
-  assert.ok(themeSource.includes('flake.dataset.depth = String(depth);'));
+test('rain and snow particles expose four distinct depth profiles with realistic scale and motion', () => {
+  const context = loadInBrowserContext(themeSource);
+  const rain = [0, 1, 2, 3].map(depth => vm.runInContext(`getPrecipitationParticleProfile('rain', ${depth})`, context));
+  const snow = [0, 1, 2, 3].map(depth => vm.runInContext(`getPrecipitationParticleProfile('snow', ${depth})`, context));
+  const heavyRain = [0, 1, 2, 3].map(depth => vm.runInContext(`getPrecipitationParticleProfile('rain', ${depth}, true)`, context));
+
+  assert.ok(rain.every((profile, index) => index === 0 || profile.lengthMin > rain[index - 1].lengthMin),
+    'Rain streaks grow longer toward the foreground');
+  assert.ok(rain.every((profile, index) => index === 0 || profile.durationMin < rain[index - 1].durationMin),
+    'Foreground rain falls faster than distant rain');
+  assert.ok(rain.every((profile, index) => index === 0 || profile.opacityMin > rain[index - 1].opacityMin),
+    'Rain gains brightness toward the foreground');
+  assert.ok(rain.every((profile, index) => index === 0 || profile.blur < rain[index - 1].blur),
+    'Rain becomes sharper toward the foreground');
+
+  assert.ok(snow.every((profile, index) => index === 0 || profile.sizeMin > snow[index - 1].sizeMin),
+    'Snowflakes grow toward the foreground');
+  assert.ok(snow.every((profile, index) => index === 0 || profile.durationMin < snow[index - 1].durationMin),
+    'Foreground snow moves faster than distant snow');
+  assert.ok(snow.every((profile, index) => index === 0 || profile.opacityMin > snow[index - 1].opacityMin),
+    'Snow gains opacity toward the foreground');
+  assert.ok(snow.every((profile, index) => index === 0 || profile.blur < snow[index - 1].blur),
+    'Snow becomes sharper toward the foreground');
+  assert.deepEqual(snow.map(profile => profile.driftScale), [0.25, 0.42, 0.68, 1]);
+
+  assert.ok(heavyRain.every((profile, index) => profile.durationMin < rain[index].durationMin),
+    'Heavy rain falls faster in every depth plane');
+  assert.ok(heavyRain.every((profile, index) => profile.lengthMin > rain[index].lengthMin),
+    'Heavy rain uses longer streaks');
+  assert.equal(vm.runInContext("getPrecipitationParticleProfile('hail', 0)", context), null);
+
   for (const depth of ['0', '1', '2', '3']) {
     assert.ok(styleSource.includes(`.raindrop[data-depth="${depth}"]`), `Rain depth ${depth} has a visual profile`);
     assert.ok(styleSource.includes(`.snowflake[data-depth="${depth}"]`), `Snow depth ${depth} has a visual profile`);
   }
   assert.ok(styleSource.includes('background: radial-gradient(circle at 35% 30%'), 'Foreground snow has a softly lit surface');
+  assert.match(styleSource, /prefers-reduced-motion:\s*reduce[\s\S]*?\.raindrop[\s\S]*?\.snowflake/);
 });
 
 test('weather animation visibility can pause and resume decorative layers', () => {
