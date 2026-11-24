@@ -3721,3 +3721,77 @@ body.theme-evening #sky .sun::after {
 @media (prefers-reduced-motion: reduce) {
     #sky .moon::before { transition: none !important; }
 }
+
+/* Time-of-day lighting for cloud highlights and volume shadows. */
+#sky[data-time-of-day="morning"] {
+    --cloud-light-a: rgba(255, 222, 184, .48);
+    --cloud-light-b: rgba(255, 239, 218, .38);
+    --cloud-light-c: rgba(255, 193, 165, .34);
+    --cloud-shadow-a: rgba(81, 66, 78, .18);
+    --cloud-shadow-b: rgba(92, 75, 91, .15);
+    --cloud-light-opacity: .86;
+    --cloud-shadow-opacity: .54;
+}
+#sky[data-time-of-day="day"] {
+    --cloud-light-a: rgba(255, 255, 255, .5);
+    --cloud-light-b: rgba(242, 249, 255, .38);
+    --cloud-light-c: rgba(222, 239, 255, .32);
+    --cloud-shadow-a: rgba(47, 72, 96, .16);
+    --cloud-shadow-b: rgba(54, 82, 108, .13);
+    --cloud-light-opacity: .88;
+    --cloud-shadow-opacity: .48;
+}
+#sky[data-time-of-day="evening"] {
+    --cloud-light-a: rgba(255, 185, 139, .5);
+    --cloud-light-b: rgba(255, 207, 173, .4);
+    --cloud-light-c: rgba(239, 151, 157, .34);
+    --cloud-shadow-a: rgba(69, 48, 79, .22);
+    --cloud-shadow-b: rgba(91, 55, 91, .18);
+    --cloud-light-opacity: .9;
+    --cloud-shadow-opacity: .62;
+}
+#sky[data-time-of-day="night"] {
+    --cloud-light-a: rgba(177, 207, 246, .32);
+    --cloud-light-b: rgba(149, 183, 229, .26);
+    --cloud-light-c: rgba(125, 162, 216, .22);
+    --cloud-shadow-a: rgba(7, 15, 34, .34);
+    --cloud-shadow-b: rgba(9, 20, 43, .3);
+    --cloud-light-opacity: .66;
+    --cloud-shadow-opacity: .78;
+}
+#sky .weather-cloud-layer::before {
+    background:
+        radial-gradient(ellipse 17% 42% at 17% 62%, var(--cloud-light-a, rgba(255,255,255,.42)), transparent 78%),
+        radial-gradient(ellipse 19% 48% at 39% 48%, var(--cloud-light-b, rgba(255,255,255,.34)), transparent 78%),
+        radial-gradient(ellipse 16% 40% at 66% 58%, var(--cloud-light-c, rgba(255,255,255,.38)), transparent 78%),
+        radial-gradient(ellipse 18% 44% at 88% 50%, var(--cloud-light-b, rgba(255,255,255,.3)), transparent 78%);
+    opacity: var(--cloud-light-opacity, .82);
+}
+#sky .weather-cloud-layer::after {
+    background:
+        radial-gradient(ellipse 24% 42% at 20% 50%, var(--cloud-shadow-a, rgba(38,57,79,.16)), transparent 80%),
+        radial-gradient(ellipse 30% 48% at 52% 56%, var(--cloud-shadow-b, rgba(38,57,79,.14)), transparent 82%),
+        radial-gradient(ellipse 24% 40% at 84% 48%, var(--cloud-shadow-a, rgba(38,57,79,.13)), transparent 80%);
+    opacity: var(--cloud-shadow-opacity, .56);
+}
+#sky .weather-cloud-layer[data-weather="storm"]::before,
+#sky .weather-cloud-layer[data-weather="rain"]::before {
+    --cloud-light-opacity: .58;
+}
+#sky .weather-cloud-layer[data-weather="storm"]::after,
+#sky .weather-cloud-layer[data-weather="rain"]::after {
+    --cloud-shadow-opacity: .82;
+}
+#sky .weather-cloud-layer[data-weather="snow"]::before {
+    --cloud-light-a: rgba(255,255,255,.72);
+    --cloud-light-b: rgba(245,250,255,.62);
+    --cloud-light-c: rgba(230,242,255,.56);
+    --cloud-light-opacity: .96;
+}
+#sky .weather-cloud-layer[data-weather="fog"]::before {
+    --cloud-light-opacity: .38;
+    filter: blur(12px);
+}
+#sky .weather-cloud-layer[data-weather="fog"]::after {
+    --cloud-shadow-opacity: .24;
+}
