@@ -225,7 +225,11 @@ try {
           fogLayer: sky.querySelector('#fog') ? getComputedStyle(sky.querySelector('#fog'), '::before').backgroundImage : '',
           lightningBolt: sky.querySelector('#lightning') ? getComputedStyle(sky.querySelector('#lightning'), '::before').clipPath : '',
           stormCloudAnimation: sky.querySelector('.weather-cloud-layer[data-weather="storm"]') ? getComputedStyle(sky.querySelector('.weather-cloud-layer[data-weather="storm"]'), '::before').animationName : '',
-          rainAngle: sky.querySelector('.raindrop')?.style.getPropertyValue('--rain-angle') || ''
+          rainAngle: sky.querySelector('.raindrop')?.style.getPropertyValue('--rain-angle') || '',
+          rainDepthCount: sky.querySelectorAll('.raindrop[data-depth]').length,
+          snowDepthCount: sky.querySelectorAll('.snowflake[data-depth]').length,
+          rainDepthBands: [...new Set([...sky.querySelectorAll('.raindrop')].map(drop => drop.dataset.depth))].length,
+          snowDepthBands: [...new Set([...sky.querySelectorAll('.snowflake')].map(flake => flake.dataset.depth))].length
         };
       }, { code, hourTheme });
       assert.equal(state.scene, ({
@@ -245,12 +249,16 @@ try {
       if (code >= 700 && code < 800) {
         assert.match(state.fogLayer, /radial-gradient/i, 'Fog uses layered atmospheric gradients');
       }
+      if (code >= 600 && code < 700) {
+        assert.ok(state.snowDepthCount > 0 && state.snowDepthBands === 4, 'Snow has four depth bands');
+      }
       if (code >= 200 && code < 300) {
         assert.match(state.lightningBolt, /polygon/i, 'Storm contains a shaped lightning bolt');
         assert.equal(state.stormCloudAnimation, 'stormCloudIllumination', 'Storm cloud highlights flash in sync with lightning');
       }
       if (code >= 300 && code < 600) {
         assert.match(state.rainAngle, /deg$/, 'Rain angle responds to wind');
+        assert.ok(state.rainDepthCount > 0 && state.rainDepthBands === 4, 'Rain has four depth bands');
       }
       if (width === 390) {
         await page.screenshot({ path: path.join(screenshotDir, `scene-${name}-390.png`), fullPage: false });
