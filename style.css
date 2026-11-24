@@ -2366,11 +2366,6 @@ body {
     pointer-events: none;
 }
 
-.cloud {
-    filter: blur(1px);
-    opacity: 0.14;
-}
-
 .app-container {
     z-index: 2;
 }
@@ -2883,7 +2878,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
     .star,
-    .cloud,
     .sun,
     .moon,
     .raindrop,
