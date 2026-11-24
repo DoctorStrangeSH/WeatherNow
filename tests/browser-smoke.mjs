@@ -588,7 +588,10 @@ try {
   assert.match(celestialAccessibility.night.moonLabel, /^Луна: /);
 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.evaluate(() => updateWeatherTheme(800, 0, 8));
+  await page.evaluate(() => {
+    updateWeatherTheme(800, 0, 8);
+    applyWeatherEffects(800, 'day', 8);
+  });
   const celestialMotion = await page.evaluate(() => ({
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     starsTransition: getComputedStyle(document.getElementById('stars')).transitionDuration,
