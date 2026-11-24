@@ -289,6 +289,28 @@ try {
     'Reduced-motion clouds remain static');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
 
+  // Verify decorative weather motion pauses in a background tab and resumes on return.
+  await page.evaluate(() => {
+    updateWeatherTheme(502, 0, 2);
+    syncWeatherAnimationVisibility(false);
+  });
+  const pausedRain = await page.evaluate(() => ({
+    visible: document.getElementById('sky').dataset.pageVisible,
+    animation: getComputedStyle(document.querySelector('#sky .raindrop')).animationPlayState
+  }));
+  assert.equal(pausedRain.visible, 'false');
+  assert.equal(pausedRain.animation, 'paused', 'Rain animation pauses when the tab is hidden');
+  const resumedRain = await page.evaluate(() => {
+    syncWeatherAnimationVisibility(true);
+    return {
+      visible: document.getElementById('sky').dataset.pageVisible,
+      animation: getComputedStyle(document.querySelector('#sky .raindrop')).animationPlayState
+    };
+  });
+  assert.equal(resumedRain.visible, 'true');
+  assert.equal(resumedRain.animation, 'running', 'Rain animation resumes when the tab is visible');
+  await page.evaluate(() => updateWeatherTheme(800, 0, 2));
+
   // Restore the API-backed city scene before the rest of browser smoke.
   await page.evaluate(() => updateWeatherTheme(800, 0, 2));
 
