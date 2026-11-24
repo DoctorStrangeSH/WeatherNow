@@ -195,6 +195,26 @@ function getMoonPhase(date = new Date()) {
 
   return { phase, illumination, waxing: phase < 0.5, name };
 }
+function getMoonHaloProfile(illumination, weatherCode = currentWeatherCode) {
+  const phaseIllumination = Math.max(0, Math.min(1, Number(illumination) || 0));
+  const code = Number(weatherCode);
+  let atmosphericVisibility = 1;
+
+  if (code >= 200 && code < 600) atmosphericVisibility = 0.14;
+  else if (code >= 600 && code < 700) atmosphericVisibility = 0.42;
+  else if (code >= 700 && code < 800) atmosphericVisibility = 0.08;
+  else if (code >= 801 && code < 900) {
+    atmosphericVisibility = ({ 801: 0.82, 802: 0.62, 803: 0.42, 804: 0.24 })[code] ?? 0.3;
+  }
+
+  return {
+    illumination: phaseIllumination,
+    visibility: atmosphericVisibility,
+    opacity: Number((phaseIllumination * atmosphericVisibility * 0.58).toFixed(3)),
+    spread: Math.round(10 + phaseIllumination * 38)
+  };
+}
+
 function updateSkyElements(timeOfDay) {
   const sky = document.getElementById('sky');
   if (sky) sky.dataset.timeOfDay = timeOfDay;
@@ -226,8 +246,12 @@ function updateSkyElements(timeOfDay) {
   moon.setAttribute('aria-hidden', timeOfDay === 'night' ? 'false' : 'true');
   moon.setAttribute('aria-label', 'Луна: ' + lunarPhase.name);
   const shadowShift = (lunarPhase.illumination * (lunarPhase.waxing ? -100 : 100)).toFixed(1);
+  const halo = getMoonHaloProfile(lunarPhase.illumination, currentWeatherCode);
+  moon.dataset.illumination = lunarPhase.illumination.toFixed(3);
   moon.style.setProperty('--moon-shadow-shift', shadowShift + '%');
   moon.style.setProperty('--moon-shadow-opacity', lunarPhase.illumination > 0.985 ? '0' : '0.92');
+  moon.style.setProperty('--moon-halo-opacity', String(halo.opacity));
+  moon.style.setProperty('--moon-halo-spread', halo.spread + 'px');
   
   updateStarsVisibility(getNightTransitionFactor(hour), currentWeatherCode);
   if (typeof updateChartTheme === 'function') updateChartTheme();

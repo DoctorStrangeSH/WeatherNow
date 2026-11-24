@@ -4018,3 +4018,24 @@ body.theme-day #sky[data-weather="fog"] {
         animation: none !important;
     }
 }
+
+
+/* Lunar halo follows illuminated area and atmospheric visibility. */
+#sky .moon,
+body.theme-night #sky .moon {
+    filter: drop-shadow(0 0 var(--moon-halo-spread, 24px)
+        rgba(192, 218, 255, var(--moon-halo-opacity, .38)));
+    box-shadow:
+        0 0 calc(var(--moon-halo-spread, 24px) * 1.35)
+            rgba(192, 218, 255, var(--moon-halo-opacity, .38)),
+        inset -10px -5px 25px rgba(0, 0, 0, .2),
+        inset 5px 5px 15px rgba(255, 255, 255, .6);
+    transition: filter 1.2s ease, box-shadow 1.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #sky .moon,
+    body.theme-night #sky .moon {
+        transition: none !important;
+    }
+}

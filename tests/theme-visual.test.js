@@ -722,3 +722,35 @@ test('switching to reduced motion removes in-flight sky transitions and prevents
   vm.runInContext('startSkyBackgroundTransition(sky, "clear", "night")', context);
   assert.equal(sky.children.length, 0, 'future transitions remain disabled while reduced motion is active');
 });
+
+
+test('moon halo intensity follows lunar illumination and atmospheric visibility', () => {
+  const context = loadInBrowserContext(themeSource);
+  const profiles = vm.runInContext(`({
+    newMoon: getMoonHaloProfile(0, 800),
+    quarterMoon: getMoonHaloProfile(0.5, 800),
+    fullMoon: getMoonHaloProfile(1, 800),
+    partlyCloudy: getMoonHaloProfile(1, 801),
+    overcast: getMoonHaloProfile(1, 804),
+    rain: getMoonHaloProfile(1, 502),
+    snow: getMoonHaloProfile(1, 601),
+    fog: getMoonHaloProfile(1, 741),
+    clampedLow: getMoonHaloProfile(-1, 800),
+    clampedHigh: getMoonHaloProfile(2, 800)
+  })`, context);
+
+  assert.equal(profiles.newMoon.opacity, 0);
+  assert.ok(profiles.quarterMoon.opacity > profiles.newMoon.opacity);
+  assert.ok(profiles.fullMoon.opacity > profiles.quarterMoon.opacity);
+  assert.ok(profiles.fullMoon.opacity > profiles.partlyCloudy.opacity);
+  assert.ok(profiles.partlyCloudy.opacity > profiles.overcast.opacity);
+  assert.ok(profiles.overcast.opacity > profiles.rain.opacity);
+  assert.ok(profiles.snow.opacity > profiles.fog.opacity);
+  assert.equal(profiles.clampedLow.illumination, 0);
+  assert.equal(profiles.clampedHigh.illumination, 1);
+  assert.equal(profiles.fullMoon.spread, 48);
+  assert.equal(profiles.newMoon.spread, 10);
+  assert.match(styleSource, /--moon-halo-opacity/);
+  assert.match(styleSource, /--moon-halo-spread/);
+  assert.match(styleSource, /prefers-reduced-motion:\s*reduce/);
+});

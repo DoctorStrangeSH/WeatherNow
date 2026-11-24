@@ -469,6 +469,38 @@ try {
       `Star accessibility state for ${sample.label}`);
   }
 
+  const lunarHaloProfiles = await page.evaluate(() => {
+    const moon = document.getElementById('moon');
+    const readHalo = () => ({
+      opacity: Number(moon.style.getPropertyValue('--moon-halo-opacity')),
+      spread: parseFloat(moon.style.getPropertyValue('--moon-halo-spread')),
+      illumination: Number(moon.dataset.illumination)
+    });
+    const profiles = {};
+    for (const [name, code] of [
+      ['clear', 800],
+      ['partlyCloudy', 801],
+      ['overcast', 804],
+      ['rain', 502],
+      ['snow', 601],
+      ['fog', 741]
+    ]) {
+      currentWeatherCode = code;
+      updateSkyElements('night');
+      profiles[name] = readHalo();
+    }
+    return profiles;
+  });
+  assert.ok(lunarHaloProfiles.clear.opacity > lunarHaloProfiles.partlyCloudy.opacity);
+  assert.ok(lunarHaloProfiles.partlyCloudy.opacity > lunarHaloProfiles.overcast.opacity);
+  assert.ok(lunarHaloProfiles.overcast.opacity > lunarHaloProfiles.rain.opacity);
+  assert.ok(lunarHaloProfiles.snow.opacity > lunarHaloProfiles.fog.opacity);
+  for (const profile of Object.values(lunarHaloProfiles)) {
+    assert.ok(profile.opacity >= 0 && profile.opacity <= 0.58);
+    assert.ok(profile.spread >= 10 && profile.spread <= 48);
+    assert.ok(profile.illumination >= 0 && profile.illumination <= 1);
+  }
+
   const celestialAccessibility = await page.evaluate(() => {
     const moon = document.getElementById('moon');
     const stars = document.getElementById('stars');
