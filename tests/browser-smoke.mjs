@@ -318,13 +318,19 @@ try {
     }
   }
 
-  const dynamicStormFlash = await page.evaluate(() => {
+  await page.evaluate(() => {
     updateWeatherTheme(211, 0, 8);
     const sky = document.getElementById('sky');
     const lightning = sky.querySelector('#lightning');
-    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
     const profile = getLightningFlashProfile(() => 0.7);
     applyLightningFlashStage(lightning, 'peak', profile);
+  });
+  // Let the short 34–84ms CSS transitions reach their intended flash intensity.
+  await page.waitForTimeout(110);
+  const dynamicStormFlash = await page.evaluate(() => {
+    const sky = document.getElementById('sky');
+    const lightning = sky.querySelector('#lightning');
+    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
     const peak = {
       lightningStage: lightning.dataset.flash,
       skyStage: sky.dataset.stormFlash,
@@ -333,7 +339,7 @@ try {
       boltX: lightning.style.getPropertyValue('--lightning-bolt-x'),
       secondary: lightning.dataset.secondary
     };
-    applyLightningFlashStage(lightning, 'off', profile);
+    applyLightningFlashStage(lightning, 'off');
     return {
       ...peak,
       cleared: !lightning.dataset.flash && !sky.dataset.stormFlash
