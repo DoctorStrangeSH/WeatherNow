@@ -934,7 +934,10 @@ test('lightning flash stages illuminate the bolt and cloud layer together, then 
       setProperty(name, value) { lightningValues[name] = value; },
       removeProperty(name) { delete lightningValues[name]; }
     },
-    removeAttribute(name) { delete this.dataset[name]; }
+    removeAttribute(name) {
+      const key = name.replace(/^data-/, '').replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase());
+      delete this.dataset[key];
+    }
   };
   const context = loadInBrowserContext(themeSource, {
     document: { getElementById(id) { return id === 'sky' ? sky : null; } }
@@ -992,11 +995,11 @@ test('lightning scheduler pauses on hidden tabs and resumes without duplicate ti
   context.syncWeatherAnimationVisibility(false);
   assert.equal(timers.size, 0);
   assert.equal(lightning.dataset.flash, undefined);
-  assert.equal(context.lightningTimerId, null);
+  assert.equal(vm.runInContext('lightningTimerId', context), null);
 
   context.syncWeatherAnimationVisibility(true);
   assert.equal(timers.size, 1);
-  assert.equal(context.lightningTimerId !== null, true);
+  assert.equal(vm.runInContext('lightningTimerId !== null', context), true);
   context.stopLightningSequence();
   assert.equal(timers.size, 0);
 });

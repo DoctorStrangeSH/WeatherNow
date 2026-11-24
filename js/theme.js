@@ -612,7 +612,7 @@ function canRunLightningSequence(lightning) {
 }
 
 function scheduleLightningSequence(lightning, delay) {
-  if (!canRunLightningSequence(lightning)) return false;
+  if (!canRunLightningSequence(lightning) || typeof setTimeout !== 'function') return false;
   activeLightningElement = lightning;
   lightningTimerId = setTimeout(() => {
     lightningTimerId = null;
@@ -622,7 +622,7 @@ function scheduleLightningSequence(lightning, delay) {
 }
 
 function playLightningBurst(lightning) {
-  if (!canRunLightningSequence(lightning)) {
+  if (typeof setTimeout !== 'function' || !canRunLightningSequence(lightning)) {
     stopLightningSequence();
     return;
   }
