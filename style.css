@@ -3685,3 +3685,14 @@ body.theme-evening #sky .sun::after {
         animation: none !important;
     }
 }
+
+
+/* Star depth: restrained parallax-free layers with only 1/5 stars twinkling. */
+.star[data-depth="0"] { filter: blur(.35px); box-shadow: 0 0 2px rgba(255,255,255,.35); }
+.star[data-depth="1"] { filter: blur(.2px); box-shadow: 0 0 2px rgba(255,255,255,.45); }
+.star[data-depth="2"] { box-shadow: 0 0 3px rgba(255,255,255,.58); }
+.star[data-depth="3"] { box-shadow: 0 0 4px rgba(205,225,255,.72); }
+.star[data-depth="4"] { box-shadow: 0 0 6px rgba(220,235,255,.9); }
+@media (prefers-reduced-motion: reduce) {
+    .star { animation: none !important; }
+}
