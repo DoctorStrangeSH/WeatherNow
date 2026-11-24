@@ -3626,3 +3626,62 @@ body.theme-evening #sky .sun::after {
         transform: none;
     }
 }
+
+
+/* Sculpted cloud volume: highlight and shadow contours without extra DOM nodes. */
+.weather-cloud-layer {
+    isolation: isolate;
+}
+.weather-cloud-layer::before,
+.weather-cloud-layer::after {
+    content: "";
+    position: absolute;
+    inset: 12% 4% 28%;
+    pointer-events: none;
+    border-radius: 50%;
+}
+.weather-cloud-layer::before {
+    background:
+        radial-gradient(ellipse 17% 42% at 17% 62%, rgba(255,255,255,.42), transparent 78%),
+        radial-gradient(ellipse 19% 48% at 39% 48%, rgba(255,255,255,.34), transparent 78%),
+        radial-gradient(ellipse 16% 40% at 66% 58%, rgba(255,255,255,.38), transparent 78%),
+        radial-gradient(ellipse 18% 44% at 88% 50%, rgba(255,255,255,.3), transparent 78%);
+    filter: blur(7px);
+    opacity: .82;
+}
+.weather-cloud-layer::after {
+    inset: 30% 2% 4%;
+    background:
+        radial-gradient(ellipse 24% 42% at 20% 50%, rgba(38,57,79,.16), transparent 80%),
+        radial-gradient(ellipse 30% 48% at 52% 56%, rgba(38,57,79,.14), transparent 82%),
+        radial-gradient(ellipse 24% 40% at 84% 48%, rgba(38,57,79,.13), transparent 80%);
+    filter: blur(13px);
+    opacity: .56;
+}
+.weather-cloud-layer[data-weather="storm"]::before,
+.weather-cloud-layer[data-weather="rain"]::before {
+    background:
+        radial-gradient(ellipse 18% 44% at 18% 60%, rgba(196,213,229,.24), transparent 78%),
+        radial-gradient(ellipse 20% 48% at 48% 48%, rgba(169,190,211,.2), transparent 78%),
+        radial-gradient(ellipse 17% 42% at 82% 55%, rgba(196,213,229,.22), transparent 78%);
+}
+.weather-cloud-layer[data-weather="storm"]::after,
+.weather-cloud-layer[data-weather="rain"]::after {
+    background:
+        radial-gradient(ellipse 30% 52% at 24% 48%, rgba(8,15,31,.32), transparent 82%),
+        radial-gradient(ellipse 34% 58% at 62% 54%, rgba(8,15,31,.3), transparent 82%),
+        radial-gradient(ellipse 25% 48% at 90% 50%, rgba(8,15,31,.26), transparent 82%);
+    opacity: .72;
+}
+.weather-cloud-layer[data-weather="snow"]::before {
+    background:
+        radial-gradient(ellipse 18% 44% at 18% 58%, rgba(255,255,255,.68), transparent 78%),
+        radial-gradient(ellipse 20% 48% at 48% 48%, rgba(255,255,255,.6), transparent 78%),
+        radial-gradient(ellipse 17% 42% at 82% 55%, rgba(255,255,255,.66), transparent 78%);
+}
+@media (prefers-reduced-motion: reduce) {
+    .weather-cloud-layer::before,
+    .weather-cloud-layer::after {
+        animation: none !important;
+    }
+}
