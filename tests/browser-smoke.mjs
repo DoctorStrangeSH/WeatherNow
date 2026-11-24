@@ -210,6 +210,7 @@ try {
           scene: sky.dataset.weather,
           background: getComputedStyle(sky).backgroundImage,
           moonOpacity: Number(getComputedStyle(moon).opacity),
+          moonInlineOpacity: Number(moon.style.opacity),
           sunAnimation: getComputedStyle(sun).animationName,
           cloudCount: visibleClouds.length,
           cloudsStatic: visibleClouds.every(layer => getComputedStyle(layer).animationName === 'none'),
@@ -229,7 +230,7 @@ try {
       assert.ok(state.documentWidth <= state.viewport + 1, `No overflow for ${name} at ${width}px`);
       assert.ok(state.effectCount <= 1, `No leftover particle layers for ${name}`);
       if (hourTheme === 'night') {
-        assert.ok(state.moonOpacity > 0.85, `Moon visible for ${name}`);
+        assert.ok(state.moonInlineOpacity > 0.85, `Moon receives visible night opacity for ${name}`);
       }
       if (code === 804 || code === 502 || code === 601 || code === 211 || code === 741) {
         assert.ok(state.cloudCount >= 1, `Cloud layer visible for ${name}`);
