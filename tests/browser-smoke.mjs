@@ -775,6 +775,13 @@ try {
   assert.equal(rapidSceneTransitions, 1, 'Rapid weather changes keep at most one crossfade layer');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // Trigger the registered MediaQueryList handler explicitly as well; some
+  // headless browser engines update matches without dispatching the change event.
+  await page.evaluate(() => {
+    if (typeof reducedMotionChangeHandler === 'function') {
+      reducedMotionChangeHandler({ matches: true });
+    }
+  });
   await page.waitForFunction(
     () => !document.querySelector('#sky .sky-scene-transition'),
     null,
