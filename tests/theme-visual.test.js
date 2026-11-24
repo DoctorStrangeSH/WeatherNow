@@ -426,7 +426,34 @@ test('lunar phase calculation covers new moon, first quarter, full moon and wani
 
 test('moon phase overlay is accessible, direction-aware and motion-safe', () => {
   assert.match(themeSource, /moon\\.setAttribute\\('aria-label', 'Луна: ' \+ lunarPhase\\.name\\)/);
-  assert.match(themeSource, /--moon-shadow-width/);
+  assert.match(themeSource, /--moon-shadow-shift/);
   assert.match(styleSource, /#sky \\.moon::before/);
-  assert.match(styleSource, /prefers-reduced-motion:\\s*reduce/);
+  assert.match(styleSource, /prefers-reduced-motion:\s*reduce/);
+});
+
+test('stars fade in at dusk and fade out at dawn with smooth endpoints', () => {
+  const context = loadInBrowserContext(themeSource);
+  const factors = vm.runInContext(`[
+    getNightTransitionFactor(17),
+    getNightTransitionFactor(19),
+    getNightTransitionFactor(21),
+    getNightTransitionFactor(5),
+    getNightTransitionFactor(6.5),
+    getNightTransitionFactor(8),
+    getNightTransitionFactor(12)
+  ]`, context);
+  assert.deepEqual(Array.from(factors), [0, 0.5, 1, 1, 0.5, 0, 0]);
+});
+
+test('star visibility is multiplied by twilight progress and respects weather cloud cover', () => {
+  const context = loadInBrowserContext(themeSource, {
+    document: {
+      addEventListener() {},
+      body: { classList: { contains: () => false } },
+      getElementById: () => ({ style: {}, setAttribute(name, value) { this[name] = value; } })
+    }
+  });
+  const opacity = vm.runInContext(`getNightSkyOpacity(800) * getNightTransitionFactor(19)`, context);
+  assert.equal(opacity, 0.45);
+  assert.match(themeSource, /updateStarsVisibility\\(getNightTransitionFactor\\(hour\\), currentWeatherCode\\)/);
 });
