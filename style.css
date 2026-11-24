@@ -512,6 +512,23 @@ body {
     }
 }
 
+/* Storm flashes illuminate cloud volumes in sync with the lightning overlay. */
+#sky .weather-cloud-layer[data-weather="storm"]::before {
+    animation: stormCloudIllumination 6s steps(1, end) infinite;
+}
+@keyframes stormCloudIllumination {
+    0%, 90%, 92%, 94%, 96%, 100% { filter: brightness(1); }
+    91% { filter: brightness(1.72); }
+    93% { filter: brightness(2.15); }
+    95% { filter: brightness(1.38); }
+}
+@media (prefers-reduced-motion: reduce) {
+    #sky .weather-cloud-layer[data-weather="storm"]::before {
+        animation: none !important;
+        filter: brightness(1);
+    }
+}
+
 /* стеклянные эффекты */
 .glass {
     background: var(--card-bg);
