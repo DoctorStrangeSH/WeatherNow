@@ -703,25 +703,28 @@ try {
   assert.ok(fogProfileMatrix.driftX && fogProfileMatrix.driftY,
     'Wind direction produces two-axis fog drift');
 
-  const scenePaletteMatrix = await page.evaluate(() => {
+  const scenePaletteMatrix = await page.evaluate(async () => {
     const sky = document.getElementById('sky');
     const periods = ['morning', 'day', 'evening', 'night'];
     const scenes = ['clear', 'cloudy', 'rain', 'thunder', 'snow', 'fog'];
-    return scenes.map(scene => ({
-      scene,
-      palettes: periods.map(period => {
+    const result = [];
+    for (const scene of scenes) {
+      const palettes = [];
+      for (const period of periods) {
         document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
         document.body.classList.add('theme-' + period);
         sky.dataset.weather = scene;
         sky.dataset.timeOfDay = period;
-        // Flush WebKit's pending body-class/data-attribute style recalculation.
-        void sky.offsetHeight;
-        return {
+        // Give WebKit two style/layout frames to apply the new body theme.
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        palettes.push({
           period,
           background: getComputedStyle(sky).backgroundImage
-        };
-      })
-    }));
+        });
+      }
+      result.push({ scene, palettes });
+    }
+    return result;
   });
   for (const scene of scenePaletteMatrix) {
     assert.ok(scene.palettes.every(palette => /gradient/i.test(palette.background)),
