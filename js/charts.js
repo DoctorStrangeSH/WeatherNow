@@ -1,13 +1,39 @@
-// ============================================
-// WeatherNow — Графики (Chart.js)
-// ============================================
+let chartLibraryPromise = null;
+
+function ensureChartLibrary() {
+  if (typeof window.Chart !== 'undefined') return Promise.resolve(window.Chart);
+  if (chartLibraryPromise) return chartLibraryPromise;
+
+  chartLibraryPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    script.async = true;
+    script.onload = () => resolve(window.Chart);
+    script.onerror = () => {
+      chartLibraryPromise = null;
+      reject(new Error('Не удалось загрузить библиотеку графиков'));
+    };
+    document.head.appendChild(script);
+  });
+  return chartLibraryPromise;
+}
 
 let tempChartInstance = null;
 let hourlyChartInstance = null;
 
-function renderTempChart(days) {
+function getChartThemePalette() {
+  const styles = window.getComputedStyle(document.body);
+  return {
+    legend: styles.getPropertyValue('--text-primary').trim() || '#f3f7fc',
+    ticks: styles.getPropertyValue('--text-muted').trim() || '#a9bbcf',
+    grid: styles.getPropertyValue('--card-border').trim() || 'rgba(255, 255, 255, 0.14)'
+  };
+}
+
+async function renderTempChart(days) {
   const canvas = document.getElementById('tempChart');
   if (!canvas || days.length === 0) return;
+  try { await ensureChartLibrary(); } catch (error) { console.warn(error.message); return; }
   const ctx = canvas.getContext('2d');
   if (tempChartInstance) tempChartInstance.destroy();
 
@@ -15,14 +41,14 @@ function renderTempChart(days) {
   const labels = days.map((day, i) => {
     if (i === 0) return 'Сегодня';
     if (i === 1) return 'Завтра';
-    const date = new Date(day.date);
+    const date = parseForecastDate(day.date);
     return dayNames[date.getDay()];
   });
 
   const maxTemps = days.map(d => d.maxTemp);
   const minTemps = days.map(d => d.minTemp);
 
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
 
   tempChartInstance = new Chart(ctx, {
     type: 'line',
@@ -57,17 +83,18 @@ function renderTempChart(days) {
         }
       ]
     },
-    options: getChartOptions(isDark)
+    options: getChartOptions(palette)
   });
 }
 
-function renderHourlyChart(hourlyData) {
+async function renderHourlyChart(hourlyData) {
   const canvas = document.getElementById('hourlyChart');
-  if (!canvas) return;
+  if (!canvas || !Array.isArray(hourlyData) || hourlyData.length === 0) return;
+  try { await ensureChartLibrary(); } catch (error) { console.warn(error.message); return; }
   const ctx = canvas.getContext('2d');
   if (hourlyChartInstance) hourlyChartInstance.destroy();
 
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
 
   hourlyChartInstance = new Chart(ctx, {
     type: 'line',
@@ -106,26 +133,38 @@ function renderHourlyChart(hourlyData) {
         legend: {
           labels: {
             usePointStyle: true,
-            color: isDark ? '#fff' : '#1a1a2e'
+            color: palette.legend
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: context => formatChartTooltip(context.dataset.label, context.parsed.y)
           }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: isDark ? '#aaa' : '#666' } },
+        x: { grid: { display: false }, ticks: { color: palette.ticks } },
         y: {
           position: 'left',
-          grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' },
-          ticks: { callback: v => v + '°', color: isDark ? '#aaa' : '#666' }
+          grid: { color: palette.grid },
+          ticks: { callback: v => v + '°', color: palette.ticks }
         },
         y1: {
           position: 'right',
+          min: 0,
           max: 100,
           grid: { display: false },
-          ticks: { callback: v => v + '%', color: isDark ? '#aaa' : '#666' }
+          ticks: { callback: v => v + '%', color: palette.ticks }
         }
       }
     }
   });
+}
+
+function formatChartTooltip(label, value) {
+  if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return label + ': нет данных';
+  const unit = label.includes('Осадки') ? '%' : '°C';
+  return `${label}: ${value}${unit}`;
 }
 
 function createGradient(ctx, color1, color2) {
@@ -135,31 +174,31 @@ function createGradient(ctx, color1, color2) {
   return gradient;
 }
 
-function getChartOptions(isDark) {
+function getChartOptions(palette) {
   return {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        labels: { usePointStyle: true, padding: 20, color: isDark ? '#fff' : '#1a1a2e' }
+        labels: { usePointStyle: true, padding: 20, color: palette.legend }
       },
       tooltip: {
         backgroundColor: 'rgba(26, 26, 46, 0.9)',
         padding: 12,
         cornerRadius: 8,
         callbacks: {
-          label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y + '°C'
+          label: (ctx) => formatChartTooltip(ctx.dataset.label, ctx.parsed.y)
         }
       }
     },
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: isDark ? '#aaa' : '#666' }
+        ticks: { color: palette.ticks }
       },
       y: {
-        grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' },
-        ticks: { callback: v => v + '°C', color: isDark ? '#aaa' : '#666' }
+        grid: { color: palette.grid },
+        ticks: { callback: v => v + '°C', color: palette.ticks }
       }
     },
     interaction: { intersect: false, mode: 'index' }
@@ -167,24 +206,25 @@ function getChartOptions(isDark) {
 }
 
 function updateChartTheme() {
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
 
   [tempChartInstance, hourlyChartInstance].forEach(chart => {
     if (chart) {
-      // Обновляем цвета сетки
-      chart.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+      chart.options.scales.y.grid.color = palette.grid;
 
-      // Обновляем цвет текста на осях
       if (chart.options.scales.x) {
-        chart.options.scales.x.ticks.color = isDark ? '#ccc' : '#666';
+        chart.options.scales.x.ticks.color = palette.ticks;
       }
       if (chart.options.scales.y) {
-        chart.options.scales.y.ticks.color = isDark ? '#ccc' : '#666';
+        chart.options.scales.y.ticks.color = palette.ticks;
+      }
+      if (chart.options.scales.y1) {
+        chart.options.scales.y1.ticks.color = palette.ticks;
+        chart.options.scales.y1.grid.color = palette.grid;
       }
 
-      // Обновляем цвет легенды
       if (chart.options.plugins && chart.options.plugins.legend) {
-        chart.options.plugins.legend.labels.color = isDark ? '#fff' : '#1a1a2e';
+        chart.options.plugins.legend.labels.color = palette.legend;
       }
 
       chart.update();

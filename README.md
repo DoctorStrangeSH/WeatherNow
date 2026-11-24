@@ -1,136 +1,122 @@
 <div align="center">
-  <img src="assets/favicon.svg" alt="WeatherNow Logo" width="80" height="80">
-  
-  # 🌤️ WeatherNow
-  
-  **Красивый прогноз погоды с живой визуализацией**
-  
-  [![GitHub Pages](https://img.shields.io/badge/Демо-GitHub%20Pages-FF8C42?style=for-the-badge&logo=github)](https://doctorstrangesh.github.io/WeatherNow)
-  [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/ru/docs/Web/JavaScript)
-  [![OpenWeatherMap](https://img.shields.io/badge/OpenWeather-API-FF8C42?style=for-the-badge)](https://openweathermap.org/api)
-  [![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?style=for-the-badge)](https://www.chartjs.org/)
-  [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap)](https://getbootstrap.com/)
+  <img src="assets/favicon.svg" alt="WeatherNow" width="76" height="76">
+
+  # WeatherNow
+
+  **Погода, которую хочется открыть.**
+
+  Текущие условия, прогноз и погодные сцены в одном адаптивном приложении.
+
+  [Открыть приложение](https://doctorstrangesh.github.io/WeatherNow/) · [Техническое задание](docs/PROJECT_SPEC.md) · [Сообщить о проблеме](https://github.com/DoctorStrangeSH/WeatherNow/issues)
 </div>
 
 ---
 
-## 📋 О проекте
+## О проекте
 
-**WeatherNow** — современное погодное приложение с анимированным небом, детальными графиками и красивым glassmorphism-дизайном. Показывает текущую погоду, прогноз на 5 дней, почасовой прогноз, карту осадков и позволяет сравнивать погоду в разных городах.
+WeatherNow — браузерное приложение для просмотра погоды по городу или геолокации. Интерфейс показывает текущие условия, прогноз на несколько дней и ближайшие часы, а погодные эффекты меняются вместе с состоянием неба и местным временем.
 
-### 🎯 Возможности
-- Текущая погода по геолокации или поиску города
-- Прогноз на 5 дней с группировкой по дням
-- Почасовой прогноз с графиком температуры и осадков
-- Интерактивные графики (Chart.js)
-- Карта осадков (OpenWeatherMap)
-- Сравнение погоды двух городов
-- Избранные города (LocalStorage)
-- Push-уведомления о дожде, снеге, грозе
-- Тёмная и светлая тема
-- Анимированное небо с облаками и звёздами
-- Полная адаптивность (mobile-first)
+Проект находится в активной переработке. Актуальные планы и статус работ ведутся в [PROJECT_SPEC.md](docs/PROJECT_SPEC.md).
 
----
+## Возможности текущей версии
 
-## 🛠 Технический стек
+- Текущая погода по выбранному городу или координатам с адаптивной погодной сценой.
+- Отдельный главный экран с крупной температурой и карточками ключевых показателей.
+- Поиск городов с подсказками и русскими названиями, когда они доступны у провайдера.
+- Прогноз OpenWeatherMap до пяти дней (шаг 3 часа) и скользящая лента ближайших 24 часов.
+- Графики температуры и погодных показателей.
+- Избранные города с безопасным отображением и устойчивым хранением настроек.
+- Список избранных городов с локальным сохранением.
+- Смена оформления и отдельные цветовые сцены по времени суток и погодным условиям.
+- Анимированные эффекты дождя, снега, ветра, тумана и грозы.
+- Карта Windy во встроенном режиме.
+- Рекомендации по одежде.
+- Уведомления браузера после разрешения пользователя.
 
-<table>
-  <tr>
-    <td><strong>Погода</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/OpenWeatherMap-API-FF8C42?style=flat-square">
-      <img src="https://img.shields.io/badge/Geolocation-API-3b82f6?style=flat-square">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Графики</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Chart.js-4.4-FF6384?style=flat-square">
-      <img src="https://img.shields.io/badge/Canvas-API-3b82f6?style=flat-square">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Интерфейс</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=flat-square&logo=bootstrap">
-      <img src="https://img.shields.io/badge/Glassmorphism-CSS-00C853?style=flat-square">
-      <img src="https://img.shields.io/badge/CSS_Animations-Облака,_Звёзды-00C853?style=flat-square">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Хранение</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/LocalStorage-Избранное-FFCA28?style=flat-square">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Уведомления</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Notifications-API-222222?style=flat-square">
-    </td>
-  </tr>
-</table>
+Некоторые возможности зависят от доступности внешних сервисов и разрешений браузера. Уведомления в текущей реализации не являются фоновыми push-уведомлениями: проверка выполняется открытым приложением.
 
----
+## Технологии
 
-## ✨ Ключевые фичи
+| Область | Используется |
+| --- | --- |
+| Разметка и стили | HTML, CSS |
+| Логика приложения | JavaScript |
+| Компоненты интерфейса | Bootstrap 5 |
+| Иконки | Bootstrap Icons |
+| Графики | Chart.js |
+| Погодные данные | OpenWeatherMap |
+| Карта | Windy |
+| Хранение настроек | LocalStorage |
 
-| Фича | Описание | Технология |
-|------|----------|------------|
-| 🌍 **Геолокация** | Автоопределение города | Geolocation API |
-| 🔍 **Поиск городов** | С автодополнением и русскими названиями | OpenWeatherMap Geo API |
-| 📊 **Графики температуры** | Макс/мин на 5 дней, почасовой с осадками | Chart.js |
-| 🗺️ **Карта осадков** | Встроенная карта OpenWeatherMap | iframe |
-| ⭐ **Избранное** | До 10 городов, быстрый доступ | LocalStorage |
-| 🌓 **Тёмная тема** | Автосохранение выбора, звёзды ночью | CSS Variables |
-| 🔔 **Уведомления** | О дожде, снеге, грозе | Notification API |
-| 📱 **PWA-готовность** | Адаптивный дизайн, mobile-first | Bootstrap 5 |
-| 🎨 **Glassmorphism** | Стеклянные карточки с блюром | CSS backdrop-filter |
-| ☁️ **Живое небо** | Анимированные облака и звёзды | CSS Animations |
-| 🆚 **Сравнение** | Погода двух городов рядом | Promise.all |
+Приложение пока использует обычные JavaScript-файлы без этапа сборки.
 
----
+## Запуск локально
 
-text
+1. Склонируйте репозиторий:
 
-### 🧠 Принципы
-- **Модульность** — каждый файл отвечает за свою зону
-- **Mobile-first** — сначала мобильная вёрстка, потом десктоп
-- **Graceful degradation** — если геолокация отклонена, грузится Москва по умолчанию
-- **Русские названия** — используется `local_names.ru` из API
+   ```bash
+   git clone https://github.com/DoctorStrangeSH/WeatherNow.git
+   cd WeatherNow
+   ```
 
----
+2. Запустите любой локальный HTTP-сервер. Например, через расширение Live Server в VS Code.
+3. Откройте выданный локальный адрес в браузере.
+4. Разрешите геолокацию или найдите город через строку поиска.
 
-## 🔧 Быстрый старт
+Не рекомендуется открывать `index.html` напрямую через `file://`: браузерные API и запросы к внешним сервисам могут работать с ограничениями.
 
-```bash
-# 1. Клонируй репозиторий
-git clone https://github.com/DoctorStrangeSH/WeatherNow.git
-cd weathernow
+## Настройка погодного API
 
-# 2. Открой index.html через Live Server (или любой сервер)
+Погодные запросы приложения должны проходить через Cloudflare Worker. Браузер передаёт только публичные параметры города или координат; секрет OpenWeatherMap хранится в Cloudflare Worker Secret `OPENWEATHER_API_KEY`.
 
-# 3. Разреши геолокацию или введи город в поиске
-⚠️ Для работы нужен API-ключ OpenWeatherMap. Текущий ключ в js/config.js — демонстрационный.
-Получи бесплатный ключ на openweathermap.org
+Код Worker, конфигурация Wrangler, тесты и инструкция развёртывания находятся в каталоге [worker/](worker/README.md). Перед публикацией фронтенда необходимо развернуть обновлённый Worker и проверить его адрес, CORS и ответы.
 
-📱 PWA-возможности (в разработке)
-Адаптивный дизайн
+**Безопасность:** ранее опубликованный API-ключ отозван владельцем и заменён новым. Новый ключ хранится только в Cloudflare Worker Secret `OPENWEATHER_API_KEY`; браузер получает только публичный адрес Worker. Не добавляйте секреты в исходники, Issues, Pull Requests или логи.
 
-Офлайн-иконка
+## Структура проекта
 
-Service Worker для кеширования
+```text
+WeatherNow/
+├── assets/              # Статические ресурсы
+├── docs/
+│   └── PROJECT_SPEC.md  # ТЗ и дорожная карта
+├── worker/
+│   ├── src/index.mjs     # Cloudflare Worker: закрытый доступ к OpenWeatherMap
+│   ├── test/             # Тесты Worker
+│   ├── wrangler.toml     # Конфигурация деплоя без секретов
+│   └── README.md         # Настройка секрета и развёртывание
+├── js/
+│   ├── api.js           # Запросы к погодному сервису
+│   ├── app.js           # Инициализация и сценарии приложения
+│   ├── charts.js        # Графики
+│   ├── config.js        # Публичная конфигурация
+│   ├── feels-like.js    # Почасовое сравнение ощущаемой температуры
+│   ├── map.js           # Карта погоды
+│   ├── notifications.js # Уведомления браузера
+│   ├── search.js        # Поиск городов
+│   ├── storage.js       # Избранные города
+│   ├── theme.js         # Погодные эффекты и тема
+│   ├── ui.js            # Отображение данных и навигация
+│   ├── wardrobe.js      # Рекомендации по одежде
+│   └── weather.js       # Форматирование и обработка прогноза
+├── index.html
+├── style.css
+└── README.md
+```
 
-Web Manifest для установки
+## Разработка
 
-🎨 Цветовая схема
-Элемент	Светлая тема	Тёмная тема
-Небо	#87CEEB → #E0F0FF	#0a0a2e → #2a2a5e
-Акцент	#FF8C42	#FF8C42
-Карточки	Белые полупрозрачные	Тёмные полупрозрачные
-Текст	#1a1a2e	#ffffff
-📄 Лицензия
-MIT — делай что хочешь, только указывай автора 😊
+- Перед изменениями ознакомьтесь с [техническим заданием](docs/PROJECT_SPEC.md).
+- Сохраняйте существующие сценарии до появления проверенной замены.
+- Не добавляйте секреты и персональные данные в репозиторий.
+- Комментарии оставляйте для решений и ограничений, которые нельзя понять из самого кода.
+- Для новых функций описывайте критерии готовности и способы проверки.
+- Перед слиянием проверяйте поиск, загрузку погоды, прогноз, избранное, погодные сцены, карту и адаптивную вёрстку.
+- Локально проверить синтаксис: `for file in js/*.js tests/*.js; do node --check "$file"; done`.
+- Запустить модульные тесты: `node --test tests/*.test.js worker/test/*.test.mjs`.
+- Проверить Worker: `node --check worker/src/index.mjs`.
+- Развёртывание Worker описано в [worker/README.md](worker/README.md).
 
-<div align="center"> <p>Сделано с ❤️ и ☕</p> <p> <a href="https://github.com/DoctorStrangeSH">GitHub</a> • <a href="https://openweathermap.org">OpenWeatherMap</a> • <a href="https://www.chartjs.org">Chart.js</a> </p> </div> ```
+## Лицензия
+
+Лицензия проекта пока не оформлена. До добавления файла LICENSE не следует считать репозиторий опубликованным под MIT или другой открытой лицензией.

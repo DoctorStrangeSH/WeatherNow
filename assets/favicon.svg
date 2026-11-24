@@ -1,10 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#87CEEB"/>
-      <stop offset="100%" style="stop-color:#FF8C42"/>
+    <linearGradient id="sky" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#55C8F5"/>
+      <stop offset="1" stop-color="#3978D8"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="24" y1="8" x2="42" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE08A"/>
+      <stop offset="1" stop-color="#FF963D"/>
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="22" fill="url(#grad)"/>
-  <text x="50" y="70" font-size="55" text-anchor="middle" fill="white">🌤</text>
+  <rect x="2" y="2" width="60" height="60" rx="19" fill="url(#sky)"/>
+  <circle cx="39" cy="24" r="12" fill="url(#sun)"/>
+  <path d="M17 45.5h28.2a8.8 8.8 0 0 0 .1-17.6 13.4 13.4 0 0 0-25.7 3.6A7.1 7.1 0 0 0 17 45.5Z" fill="#fff" fill-opacity=".96"/>
+  <path d="M20 50h22" stroke="#D9F3FF" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
 </svg>

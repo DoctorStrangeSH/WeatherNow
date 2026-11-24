@@ -4,20 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeatherNow — Погода всегда под рукой</title>
+    <meta name="description" content="WeatherNow — текущая погода, прогноз на неделю, почасовые графики и погодные сцены для выбранного города.">
+    <meta name="theme-color" content="#101b35">
+    <title>WeatherNow — Погода, которую хочется открыть</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    </noscript>
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet">
+    </noscript>
     <!-- Кастомные стили -->
     <link href="style.css" rel="stylesheet">
 </head>
@@ -26,10 +38,6 @@
 
     <!-- Анимированное небо -->
     <div class="sky-background" id="sky">
-        <div class="cloud cloud-1"></div>
-        <div class="cloud cloud-2"></div>
-        <div class="cloud cloud-3"></div>
-        <div class="cloud cloud-4"></div>
         <div class="stars" id="stars"></div>
     </div>
 
@@ -42,77 +50,83 @@
                 <div class="d-flex justify-content-between align-items-center py-2 py-md-3">
                     <!-- Логотип -->
                     <a href="#" class="logo" onclick="showScreen('home'); return false;">
-                        <div class="logo-icon">
-                            <i class="bi bi-cloud-sun-fill"></i>
-                        </div>
+                        <span class="logo-icon" aria-hidden="true"><span class="brand-sun"></span><span class="brand-cloud"></span></span>
                         <span class="logo-text">
                             <span class="logo-weather">Weather</span><span class="logo-now text-accent">Now</span>
                         </span>
                     </a>
 
                     <!-- Навигация (десктоп) -->
-                    <div class="d-none d-md-flex align-items-center gap-2">
+                    <div class="d-none d-lg-flex align-items-center gap-2">
                         <!-- Поиск -->
                         <div class="search-wrapper position-relative">
                             <div class="input-group input-group-sm" style="width: 220px;">
                                 <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control glass-search" id="header-search"
-                                    placeholder="Поиск города..." autocomplete="off">
+                                <input type="text" class="form-control glass-search" id="header-search" role="combobox" aria-haspopup="listbox" aria-expanded="false"
+                                    placeholder="Поиск города..." aria-label="Поиск города" aria-controls="search-results" autocomplete="off">
                             </div>
-                            <div id="search-results" class="search-results glass-card rounded-3 p-2"
-                                style="display: none;"></div>
+                            <div id="search-results" class="search-results glass-card rounded-3 p-2" role="listbox"
+                                aria-label="Результаты поиска" style="display: none;"></div>
                         </div>
                         <!-- Кнопки навигации -->
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('rainmap')"
-                            title="Карта осадков">
+                            title="Погода на карте" aria-label="Открыть погодную карту">
                             <i class="bi bi-map me-1"></i>Карта
                         </button>
-                        <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('compare')"
-                            title="Сравнить города">
-                            <i class="bi bi-layout-split me-1"></i>Сравнить
-                        </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-3" onclick="showScreen('favorites')"
-                            title="Избранное">
+                            title="Избранное" aria-label="Избранные города">
                             <i class="bi bi-heart me-1"></i>Избранное
                         </button>
-                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="requestNotificationPermission()"
-                            title="Уведомления">
+                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="openWeatherNotificationSettings()"
+                            title="Уведомления" aria-label="Настройки уведомлений">
                             <i class="bi bi-bell"></i>
                         </button>
                     </div>
 
                     <!-- Мобильное меню -->
-                    <div class="d-md-none d-flex align-items-center gap-1">
+                    <div class="d-lg-none d-flex align-items-center gap-1">
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('home')"
-                            title="Главная">
+                            title="Главная" aria-label="Главная">
                             <i class="bi bi-house"></i>
                         </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('rainmap')"
-                            title="Карта">
+                            title="Погода на карте" aria-label="Открыть погодную карту">
                             <i class="bi bi-map"></i>
                         </button>
-                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('compare')"
-                            title="Сравнить">
-                            <i class="bi bi-layout-split"></i>
-                        </button>
                         <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="showScreen('favorites')"
-                            title="Избранное">
+                            title="Избранное" aria-label="Избранные города">
                             <i class="bi bi-heart"></i>
+                        </button>
+                        <button class="btn btn-glass btn-sm rounded-pill px-2" onclick="openWeatherNotificationSettings()"
+                            title="Уведомления" aria-label="Настройки уведомлений">
+                            <i class="bi bi-bell"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </header>
 
+        <aside class="network-status" id="network-status" role="status" aria-live="polite" hidden>
+            <div class="network-status__copy">
+                <i class="bi bi-wifi-off" aria-hidden="true"></i>
+                <span id="network-status-message">Нет подключения к интернету. Показываем последние загруженные данные.</span>
+            </div>
+            <button class="network-status__retry" id="network-retry-btn" type="button">
+                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                Повторить
+            </button>
+        </aside>
+
         <!-- Мобильный поиск -->
-        <div class="d-md-none px-3 pt-2 pb-1">
+        <div class="d-lg-none px-3 pt-2 pb-1">
             <div class="search-wrapper-mobile position-relative">
                 <div class="input-group">
                     <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control glass-search" id="mobile-search"
-                        placeholder="Поиск города..." autocomplete="off">
+                    <input type="text" class="form-control glass-search" id="mobile-search" role="combobox" aria-haspopup="listbox" aria-expanded="false"
+                        placeholder="Поиск города..." aria-label="Поиск города" aria-controls="search-results-mobile" autocomplete="off">
                 </div>
-                <div id="search-results-mobile" class="search-results glass-card rounded-3 p-2" style="display: none;">
+                <div id="search-results-mobile" class="search-results glass-card rounded-3 p-2" role="listbox"
+                    aria-label="Результаты поиска" style="display: none;">
                 </div>
             </div>
         </div>
@@ -124,48 +138,51 @@
                 <!-- ЭКРАН 1: ГЛАВНАЯ -->
                 <div class="screen active" id="screen-home">
                     <div class="row justify-content-center">
-                        <div class="col-12 col-lg-8 text-center">
+                        <div class="col-12 col-lg-10 text-center">
 
-                            <!-- Иконка погоды -->
-                            <div class="weather-icon-large mb-3" id="main-icon">
-                                <i class="bi bi-cloud-sun-fill"></i>
-                            </div>
+                            <section class="weather-hero" aria-labelledby="main-city">
+                                <div class="weather-hero__eyebrow">
+                                    <span class="weather-live-dot" aria-hidden="true"></span>
+                                    ТЕКУЩАЯ ПОГОДА
+                                </div>
 
-                            <!-- Кнопка избранного -->
-                            <button class="btn btn-link p-0 mb-3" id="favorite-btn"
-                                style="font-size: 1.5rem; text-decoration: none;" title="Добавить в избранное">
-                                <i class="bi bi-heart fs-4"></i>
-                            </button>
+                                <button class="weather-favorite" id="favorite-btn" type="button" aria-label="Добавить город в избранное"
+                                    aria-label="Добавить город в избранное" title="Добавить в избранное">
+                                    <i class="bi bi-heart fs-5" aria-hidden="true"></i>
+                                </button>
 
-                            <!-- Основная инфа -->
-                            <h1 class="display-3 display-md-4 fw-bold mb-2" id="main-temp">--°C</h1>
-                            <p class="fs-5 mb-1" id="main-city">Загрузка...</p>
-                            <p class="text-muted mb-4" id="main-desc">Получаем данные...</p>
+                                <div class="weather-icon-large" id="main-icon" aria-hidden="true">
+                                    <i class="bi bi-cloud-sun-fill"></i>
+                                </div>
 
-                            <!-- Кнопка обновления геолокации -->
-                            <button class="btn btn-glass btn-sm rounded-pill mb-4 d-none" id="retry-geo-btn"
-                                onclick="retryGeolocation()">
-                                <i class="bi bi-geo-alt me-1"></i>Определить город
-                            </button>
+                                <h1 class="weather-hero__temperature" id="main-temp">--°C</h1>
+                                <p class="weather-hero__city" id="main-city">Загрузка...</p>
+                                <p class="weather-hero__description" id="main-desc">Получаем данные...</p>
+
+                                <button class="btn btn-glass btn-sm rounded-pill d-none" id="retry-geo-btn"
+                                    type="button" onclick="retryGeolocation()">
+                                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>Определить город
+                                </button>
+                            </section>
 
                             <!-- Детали -->
-                            <div class="row g-2 g-md-3 mb-4">
+                            <div class="row g-2 g-md-3 mb-4 weather-details" aria-label="Показатели погоды">
                                 <div class="col-4">
-                                    <div class="glass-card rounded-4 p-2 p-md-3">
+                                    <div class="glass-card rounded-4 p-2 p-md-3 weather-detail-card">
                                         <i class="bi bi-droplet fs-5 fs-md-4 text-info"></i>
                                         <p class="fw-bold mb-0 mt-1 small" id="detail-humidity">--%</p>
                                         <small class="text-muted d-none d-md-block">Влажность</small>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="glass-card rounded-4 p-2 p-md-3">
+                                    <div class="glass-card rounded-4 p-2 p-md-3 weather-detail-card">
                                         <i class="bi bi-wind fs-5 fs-md-4 text-primary"></i>
                                         <p class="fw-bold mb-0 mt-1 small" id="detail-wind">-- м/с</p>
                                         <small class="text-muted d-none d-md-block">Ветер</small>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="glass-card rounded-4 p-2 p-md-3">
+                                    <div class="glass-card rounded-4 p-2 p-md-3 weather-detail-card">
                                         <i class="bi bi-thermometer-half fs-5 fs-md-4 text-warning"></i>
                                         <p class="fw-bold mb-0 mt-1 small" id="detail-feels">--°C</p>
                                         <small class="text-muted d-none d-md-block">Ощущается</small>
@@ -173,10 +190,21 @@
                                 </div>
                             </div>
 
+                            <section class="weather-insights mt-4 mb-4" id="weather-insights" aria-labelledby="weather-insights-title">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                                    <div>
+                                        <p class="weather-section-kicker mb-1">БОЛЬШЕ ДЕТАЛЕЙ</p>
+                                        <h2 class="fw-bold fs-5 mb-0" id="weather-insights-title">Атмосферные показатели</h2>
+                                    </div>
+                                    <i class="bi bi-speedometer2 weather-insights-mark" aria-hidden="true"></i>
+                                </div>
+                                <div class="row g-2 g-md-3" id="weather-insights-grid" aria-live="polite"></div>
+                            </section>
+
                             <!-- Прогноз на 5 дней -->
-                            <h5 class="fw-bold mb-3 mt-4">
+                            <h2 class="fw-bold fs-5 mb-3 mt-4 forecast-heading">
                                 <i class="bi bi-calendar-week me-2"></i>Прогноз на 5 дней
-                            </h5>
+                            </h2>
                             <div class="row g-2" id="forecast-container">
                                 <div class="col-12 text-center text-muted py-3">
                                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
@@ -216,39 +244,6 @@
                 <div class="screen" id="screen-favorites"></div>
 
                 <!-- ЭКРАН 3: СРАВНЕНИЕ -->
-                <div class="screen" id="screen-compare">
-                    <div class="row justify-content-center">
-                        <div class="col-12 col-lg-10">
-                            <h3 class="fw-bold mb-4 text-center">
-                                <i class="bi bi-layout-split me-2"></i>Сравнение городов
-                            </h3>
-                            <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control glass-search" id="compare-city-1"
-                                            placeholder="Первый город..." autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text glass-search"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control glass-search" id="compare-city-2"
-                                            placeholder="Второй город..." autocomplete="off">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center mb-4">
-                                <button class="btn btn-accent rounded-pill px-5" id="compare-btn">
-                                    <i class="bi bi-arrow-left-right me-2"></i>Сравнить
-                                </button>
-                            </div>
-                            <div class="row g-4" id="compare-results"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ЭКРАН 4: КАРТА ОСАДКОВ -->
                 <div class="screen" id="screen-rainmap">
                     <div class="row justify-content-center">
                         <div class="col-12 col-lg-10">
@@ -256,28 +251,33 @@
                                 <i class="bi bi-map me-2"></i>Погода на карте
                             </h3>
 
-                            <!-- Переключатель слоёв -->
-                            <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
-                                <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
-                                    onclick="switchMapLayer('temperature')">
-                                    <i class="bi bi-thermometer-half me-1"></i>Температура
-                                </button>
-                                <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    onclick="switchMapLayer('wind')">
-                                    <i class="bi bi-wind me-1"></i>Ветер
-                                </button>
-                                <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    onclick="switchMapLayer('precipitation')">
-                                    <i class="bi bi-droplet me-1"></i>Осадки
-                                </button>
-                                <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
-                                    onclick="switchMapLayer('clouds')">
-                                    <i class="bi bi-cloud me-1"></i>Облака
-                                </button>
-                            </div>
-
-                            <!-- Контейнер карты -->
+                            <!-- Карта и постоянно доступная панель управления -->
                             <div class="glass-card rounded-4 overflow-hidden weather-map-container">
+                                <div class="map-toolbar">
+                                    <div class="map-layer-controls" role="group" aria-label="Слои погодной карты">
+                                        <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
+                                            data-layer="temperature" aria-pressed="false" onclick="switchMapLayer('temperature')" title="Показать температуру">
+                                            <i class="bi bi-thermometer-half me-1" aria-hidden="true"></i>Температура
+                                        </button>
+                                        <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
+                                            data-layer="wind" aria-pressed="false" onclick="switchMapLayer('wind')" title="Показать ветер">
+                                            <i class="bi bi-wind me-1" aria-hidden="true"></i>Ветер
+                                        </button>
+                                        <button class="btn btn-glass btn-sm rounded-pill active map-layer-btn"
+                                            data-layer="precipitation" aria-pressed="true" onclick="switchMapLayer('precipitation')" title="Показать осадки">
+                                            <i class="bi bi-droplet me-1" aria-hidden="true"></i>Осадки
+                                        </button>
+                                        <button class="btn btn-glass btn-sm rounded-pill map-layer-btn"
+                                            data-layer="clouds" aria-pressed="false" onclick="switchMapLayer('clouds')" title="Показать облачность">
+                                            <i class="bi bi-cloud me-1" aria-hidden="true"></i>Облака
+                                        </button>
+                                    </div>
+                                    <button id="map-fullscreen-btn" class="btn btn-glass btn-sm rounded-pill map-fullscreen-btn"
+                                        type="button" aria-pressed="false" onclick="toggleMapFullscreen()">
+                                        <i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i>На весь экран
+                                    </button>
+                                </div>
+                                <div id="map-status" class="map-status" role="status" aria-live="polite" hidden></div>
                                 <div id="weather-map" style="width: 100%; height: 500px;"></div>
                             </div>
 
@@ -300,38 +300,73 @@
                                 </div>
                             </div>
 
-                            <p class="text-center text-muted small mt-2">Данные предоставлены OpenWeatherMap</p>
+                            <p class="text-center text-muted small mt-2">Карта: Windy · Погодные показатели и прогноз: OpenWeatherMap</p>
                         </div>
                     </div>
                 </div>
         </main>
 
+
+        <dialog class="notification-dialog" id="notification-settings-dialog" aria-labelledby="notification-dialog-title">
+            <form class="notification-dialog__form" method="dialog" onsubmit="event.preventDefault(); saveWeatherNotificationSettings();">
+                <div class="notification-dialog__header">
+                    <div>
+                        <p class="notification-dialog__eyebrow">Персональные предупреждения</p>
+                        <h2 id="notification-dialog-title">Погодные уведомления</h2>
+                        <p>Выберите события, о которых приложение сообщит при проверке погоды.</p>
+                    </div>
+                    <button class="notification-dialog__close" type="button" aria-label="Закрыть настройки" onclick="document.getElementById('notification-settings-dialog').close()">×</button>
+                </div>
+                <label class="notification-setting notification-setting--master">
+                    <span><strong>Включить уведомления</strong><small>При загрузке или обновлении погоды</small></span>
+                    <input id="notification-enabled" type="checkbox">
+                </label>
+                <div class="notification-dialog__section">
+                    <h3>Погодные события</h3>
+                    <label class="notification-setting"><span>Дождь</span><input id="notification-rain" type="checkbox" checked></label>
+                    <label class="notification-setting"><span>Гроза</span><input id="notification-storms" type="checkbox" checked></label>
+                    <label class="notification-setting"><span>Снег</span><input id="notification-snow" type="checkbox" checked></label>
+                    <label class="notification-setting"><span>Сильный ветер</span><span class="notification-setting__control"><input id="notification-wind-threshold" type="number" min="1" max="40" step="1" value="12" aria-label="Порог ветра в метрах в секунду"><small>м/с</small><input id="notification-wind" type="checkbox" checked aria-label="Уведомлять о сильном ветре"></span></label>
+                </div>
+                <div class="notification-dialog__section">
+                    <h3>Температура</h3>
+                    <label class="notification-setting"><span>Холоднее чем</span><span class="notification-setting__control"><input id="notification-cold-threshold" type="number" min="-50" max="20" step="1" value="0" aria-label="Порог низкой температуры"><small>°C</small><input id="notification-cold" type="checkbox" aria-label="Уведомлять о холоде"></span></label>
+                    <label class="notification-setting"><span>Жарче чем</span><span class="notification-setting__control"><input id="notification-heat-threshold" type="number" min="15" max="55" step="1" value="32" aria-label="Порог высокой температуры"><small>°C</small><input id="notification-heat" type="checkbox" aria-label="Уведомлять о жаре"></span></label>
+                </div>
+                <p class="notification-dialog__note">Предупреждения проверяются при загрузке погоды и смене города. Для доставки при закрытой вкладке понадобится отдельный push-сервис.</p>
+                <div class="notification-dialog__actions">
+                    <button class="btn btn-glass rounded-pill" type="button" onclick="document.getElementById('notification-settings-dialog').close()">Отмена</button>
+                    <button class="btn btn-accent rounded-pill" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </dialog>
+
         <!-- ФУТЕР -->
         <footer class="app-footer glass">
             <div class="container text-center py-2">
-                <small class="text-muted">© 2026 WeatherNow. Данные: OpenWeatherMap</small>
+                <small class="footer-copy">© 2026 WeatherNow. Данные: OpenWeatherMap</small>
             </div>
         </footer>
 
     </div>
 
     <!-- Скрипты -->
-    <script src="js/config.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/weather.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/feels-like.js"></script>
-    <script src="js/wardrobe.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/notifications.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
+    <script defer src="js/config.js"></script>
+    <script defer src="js/api.js"></script>
+    <script defer src="js/weather.js"></script>
+    <script defer src="js/charts.js"></script>
+    <script defer src="js/feels-like.js"></script>
+    <script defer src="js/wardrobe.js"></script>
+    <script defer src="js/map.js"></script>
+    <script defer src="js/search.js"></script>
+    <script defer src="js/storage.js"></script>
+    <script defer src="js/notifications.js"></script>
+    <script defer src="js/theme.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/app.js"></script>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

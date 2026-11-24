@@ -1,13 +1,10 @@
-// ============================================
-// WeatherNow — UI (рендеринг, навигация)
-// ============================================
-
 let currentLat = null;
 let currentLon = null;
 let currentForecastData = null;
-let currentHourlyDay = 0;
-
-// ========== НАВИГАЦИЯ ==========
+let currentForecastCity = '';
+let currentWeatherCityName = '';
+let currentWeatherRequestId = 0;
+let forecastRequestId = 0;
 
 function showScreen(screenName) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -17,54 +14,147 @@ function showScreen(screenName) {
   }
   document.dispatchEvent(new CustomEvent('screenChanged', { detail: screenName }));
 
-  // Сохраняем текущий экран
   localStorage.setItem('weathernow-screen', screenName);
 
-  // Скролл наверх при смене экрана (только если перешли сами, не при загрузке)
   if (screenName !== localStorage.getItem('weathernow-screen-restore')) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   localStorage.removeItem('weathernow-screen-restore');
 }
 
-// ========== РЕНДЕРИНГ ПОГОДЫ ==========
+function createWeatherInsight(label, value, icon, note = '') {
+  const column = document.createElement('div');
+  column.className = 'col-6 col-md-4';
 
-function renderCurrentWeather(data) {
+  const card = document.createElement('article');
+  card.className = 'weather-insight-card h-100';
+
+  const symbol = document.createElement('span');
+  symbol.className = 'weather-insight-icon';
+  const iconElement = document.createElement('i');
+  iconElement.className = `bi ${icon}`;
+  iconElement.setAttribute('aria-hidden', 'true');
+  symbol.append(iconElement);
+
+  const title = document.createElement('p');
+  title.className = 'weather-insight-label';
+  title.textContent = label;
+
+  const reading = document.createElement('strong');
+  reading.className = 'weather-insight-value';
+  reading.textContent = value;
+
+  card.append(symbol, title, reading);
+
+  if (note) {
+    const detail = document.createElement('small');
+    detail.className = 'weather-insight-note';
+    detail.textContent = note;
+    card.append(detail);
+  }
+
+  column.append(card);
+  return column;
+}
+
+function renderWeatherInsights(data) {
+  const grid = document.getElementById('weather-insights-grid');
+  if (!grid) return;
+
+  const pressure = Number.isFinite(Number(data.main?.pressure))
+    ? `${Math.round(Number(data.main.pressure))} гПа`
+    : 'Нет данных';
+  const windDirection = formatWindDirection(data.wind?.deg);
+  const windGust = Number.isFinite(Number(data.wind?.gust))
+    ? `${Number(data.wind.gust).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} м/с`
+    : 'Нет данных';
+  const daylight = formatDaylightDuration(data.sys?.sunrise, data.sys?.sunset);
+  const timezone = Number(data.timezone) || 0;
+
+  const sunrise = formatCityTime(data.sys?.sunrise, timezone);
+  const sunset = formatCityTime(data.sys?.sunset, timezone);
+  const sunNote = sunrise !== '—' && sunset !== '—'
+    ? `Световой день: ${daylight}`
+    : 'Время города';
+
+  const items = [
+    createWeatherInsight('Давление', pressure, 'bi-speedometer2', 'Атмосферное давление'),
+    createWeatherInsight('Видимость', formatVisibility(data.visibility), 'bi-eye', 'Дальность обзора'),
+    createWeatherInsight('Направление ветра', windDirection, 'bi-compass', 'Откуда дует ветер'),
+    createWeatherInsight('Порывы ветра', windGust, 'bi-wind', 'Максимальные порывы'),
+    createWeatherInsight('Восход', sunrise, 'bi-sunrise', 'Местное время'),
+    createWeatherInsight('Закат', sunset, 'bi-sunset', sunNote)
+  ];
+
+  grid.replaceChildren(...items);
+}
+
+function renderCurrentWeather(data, options = {}) {
+  currentForecastData = null;
+  if (options.cached !== true && typeof saveLastWeatherSnapshot === 'function') {
+    saveLastWeatherSnapshot(data);
+  }
+  currentWeatherCityName = data.name || '';
+  const weatherHero = document.querySelector('.weather-hero');
+  if (weatherHero) weatherHero.dataset.loadState = 'ready';
+  if (typeof dismissNetworkStatus === 'function') dismissNetworkStatus();
   document.getElementById('main-city').textContent = `${data.name}, ${data.sys.country}`;
   document.getElementById('main-temp').textContent = `${Math.round(data.main.temp)}°C`;
-  document.getElementById('main-desc').textContent = capitalize(data.weather[0].description);
+  const weatherDescription = capitalize(data.weather[0].description);
+  const mainDescription = document.getElementById('main-desc');
+  if (mainDescription) {
+    if (options.cached === true) {
+      const savedLabel = new Date(options.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+      mainDescription.textContent = options.stale === true
+        ? `${weatherDescription} · устаревшие данные, сохранены ${savedLabel}`
+        : `${weatherDescription} · сохранено ${savedLabel}`;
+      mainDescription.classList.toggle('cache-warning', options.stale === true);
+    } else {
+      mainDescription.textContent = weatherDescription;
+      mainDescription.classList.remove('cache-warning');
+    }
+  }
   document.getElementById('detail-humidity').textContent = `${data.main.humidity}%`;
   document.getElementById('detail-wind').textContent = `${data.wind.speed} м/с`;
   document.getElementById('detail-feels').textContent = `${Math.round(data.main.feels_like)}°C`;
+  renderWeatherInsights(data);
 
-  document.getElementById('main-icon').innerHTML = getWeatherEmoji(data.weather[0].id);
+  document.getElementById('main-icon').innerHTML = getWeatherIconMarkup(data.weather[0].id);
 
-  // Обновляем тему
   if (typeof updateWeatherTheme === 'function') {
-    updateWeatherTheme(data.weather[0].id, data.timezone);
+    updateWeatherTheme(data.weather[0].id, data.timezone, data.wind?.speed, data.visibility, data.wind?.deg);
   }
 
-  // Загружаем прогноз
-  loadForecast(data.name);
+  if (options.cached === true) {
+    if (!restoreCachedForecast(data.name)) {
+      const forecastContainer = document.getElementById('forecast-container');
+      if (forecastContainer) {
+        forecastContainer.dataset.state = 'offline';
+        forecastContainer.textContent = 'Прогноз пока недоступен без подключения к интернету.';
+      }
+    }
+  } else {
+    loadForecast(data.name);
+  }
 
-  // Рендерим "Ощущается как"
   if (typeof renderFeelsLikeSection === 'function' && currentForecastData) {
     renderFeelsLikeSection(currentForecastData);
   }
 
-  // Рендерим гардероб
   if (typeof renderWardrobe === 'function') {
     renderWardrobe(data);
   }
 
-  // Обновляем кнопку избранного
   const favBtn = document.getElementById('favorite-btn');
   if (favBtn) {
     favBtn.onclick = () => toggleFavorite(data.name, data.sys.country);
     updateFavoriteButton(data.name);
   }
 
-  // Обновляем карту только если мы на экране карты
+  if (options.cached !== true && typeof checkWeatherForAlerts === 'function') {
+    checkWeatherForAlerts(data);
+  }
+
   const rainMapScreen = document.getElementById('screen-rainmap');
   if (rainMapScreen && rainMapScreen.classList.contains('active')) {
     if (typeof updateRainMap === 'function') {
@@ -73,12 +163,26 @@ function renderCurrentWeather(data) {
   }
 }
 
-// ========== ПРОГНОЗ ==========
-
 async function loadForecast(city) {
+  const requestId = ++forecastRequestId;
+  currentForecastCity = city;
+
+  const container = document.getElementById('forecast-container');
+  if (container) {
+    container.dataset.state = 'loading';
+    container.textContent = 'Загружаем прогноз…';
+  }
+
   try {
     const forecastData = await fetchForecast(city);
+    if (requestId !== forecastRequestId) return;
+
     currentForecastData = forecastData;
+    if (typeof saveLastForecastSnapshot === 'function') {
+      saveLastForecastSnapshot(city, forecastData);
+    }
+    const forecastContainer = document.getElementById('forecast-container');
+    if (forecastContainer) forecastContainer.dataset.state = 'ready';
     const dailyForecast = groupForecastByDay(forecastData);
     renderForecast(dailyForecast);
     
@@ -87,16 +191,32 @@ async function loadForecast(city) {
     }
 
   } catch (error) {
-    console.error('Ошибка загрузки прогноза:', error);
-    const container = document.getElementById('forecast-container');
-    if (container) {
-      container.innerHTML = `
-        <div class="col-12 text-center text-muted py-3">
-          <i class="bi bi-exclamation-circle me-2"></i>Не удалось загрузить прогноз
-        </div>
-      `;
+    if (requestId !== forecastRequestId) return;
+
+    // Keep a usable forecast for this city when the network request fails.
+    if (restoreCachedForecast(city)) return;
+
+    const forecastContainer = document.getElementById('forecast-container');
+    if (forecastContainer) {
+      forecastContainer.dataset.state = 'error';
+      const message = document.createElement('p');
+      message.className = 'col-12 text-center text-muted py-3 mb-2';
+      message.textContent = error instanceof Error && error.message
+        ? error.message
+        : 'Не удалось загрузить прогноз';
+
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'btn btn-glass btn-sm rounded-pill mx-auto';
+      retry.textContent = 'Повторить загрузку';
+      retry.addEventListener('click', retryForecast);
+      forecastContainer.replaceChildren(message, retry);
     }
   }
+}
+
+function retryForecast() {
+  if (currentForecastCity) loadForecast(currentForecastCity);
 }
 
 function renderForecast(days) {
@@ -107,7 +227,7 @@ function renderForecast(days) {
   const monthNames = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 
   container.innerHTML = days.map((day, index) => {
-    const date = new Date(day.date);
+    const date = parseForecastDate(day.date);
     const dayName = index === 0 ? 'Сегодня' : index === 1 ? 'Завтра' : dayNames[date.getDay()];
     const dateStr = `${date.getDate()} ${monthNames[date.getMonth()]}`;
 
@@ -116,7 +236,7 @@ function renderForecast(days) {
         <div class="glass-card rounded-4 p-2 p-md-3 text-center h-100 forecast-card">
           <p class="fw-bold small mb-1">${dayName}</p>
           <p class="text-muted small mb-2">${dateStr}</p>
-          <div class="fs-2 mb-2">${getWeatherEmoji(day.icon)}</div>
+          <div class="fs-2 mb-2">${getWeatherIconMarkup(day.icon)}</div>
           <div class="temp-range">
             <div class="temp-high" title="Максимальная">
               <i class="bi bi-arrow-up text-danger" style="font-size: 0.6rem;"></i>
@@ -144,119 +264,74 @@ function renderForecast(days) {
 }
 
 function renderHourlyForecast() {
-  if (!currentForecastData) return;
-
-  const hourlyData = getHourlyForecast(currentForecastData, currentHourlyDay);
   const container = document.getElementById('hourly-container');
-  if (!container) return;
+  if (!container || !currentForecastData) return;
+
+  const hourlyData = getNext24Hours(currentForecastData);
+
+  if (hourlyData.length === 0) {
+    container.innerHTML = `
+      <div class="forecast-empty-state">
+        <i class="bi bi-clock-history" aria-hidden="true"></i>
+        <p class="fw-semibold mb-1">Почасовой прогноз пока недоступен</p>
+        <small>Обновите данные немного позже</small>
+      </div>
+    `;
+    return;
+  }
 
   container.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Почасовой прогноз</h5>
-      <div class="btn-group btn-group-sm">
-        <button class="btn btn-glass ${currentHourlyDay === 0 ? 'active' : ''}" onclick="switchHourlyDay(0)">Сегодня</button>
-        <button class="btn btn-glass ${currentHourlyDay === 1 ? 'active' : ''}" onclick="switchHourlyDay(1)">Завтра</button>
-      </div>
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+      <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Ближайшие 24 часа</h5>
+      <span class="forecast-section-meta">Шаг прогноза · 3 часа</span>
     </div>
-    <div style="position: relative; height: 220px;" class="mb-3">
-      <canvas id="hourlyChart"></canvas>
+    <div class="hourly-chart-wrap mb-3">
+      <canvas id="hourlyChart" role="img" aria-label="График температуры и вероятности осадков на ближайшие 24 часа"></canvas>
     </div>
-    <div class="hourly-scroll d-flex gap-2 overflow-auto pb-2">
+    <div class="hourly-scroll d-flex gap-2 overflow-auto pb-2" aria-label="Почасовой прогноз на ближайшие 24 часа">
       ${hourlyData.map(hour => `
-        <div class="glass-card rounded-4 p-2 text-center flex-shrink-0" style="min-width: 70px;">
-          <small class="text-muted d-block">${hour.time}</small>
-          <span class="fs-5 d-block my-1">${getWeatherEmoji(hour.icon)}</span>
-          <p class="fw-bold small mb-0">${hour.temp}°</p>
-          ${hour.pop > 30 ? `<small class="text-info">💧${hour.pop}%</small>` : ''}
-        </div>
+        <article class="hourly-forecast-item flex-shrink-0">
+          <small class="hourly-forecast-day">${hour.dateLabel}</small>
+          <span class="hourly-forecast-time">${hour.time}</span>
+          <span class="hourly-forecast-icon" aria-hidden="true">${getWeatherIconMarkup(hour.icon)}</span>
+          <p class="fw-bold mb-0">${hour.temp}°</p>
+          <small class="hourly-forecast-rain ${hour.pop > 0 ? 'is-visible' : ''}">${hour.pop > 0 ? `<i class="bi bi-droplet-fill" aria-hidden="true"></i> ${hour.pop}%` : 'Без осадков'}</small>
+        </article>
       `).join('')}
     </div>
   `;
+
+  const highlights = getForecastHighlights(hourlyData);
+  if (highlights.length) {
+    const panel = document.createElement('section');
+    panel.className = 'forecast-highlights';
+    panel.setAttribute('aria-label', 'Важные изменения погоды');
+
+    const heading = document.createElement('p');
+    heading.className = 'forecast-highlights-title';
+    heading.textContent = 'На что обратить внимание';
+    panel.append(heading);
+
+    highlights.forEach(highlight => {
+      const item = document.createElement('p');
+      item.className = 'forecast-highlight-item';
+      const icon = document.createElement('i');
+      icon.className = `bi ${highlight.icon}`;
+      icon.setAttribute('aria-hidden', 'true');
+      const text = document.createElement('span');
+      text.textContent = highlight.text;
+      item.append(icon, text);
+      panel.append(item);
+    });
+
+    const chart = container.querySelector('.hourly-chart-wrap');
+    if (chart) chart.after(panel);
+  }
 
   if (typeof renderHourlyChart === 'function') {
     renderHourlyChart(hourlyData);
   }
 }
-
-function switchHourlyDay(day) {
-  currentHourlyDay = day;
-  renderHourlyForecast();
-}
-
-// ========== СРАВНЕНИЕ ==========
-
-function setupCompareButton() {
-  const compareBtn = document.getElementById('compare-btn');
-  if (compareBtn) {
-    compareBtn.addEventListener('click', compareCities);
-  }
-}
-
-async function compareCities() {
-  const city1 = document.getElementById('compare-city-1').value.trim();
-  const city2 = document.getElementById('compare-city-2').value.trim();
-
-  if (!city1 || !city2) {
-    showToast('Введи оба города для сравнения', 'warning');
-    return;
-  }
-
-  const container = document.getElementById('compare-results');
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="col-12 text-center py-4">
-      <div class="spinner-border text-accent" role="status"></div>
-      <p class="text-muted mt-2">Сравниваем погоду...</p>
-    </div>
-  `;
-
-  try {
-    const [data1, data2] = await Promise.all([fetchWeather(city1), fetchWeather(city2)]);
-
-    container.innerHTML = `
-      <div class="col-12 col-md-6 mb-3 mb-md-0">
-        <div class="glass-card rounded-4 p-4 text-center h-100">
-          <h4 class="fw-bold mb-3">${data1.name}, ${data1.sys.country}</h4>
-          <div class="fs-1 mb-2">${getWeatherEmoji(data1.weather[0].id)}</div>
-          <p class="display-5 fw-bold">${Math.round(data1.main.temp)}°C</p>
-          <p class="text-muted">${capitalize(data1.weather[0].description)}</p>
-          <hr>
-          <div class="row g-2 small">
-            <div class="col-6">💧 ${data1.main.humidity}%</div>
-            <div class="col-6">💨 ${data1.wind.speed} м/с</div>
-            <div class="col-6">🌡️ ${Math.round(data1.main.feels_like)}°C</div>
-            <div class="col-6">📊 ${data1.main.pressure} гПа</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-md-6">
-        <div class="glass-card rounded-4 p-4 text-center h-100">
-          <h4 class="fw-bold mb-3">${data2.name}, ${data2.sys.country}</h4>
-          <div class="fs-1 mb-2">${getWeatherEmoji(data2.weather[0].id)}</div>
-          <p class="display-5 fw-bold">${Math.round(data2.main.temp)}°C</p>
-          <p class="text-muted">${capitalize(data2.weather[0].description)}</p>
-          <hr>
-          <div class="row g-2 small">
-            <div class="col-6">💧 ${data2.main.humidity}%</div>
-            <div class="col-6">💨 ${data2.wind.speed} м/с</div>
-            <div class="col-6">🌡️ ${Math.round(data2.main.feels_like)}°C</div>
-            <div class="col-6">📊 ${data2.main.pressure} гПа</div>
-          </div>
-        </div>
-      </div>
-    `;
-  } catch {
-    container.innerHTML = `
-      <div class="col-12 text-center text-danger py-4">
-        <i class="bi bi-exclamation-circle fs-1 d-block mb-2"></i>
-        Не удалось загрузить данные. Проверь названия городов.
-      </div>
-    `;
-  }
-}
-
-// ========== ТОСТЫ ==========
 
 function showToast(message, type = 'info') {
   let container = document.getElementById('toast-container');
@@ -291,9 +366,6 @@ function showToast(message, type = 'info') {
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// ========== СОХРАНЕНИЕ СОСТОЯНИЯ ==========
-
-// Сохраняем текущий экран и позицию скролла перед уходом
 window.addEventListener('beforeunload', () => {
   const activeScreen = document.querySelector('.screen.active');
   if (activeScreen) {
@@ -302,18 +374,15 @@ window.addEventListener('beforeunload', () => {
   localStorage.setItem('weathernow-scroll', window.scrollY);
 });
 
-// Восстанавливаем состояние при загрузке
 function restoreState() {
   const savedScreen = localStorage.getItem('weathernow-screen');
   const savedScroll = localStorage.getItem('weathernow-scroll');
 
   if (savedScreen && savedScreen !== 'home') {
-    // Устанавливаем флаг, чтобы showScreen не скроллил наверх
     localStorage.setItem('weathernow-screen-restore', 'true');
     showScreen(savedScreen);
   }
 
-  // Восстанавливаем позицию скролла
   if (savedScroll) {
     setTimeout(() => {
       window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
@@ -321,8 +390,33 @@ function restoreState() {
   }
 }
 
-// Вызываем восстановление при загрузке
 document.addEventListener('DOMContentLoaded', () => {
-  // Небольшая задержка, чтобы DOM полностью загрузился
   setTimeout(restoreState, 50);
 });
+
+
+function restoreCachedForecast(city) {
+  if (typeof getLastForecastSnapshot !== 'function') return false;
+  const snapshot = getLastForecastSnapshot(city);
+  if (!snapshot) return false;
+
+  currentForecastCity = city;
+  currentForecastData = snapshot.data;
+  const container = document.getElementById('forecast-container');
+  if (container) {
+    container.dataset.state = 'cached';
+    renderForecast(groupForecastByDay(snapshot.data));
+    const notice = document.createElement('p');
+    notice.className = snapshot.stale ? 'forecast-cache-note is-stale' : 'forecast-cache-note';
+    const savedLabel = new Date(snapshot.savedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+    notice.textContent = snapshot.stale
+      ? `Устаревший прогноз · сохранён ${savedLabel}`
+      : `Прогноз сохранён ${savedLabel}`;
+    container.prepend(notice);
+  }
+
+  if (typeof renderFeelsLikeSection === 'function') {
+    renderFeelsLikeSection(snapshot.data);
+  }
+  return true;
+}

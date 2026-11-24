@@ -1,7 +1,3 @@
-// ============================================
-// WeatherNow — Ощущается как (Feels Like)
-// ============================================
-
 let feelsLikeChartInstance = null;
 let feelsLikeData = null;
 
@@ -9,42 +5,47 @@ function renderFeelsLikeSection(forecastData) {
   const container = document.getElementById('feels-like-container');
   if (!container || !forecastData) return;
   
-  // Получаем данные на 24 часа
-  const today = new Date().toISOString().split('T')[0];
-  const todayData = forecastData.list
-    .filter(item => item.dt_txt.startsWith(today))
-    .slice(0, 8); // 8 точек (24 часа с шагом 3 часа)
-  
-  feelsLikeData = todayData.map(item => ({
-    time: item.dt_txt.split(' ')[1].slice(0, 5),
-    temp: Math.round(item.main.temp),
-    feels: Math.round(item.main.feels_like),
-    wind: item.wind.speed,
-    humidity: item.main.humidity
+  const next24Hours = getNext24Hours(forecastData);
+  feelsLikeData = next24Hours.map(hour => ({
+    time: hour.time,
+    temp: hour.temp,
+    feels: hour.feels,
+    wind: hour.wind,
+    humidity: hour.humidity
   }));
+
+  if (feelsLikeData.length === 0) {
+    container.innerHTML = `
+      <div class="forecast-empty-state mt-3">
+        <i class="bi bi-thermometer-half" aria-hidden="true"></i>
+        <p class="fw-semibold mb-1">Данные об ощущаемой температуре появятся позже</p>
+        <small>Не удалось получить почасовые значения</small>
+      </div>
+    `;
+    return;
+  }
   
   container.innerHTML = `
     <div class="glass-card rounded-4 p-4 mt-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0">
-          <i class="bi bi-thermometer-sun me-2"></i>Температура и ощущения
+          <i class="bi bi-thermometer-sun me-2"></i>Температура и ощущения · 24 часа
         </h5>
         <div class="btn-group btn-group-sm">
-          <button class="btn btn-glass active" onclick="switchFeelsLikeView('chart')">
+          <button class="btn btn-glass active" type="button" aria-label="Показать график ощущаемой температуры" aria-pressed="true" onclick="switchFeelsLikeView('chart')">
             <i class="bi bi-graph-up"></i>
           </button>
-          <button class="btn btn-glass" onclick="switchFeelsLikeView('cards')">
+          <button class="btn btn-glass" type="button" aria-label="Показать карточки ощущаемой температуры" aria-pressed="false" onclick="switchFeelsLikeView('cards')">
             <i class="bi bi-grid-3x3-gap"></i>
           </button>
         </div>
       </div>
       
-      <!-- График -->
-      <div id="feels-like-chart-container" style="position: relative; height: 250px;">
-        <canvas id="feelsLikeChart"></canvas>
+      <div id="feels-like-chart-container" class="hourly-chart-wrap">
+        <canvas id="feelsLikeChart" role="img" aria-label="Сравнение температуры воздуха и ощущаемой температуры на ближайшие 24 часа"></canvas>
       </div>
       
-      <!-- Карточки (скрыты по умолчанию) -->
+      
       <div id="feels-like-cards" class="hourly-scroll d-flex gap-2 overflow-auto pb-2 d-none mt-3">
         ${feelsLikeData.map(hour => `
           <div class="glass-card rounded-4 p-3 text-center flex-shrink-0" style="min-width: 90px;">
@@ -63,7 +64,6 @@ function renderFeelsLikeSection(forecastData) {
         `).join('')}
       </div>
       
-      <!-- Разница -->
       <div class="text-center mt-2 small text-muted">
         <i class="bi bi-info-circle me-1"></i>
         Разница из-за ветра (${feelsLikeData[0].wind} м/с) и влажности (${feelsLikeData[0].humidity}%)
@@ -79,28 +79,34 @@ function switchFeelsLikeView(view) {
   const cardsContainer = document.getElementById('feels-like-cards');
   const buttons = document.querySelectorAll('#feels-like-container .btn-glass');
   
-  buttons.forEach(btn => btn.classList.remove('active'));
+  buttons.forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-pressed', 'false');
+  });
   
   if (view === 'chart') {
     chartContainer.classList.remove('d-none');
     cardsContainer.classList.add('d-none');
     buttons[0].classList.add('active');
+    buttons[0].setAttribute('aria-pressed', 'true');
     if (feelsLikeData) renderFeelsLikeChart(feelsLikeData);
   } else {
     chartContainer.classList.add('d-none');
     cardsContainer.classList.remove('d-none');
     buttons[1].classList.add('active');
+    buttons[1].setAttribute('aria-pressed', 'true');
   }
 }
 
-function renderFeelsLikeChart(data) {
+async function renderFeelsLikeChart(data) {
   const canvas = document.getElementById('feelsLikeChart');
   if (!canvas || !data) return;
+  try { await ensureChartLibrary(); } catch (error) { console.warn(error.message); return; }
   
   const ctx = canvas.getContext('2d');
   if (feelsLikeChartInstance) feelsLikeChartInstance.destroy();
   
-  const isDark = document.body.classList.contains('theme-night');
+  const palette = getChartThemePalette();
   
   feelsLikeChartInstance = new Chart(ctx, {
     type: 'line',
@@ -137,7 +143,7 @@ function renderFeelsLikeChart(data) {
         legend: {
           labels: {
             usePointStyle: true,
-            color: isDark ? '#fff' : '#1a1a2e',
+            color: palette.legend,
             padding: 20,
           }
         },
@@ -151,10 +157,10 @@ function renderFeelsLikeChart(data) {
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: isDark ? '#ccc' : '#666' } },
+        x: { grid: { display: false }, ticks: { color: palette.ticks } },
         y: {
-          grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' },
-          ticks: { callback: v => v + '°', color: isDark ? '#ccc' : '#666' }
+          grid: { color: palette.grid },
+          ticks: { callback: v => v + '°', color: palette.ticks }
         }
       }
     }
@@ -166,4 +172,15 @@ function createGradient(ctx, color1, color2) {
   gradient.addColorStop(0, color1);
   gradient.addColorStop(1, color2);
   return gradient;
+}
+
+function updateFeelsLikeChartTheme() {
+  if (!feelsLikeChartInstance) return;
+  const palette = getChartThemePalette();
+  const options = feelsLikeChartInstance.options;
+  if (options.plugins?.legend?.labels) options.plugins.legend.labels.color = palette.legend;
+  if (options.scales?.x?.ticks) options.scales.x.ticks.color = palette.ticks;
+  if (options.scales?.y?.ticks) options.scales.y.ticks.color = palette.ticks;
+  if (options.scales?.y?.grid) options.scales.y.grid.color = palette.grid;
+  feelsLikeChartInstance.update();
 }

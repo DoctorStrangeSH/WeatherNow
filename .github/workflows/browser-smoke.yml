@@ -1,0 +1,153 @@
+name: Browser and production smoke
+
+on:
+  # PR branches are tested by pull_request; push is reserved for main to avoid duplicate runs.
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+
+concurrency:
+  group: weathernow-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  browser-smoke:
+    name: ${{ matrix.browser }} browser smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.56.1 axe-core@4.10.3
+          npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run desktop and mobile browser scenarios
+        env:
+          BROWSER: ${{ matrix.browser }}
+          SCREENSHOT_DIR: artifacts/browser-smoke/${{ matrix.browser }}
+        run: node tests/browser-smoke.mjs
+
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weathernow-browser-smoke-${{ matrix.browser }}
+          path: artifacts/browser-smoke/**/*.png
+          if-no-files-found: ignore
+
+  production-worker-smoke:
+    name: Production Cloudflare Worker smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify production Worker endpoints and security
+        run: node tests/worker-production-smoke.mjs
+
+
+  lighthouse:
+    name: Lighthouse performance audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Lighthouse and static server
+        run: npm install --no-save lighthouse@12.8.2 http-server@14.1.1
+
+      - name: Start local preview server
+        run: |
+          npx http-server . -p 5500 -c-1 -g > /tmp/weathernow-server.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:5500/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/weathernow-server.log
+          exit 1
+
+      - name: Run mobile Lighthouse audit
+        run: |
+          mkdir -p artifacts/lighthouse
+          npx lighthouse http://127.0.0.1:5500/ --chrome-flags="--headless --no-sandbox" --only-categories=performance,accessibility,best-practices,seo --form-factor=mobile --screenEmulation.mobile --output=json --output=html --output-path=./artifacts/lighthouse/mobile
+
+      - name: Publish Lighthouse score summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const reportPath = 'artifacts/lighthouse/mobile.report.json';
+          if (!fs.existsSync(reportPath)) {
+            const message = 'Lighthouse JSON report was not generated.';
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Lighthouse mobile audit\n\n⚠️ ${message}\n`);
+            console.error(message);
+            process.exit(1);
+          }
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const categories = report.categories || {};
+          const audits = report.audits || {};
+          const score = key => categories[key]?.score == null ? '—' : Math.round(categories[key].score * 100);
+          const metric = key => audits[key]?.displayValue || '—';
+          const rows = [
+            ['Performance', score('performance')],
+            ['Accessibility', score('accessibility')],
+            ['Best Practices', score('best-practices')],
+            ['SEO', score('seo')]
+          ];
+          const metrics = [
+            ['First Contentful Paint', metric('first-contentful-paint')],
+            ['Largest Contentful Paint', metric('largest-contentful-paint')],
+            ['Total Blocking Time', metric('total-blocking-time')],
+            ['Cumulative Layout Shift', metric('cumulative-layout-shift')],
+            ['Speed Index', metric('speed-index')]
+          ];
+          let summary = '## Lighthouse mobile audit\n\n';
+          summary += '| Category | Score / 100 |\n|---|---:|\n';
+          summary += rows.map(([name, value]) => `|${name}|${value}|`).join('\n');
+          summary += '\n\n| Lab metric | Result |\n|---|---|\n';
+          summary += metrics.map(([name, value]) => `|${name}|${value}|`).join('\n');
+          summary += '\n';
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+          console.log(summary);
+          NODE
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weathernow-lighthouse-mobile
+          path: artifacts/lighthouse/
+          if-no-files-found: ignore

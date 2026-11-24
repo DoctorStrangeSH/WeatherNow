@@ -1,0 +1,42 @@
+name: Quality checks
+
+on:
+  # PR branches are tested by pull_request; push is reserved for main to avoid duplicate runs.
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+
+concurrency:
+  group: weathernow-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  javascript:
+    name: JavaScript checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        run: |
+          set -e
+          for file in js/*.js tests/*.js worker/src/*.mjs worker/test/*.mjs; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+
+      - name: Run unit tests
+        run: node --test tests/*.test.js worker/test/*.test.mjs
