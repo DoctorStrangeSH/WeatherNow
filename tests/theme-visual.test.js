@@ -505,8 +505,8 @@ test('cloud lighting palette follows all four local time-of-day states', () => {
 test('storm cloud highlights flash in sync with the lightning and stop for reduced motion', () => {
   assert.match(styleSource, /\.weather-cloud-layer\[data-weather="storm"\]::before\s*\{\s*animation:\s*stormCloudIllumination 6s/);
   assert.match(styleSource, /@keyframes stormCloudIllumination/);
-  assert.match(styleSource, /91%\s*\{\s*filter:\s*blur\(7px\) brightness\(1\.72\)/);
-  assert.match(styleSource, /93%\s*\{\s*filter:\s*blur\(7px\) brightness\(2\.15\)/);
+  assert.match(styleSource, /91%\s*\{\s*filter:\s*blur\(7px\) brightness\(var\(--storm-flash-soft,\s*1\.72\)\)/);
+  assert.match(styleSource, /93%\s*\{\s*filter:\s*blur\(7px\) brightness\(var\(--storm-flash-peak,\s*2\.15\)\)/);
   assert.match(styleSource, /prefers-reduced-motion:\s*reduce\)\s*\{\s*#sky \.weather-cloud-layer\[data-weather="storm"\]::before/);
 });
 
