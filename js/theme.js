@@ -81,6 +81,26 @@ function getSkyArcPosition(hour, startHour, endHour) {
   return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
 }
 
+function getMoonPhase(date = new Date()) {
+  const synodicMonth = 29.530588853;
+  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+  const timestamp = date instanceof Date ? date.getTime() : new Date(date).getTime();
+  const daysSinceKnownNewMoon = (timestamp - knownNewMoon) / 86400000;
+  const phase = ((daysSinceKnownNewMoon / synodicMonth) % 1 + 1) % 1;
+  const illumination = (1 - Math.cos(phase * Math.PI * 2)) / 2;
+  let name;
+
+  if (phase < 0.035 || phase >= 0.965) name = 'новолуние';
+  else if (phase < 0.22) name = 'растущий серп';
+  else if (phase < 0.28) name = 'первая четверть';
+  else if (phase < 0.47) name = 'растущая луна';
+  else if (phase < 0.53) name = 'полнолуние';
+  else if (phase < 0.72) name = 'убывающая луна';
+  else if (phase < 0.78) name = 'последняя четверть';
+  else name = 'убывающий серп';
+
+  return { phase, illumination, waxing: phase < 0.5, name };
+}
 function updateSkyElements(timeOfDay) {
   const sun = document.getElementById('sun');
   const moon = document.getElementById('moon');
@@ -104,6 +124,14 @@ function updateSkyElements(timeOfDay) {
   moon.style.top = `${moonPosition.y}%`;
   moon.style.opacity = timeOfDay === 'night' ? '0.94' : '0';
   moon.style.transform = 'translate(-50%, -50%)';
+  const lunarPhase = getMoonPhase();
+  const shadowWidth = ((1 - lunarPhase.illumination) * 100).toFixed(1);
+  moon.dataset.phase = lunarPhase.name;
+  moon.setAttribute('aria-label', 'Луна: ' + lunarPhase.name);
+  moon.style.setProperty('--moon-shadow-width', shadowWidth + '%');
+  moon.style.setProperty('--moon-shadow-left', lunarPhase.waxing ? '0%' : 'auto');
+  moon.style.setProperty('--moon-shadow-right', lunarPhase.waxing ? 'auto' : '0%');
+  moon.style.setProperty('--moon-shadow-opacity', lunarPhase.illumination > 0.985 ? '0' : '0.92');
   
   updateStarsVisibility(timeOfDay === 'night', currentWeatherCode);
   if (typeof updateChartTheme === 'function') updateChartTheme();
