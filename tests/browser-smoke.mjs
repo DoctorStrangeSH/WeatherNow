@@ -727,6 +727,7 @@ try {
     assert.equal(new Set(scene.palettes.map(palette => palette.background)).size, 4,
       `${scene.scene} has four distinct morning/day/evening/night palettes`);
   }
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   const sceneTransition = await page.evaluate(() => {
     const sky = document.getElementById('sky');
     sky.querySelector('.sky-scene-transition')?.remove();
