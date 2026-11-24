@@ -521,9 +521,8 @@ test('cloud lighting palette follows all four local time-of-day states', () => {
 });
 
 test('storm cloud volume reacts to the same flash stage as the lightning overlay', () => {
-  assert.match(styleSource, /#sky\[data-storm-flash="soft"\].*weather-cloud-layer\[data-weather="storm"\]::before/);
-  assert.match(styleSource, /#sky\[data-storm-flash="peak"\].*weather-cloud-layer\[data-weather="storm"\]::before/);
-  assert.match(styleSource, /#sky\[data-storm-flash="fade"\].*weather-cloud-layer\[data-weather="storm"\]::before/);
+  assert.match(styleSource, /#sky \.weather-cloud-layer\[data-weather="storm"\]::before\s*\{[^}]*filter:\s*blur\(7px\) brightness\(var\(--storm-flash-brightness,\s*1\)\)/s);
+  assert.match(themeSource, /cloud\.style\.setProperty\('--storm-flash-brightness', brightnessValue\)/);
   assert.match(styleSource, /transition: filter 84ms ease/);
   assert.match(styleSource, /prefers-reduced-motion:\s*reduce\)[\s\S]*#sky \.weather-cloud-layer\[data-weather="storm"\]::before/);
   assert.match(themeSource, /sky\.dataset\.stormFlash = stage/);
