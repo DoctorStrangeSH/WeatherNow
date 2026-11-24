@@ -320,13 +320,30 @@ test('fog uses layered slow atmospheric drift and respects reduced motion', () =
   assert.match(fogStyles, /prefers-reduced-motion:\s*reduce/);
 });
 
-test('storm scene includes a visible lightning bolt with a restrained flash cycle', () => {
-  const lightningStart = styleSource.indexOf('#lightning::before');
-  const lightningEnd = styleSource.indexOf('/* стеклянные эффекты */', lightningStart);
-  const lightningStyles = styleSource.slice(lightningStart, lightningEnd);
-  assert.match(lightningStyles, /clip-path:\s*polygon/);
-  assert.match(lightningStyles, /@keyframes lightningBolt/);
-  assert.match(lightningStyles, /91%\s*\{/);
+test('storm scene uses variable lightning profiles and irregular, bounded flash timing', () => {
+  const context = loadInBrowserContext(themeSource);
+  const profiles = vm.runInContext(`({
+    low: getLightningFlashProfile(() => 0.05),
+    high: getLightningFlashProfile(() => 0.95),
+    single: getLightningFlashSequence({ secondary: false }, () => 0.5),
+    double: getLightningFlashSequence({ secondary: true }, () => 0.5),
+    initialDelay: getLightningDelay(() => 0.5, true),
+    nextDelay: getLightningDelay(() => 0.5, false)
+  })`, context);
+
+  assert.ok(profiles.low.intensity >= 0.42 && profiles.low.intensity <= 1);
+  assert.ok(profiles.high.intensity > profiles.low.intensity);
+  assert.notEqual(profiles.low.boltX, profiles.high.boltX);
+  assert.notEqual(profiles.low.shape, profiles.high.shape);
+  assert.equal(profiles.single.length, 4);
+  assert.equal(profiles.double.length, 8);
+  assert.ok(profiles.single.every(step => step.duration >= 30 && step.duration <= 130));
+  assert.ok(profiles.initialDelay >= 1600 && profiles.initialDelay <= 5400);
+  assert.ok(profiles.nextDelay >= 3800 && profiles.nextDelay <= 12500);
+  assert.match(styleSource, /#lightning\[data-flash="peak"\]/);
+  assert.match(styleSource, /#lightning\[data-bolt-shape="forked"\]::before/);
+  assert.match(styleSource, /#lightning::after/);
+  assert.doesNotMatch(styleSource, /@keyframes lightningBolt|@keyframes lightningFlash/);
 });
 
 
@@ -503,12 +520,14 @@ test('cloud lighting palette follows all four local time-of-day states', () => {
   assert.ok(styleSource.includes('#sky .weather-cloud-layer[data-weather="fog"]::before'));
 });
 
-test('storm cloud highlights flash in sync with the lightning and stop for reduced motion', () => {
-  assert.match(styleSource, /\.weather-cloud-layer\[data-weather="storm"\]::before\s*\{\s*animation:\s*stormCloudIllumination 6s/);
-  assert.match(styleSource, /@keyframes stormCloudIllumination/);
-  assert.match(styleSource, /91%\s*\{\s*filter:\s*blur\(7px\) brightness\(var\(--storm-flash-soft,\s*1\.72\)\)/);
-  assert.match(styleSource, /93%\s*\{\s*filter:\s*blur\(7px\) brightness\(var\(--storm-flash-peak,\s*2\.15\)\)/);
-  assert.match(styleSource, /prefers-reduced-motion:\s*reduce\)\s*\{\s*#sky \.weather-cloud-layer\[data-weather="storm"\]::before/);
+test('storm cloud volume reacts to the same flash stage as the lightning overlay', () => {
+  assert.match(styleSource, /#sky\[data-storm-flash="soft"\].*weather-cloud-layer\[data-weather="storm"\]::before/);
+  assert.match(styleSource, /#sky\[data-storm-flash="peak"\].*weather-cloud-layer\[data-weather="storm"\]::before/);
+  assert.match(styleSource, /#sky\[data-storm-flash="fade"\].*weather-cloud-layer\[data-weather="storm"\]::before/);
+  assert.match(styleSource, /transition: filter 84ms ease/);
+  assert.match(styleSource, /prefers-reduced-motion:\s*reduce\)[\s\S]*#sky \.weather-cloud-layer\[data-weather="storm"\]::before/);
+  assert.match(themeSource, /sky\.dataset\.stormFlash = stage/);
+  assert.match(themeSource, /stopLightningSequence\(\)/);
 });
 
 test('rain and snow particles expose four distinct depth profiles with realistic scale and motion', () => {
@@ -899,4 +918,85 @@ test('volumetric fog uses three visual depth planes and remains lightweight on m
   assert.match(styleSource, /@media \(max-width: 767\.98px\)[\s\S]*#fog/);
   assert.match(styleSource, /@media \(max-width: 390px\)[\s\S]*#fog/);
   assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*#fog::before/);
+});
+
+
+test('lightning flash stages illuminate the bolt and cloud layer together, then clear cleanly', () => {
+  const values = {};
+  const sky = { dataset: {}, style: {
+    setProperty(name, value) { values[name] = value; },
+    removeProperty(name) { delete values[name]; }
+  } };
+  const lightningValues = {};
+  const lightning = {
+    dataset: {},
+    style: {
+      setProperty(name, value) { lightningValues[name] = value; },
+      removeProperty(name) { delete lightningValues[name]; }
+    },
+    removeAttribute(name) { delete this.dataset[name]; }
+  };
+  const context = loadInBrowserContext(themeSource, {
+    document: { getElementById(id) { return id === 'sky' ? sky : null; } }
+  });
+  const profile = vm.runInContext('getLightningFlashProfile(() => 0.7)', context);
+  context.applyLightningFlashStage(lightning, 'peak', profile);
+
+  assert.equal(lightning.dataset.flash, 'peak');
+  assert.equal(sky.dataset.stormFlash, 'peak');
+  assert.equal(lightningValues['--lightning-bolt-x'], profile.boltX + '%');
+  assert.equal(values['--storm-flash-brightness'], String(profile.cloudBrightness));
+  assert.ok(Number(lightningValues['--lightning-bolt-opacity']) > 0.5);
+
+  context.applyLightningFlashStage(lightning, 'off', profile);
+  assert.equal(lightning.dataset.flash, undefined);
+  assert.equal(sky.dataset.stormFlash, undefined);
+  assert.equal(values['--storm-flash-brightness'], undefined);
+});
+
+test('lightning scheduler pauses on hidden tabs and resumes without duplicate timers', () => {
+  const timers = new Map();
+  let nextTimerId = 0;
+  const sky = { dataset: {}, style: {
+    setProperty() {},
+    removeProperty() {}
+  }, querySelector(selector) { return selector === '#lightning' ? lightning : null; } };
+  const lightningValues = {};
+  const lightning = {
+    dataset: {},
+    isConnected: true,
+    style: {
+      setProperty(name, value) { lightningValues[name] = value; },
+      removeProperty(name) { delete lightningValues[name]; }
+    },
+    removeAttribute(name) { delete this.dataset[name]; }
+  };
+  const context = loadInBrowserContext(themeSource, {
+    document: {
+      hidden: false,
+      getElementById(id) { return id === 'sky' ? sky : null; }
+    },
+    window: { matchMedia: () => ({ matches: false }) },
+    setTimeout(callback, delay) {
+      const id = ++nextTimerId;
+      timers.set(id, { callback, delay });
+      return id;
+    },
+    clearTimeout(id) { timers.delete(id); }
+  });
+
+  assert.equal(context.startLightningSequence(lightning, 2400), true);
+  assert.equal(timers.size, 1);
+  assert.equal([...timers.values()][0].delay, 2400);
+
+  context.syncWeatherAnimationVisibility(false);
+  assert.equal(timers.size, 0);
+  assert.equal(lightning.dataset.flash, undefined);
+  assert.equal(context.lightningTimerId, null);
+
+  context.syncWeatherAnimationVisibility(true);
+  assert.equal(timers.size, 1);
+  assert.equal(context.lightningTimerId !== null, true);
+  context.stopLightningSequence();
+  assert.equal(timers.size, 0);
 });

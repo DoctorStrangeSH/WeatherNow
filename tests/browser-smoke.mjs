@@ -194,6 +194,8 @@ try {
       const state = await page.evaluate(async ({ code, hourTheme }) => {
         currentWeatherCode = code;
         currentWindSpeed = 8;
+        currentVisibility = code === 741 ? 900 : 10000;
+        currentWindDirection = 225;
         document.body.classList.remove('theme-morning', 'theme-day', 'theme-evening', 'theme-night');
         document.body.classList.add('theme-' + hourTheme);
         updateSkyElements(hourTheme);
@@ -236,7 +238,8 @@ try {
             };
           })(),
           lightningBolt: sky.querySelector('#lightning') ? getComputedStyle(sky.querySelector('#lightning'), '::before').clipPath : '',
-          stormCloudAnimation: sky.querySelector('.weather-cloud-layer[data-weather="storm"]') ? getComputedStyle(sky.querySelector('.weather-cloud-layer[data-weather="storm"]'), '::before').animationName : '',
+          stormCloudTransition: sky.querySelector('.weather-cloud-layer[data-weather="storm"]') ? getComputedStyle(sky.querySelector('.weather-cloud-layer[data-weather="storm"]'), '::before').transitionDuration : '',
+          lightningSchedulePending: code >= 200 && code < 300 ? lightningTimerId !== null : false,
           rainAngle: sky.querySelector('.raindrop')?.style.getPropertyValue('--rain-angle') || '',
           rainDepthCount: sky.querySelectorAll('.raindrop[data-depth]').length,
           snowDepthCount: sky.querySelectorAll('.snowflake[data-depth]').length,
@@ -295,7 +298,8 @@ try {
       }
       if (code >= 200 && code < 300) {
         assert.match(state.lightningBolt, /polygon/i, 'Storm contains a shaped lightning bolt');
-        assert.equal(state.stormCloudAnimation, 'stormCloudIllumination', 'Storm cloud highlights flash in sync with lightning');
+        assert.notEqual(state.stormCloudTransition, '0s', 'Storm cloud volume can react to each irregular flash');
+        assert.equal(state.lightningSchedulePending, true, 'Storm creates one pending irregular strike sequence');
       }
       if (code >= 300 && code < 600) {
         assert.match(state.rainAngle, /deg$/, 'Rain angle responds to wind');
@@ -313,6 +317,35 @@ try {
       }
     }
   }
+
+  const dynamicStormFlash = await page.evaluate(() => {
+    updateWeatherTheme(211, 0, 8);
+    const sky = document.getElementById('sky');
+    const lightning = sky.querySelector('#lightning');
+    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
+    const profile = getLightningFlashProfile(() => 0.7);
+    applyLightningFlashStage(lightning, 'peak', profile);
+    const peak = {
+      lightningStage: lightning.dataset.flash,
+      skyStage: sky.dataset.stormFlash,
+      cloudFilter: getComputedStyle(cloud, '::before').filter,
+      boltOpacity: Number(getComputedStyle(lightning, '::before').opacity),
+      boltX: lightning.style.getPropertyValue('--lightning-bolt-x'),
+      secondary: lightning.dataset.secondary
+    };
+    applyLightningFlashStage(lightning, 'off', profile);
+    return {
+      ...peak,
+      cleared: !lightning.dataset.flash && !sky.dataset.stormFlash
+    };
+  });
+  assert.equal(dynamicStormFlash.lightningStage, 'peak');
+  assert.equal(dynamicStormFlash.skyStage, 'peak');
+  assert.match(dynamicStormFlash.cloudFilter, /brightness\(/,
+    'Cloud volume brightens during the same lightning strike');
+  assert.ok(dynamicStormFlash.boltOpacity > 0.5, 'The bolt becomes visible at peak intensity');
+  assert.match(dynamicStormFlash.boltX, /%$/, 'Bolt position changes between strikes');
+  assert.equal(dynamicStormFlash.cleared, true, 'Flash state is cleared after the strike');
 
   const fullSceneMatrix = await page.evaluate(() => {
     const sky = document.getElementById('sky');
@@ -742,13 +775,20 @@ try {
     'Enabling reduced motion mid-transition removes the old scene layer immediately');
 
   const reducedStormFlash = await page.evaluate(() => {
+    updateWeatherTheme(211, 0, 8);
     const sky = document.getElementById('sky');
-    currentWeatherCode = 211;
-    updateCloudAtmosphere(211, 8);
-    const cloud = sky.querySelector('.weather-cloud-layer[data-weather="storm"]');
-    return cloud ? getComputedStyle(cloud, '::before').animationName : '';
+    return {
+      lightningLayer: Boolean(sky.querySelector('#lightning')),
+      timerPending: lightningTimerId !== null,
+      flashStage: sky.dataset.stormFlash || ''
+    };
   });
-  assert.equal(reducedStormFlash, 'none', 'Storm cloud flashes stop when reduced motion is enabled');
+  assert.equal(reducedStormFlash.lightningLayer, false,
+    'Reduced motion does not create an animated lightning layer');
+  assert.equal(reducedStormFlash.timerPending, false,
+    'Reduced motion does not schedule lightning timers');
+  assert.equal(reducedStormFlash.flashStage, '',
+    'Reduced motion leaves the storm cloud volume unflashed');
   const reducedPrecipitation = await page.evaluate(() => {
     updateWeatherTheme(502, 0, 8);
     const rainParticles = document.querySelectorAll('#sky .raindrop').length;
@@ -806,17 +846,20 @@ try {
       return (pseudo ? getComputedStyle(element, pseudo) : getComputedStyle(element)).animationPlayState;
     };
     return {
-      lightning: read(sky.querySelector('#lightning')),
-      lightningBolt: read(sky.querySelector('#lightning'), '::before'),
+      lightningTimerPending: lightningTimerId !== null,
+      lightningFlashStage: sky.querySelector('#lightning')?.dataset.flash || '',
       stormCloud: read(cloud),
-      stormCloudLight: read(cloud, '::before'),
       wind: read(sky.querySelector('.wind-line')),
       sunAura: read(sky.querySelector('#sun'), '::after'),
       starTwinkle: read(sky.querySelector('#stars .star'))
     };
   });
-  assert.ok(Object.values(pausedStorm).every(state => state === 'paused'),
-    `Storm, cloud, wind, sun and star motion pauses in background: ${JSON.stringify(pausedStorm)}`);
+  assert.equal(pausedStorm.lightningTimerPending, false,
+    'The irregular lightning scheduler stops while the tab is hidden');
+  assert.equal(pausedStorm.lightningFlashStage, '',
+    'An in-progress flash is cleared when the tab is hidden');
+  assert.ok(['stormCloud', 'wind', 'sunAura', 'starTwinkle'].every(key => pausedStorm[key] === 'paused'),
+    `Cloud, wind, sun and star animations pause in background: ${JSON.stringify(pausedStorm)}`);
 
   const resumedStorm = await page.evaluate(() => {
     syncWeatherAnimationVisibility(true);
@@ -826,18 +869,18 @@ try {
       if (!element) return 'missing';
       return (pseudo ? getComputedStyle(element, pseudo) : getComputedStyle(element)).animationPlayState;
     };
-    return [
-      read(sky.querySelector('#lightning')),
-      read(sky.querySelector('#lightning'), '::before'),
-      read(cloud),
-      read(cloud, '::before'),
-      read(sky.querySelector('.wind-line')),
-      read(sky.querySelector('#sun'), '::after'),
-      read(sky.querySelector('#stars .star'))
-    ];
+    return {
+      lightningTimerPending: lightningTimerId !== null,
+      cloud: read(cloud),
+      wind: read(sky.querySelector('.wind-line')),
+      sunAura: read(sky.querySelector('#sun'), '::after'),
+      starTwinkle: read(sky.querySelector('#stars .star'))
+    };
   });
-  assert.ok(resumedStorm.every(state => state === 'running'),
-    `Storm scene motion resumes when visible: ${JSON.stringify(resumedStorm)}`);
+  assert.equal(resumedStorm.lightningTimerPending, true,
+    'The irregular lightning scheduler resumes when the tab becomes visible');
+  assert.ok(['cloud', 'wind', 'sunAura', 'starTwinkle'].every(key => resumedStorm[key] === 'running'),
+    `Storm scene animations resume when visible: ${JSON.stringify(resumedStorm)}`);
 
   const pausedFog = await page.evaluate(() => {
     updateWeatherTheme(741, 0, 2);

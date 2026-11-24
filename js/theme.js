@@ -80,7 +80,13 @@ function watchReducedMotionPreference() {
     const shouldReduceMotion = event && typeof event.matches === 'boolean'
       ? event.matches
       : mediaQuery.matches;
-    if (shouldReduceMotion) removeSkySceneTransition();
+    if (shouldReduceMotion) {
+      removeSkySceneTransition();
+      stopLightningSequence();
+    } else {
+      const lightning = document.getElementById('lightning');
+      if (lightning && !document.hidden) startLightningSequence(lightning);
+    }
   };
 
   if (typeof mediaQuery.addEventListener === 'function') {
@@ -494,13 +500,176 @@ function createWindLines(intensity) {
   sky.appendChild(container);
 }
 
+let lightningTimerId = null;
+let activeLightningElement = null;
+
+function getLightningDelay(random = Math.random, initial = false) {
+  const raw = typeof random === 'function' ? Number(random()) : Number(random);
+  const sample = Math.max(0, Math.min(0.9999, Number.isFinite(raw) ? raw : 0.5));
+  return Math.round(initial ? 1600 + sample * 3800 : 3800 + sample * 8700);
+}
+
+function getLightningFlashProfile(random = Math.random) {
+  const sample = () => {
+    const raw = typeof random === 'function' ? Number(random()) : Number(random);
+    return Math.max(0, Math.min(0.9999, Number.isFinite(raw) ? raw : 0.5));
+  };
+  const intensity = 0.42 + sample() * 0.58;
+  const shapes = ['classic', 'forked', 'wide'];
+  return {
+    intensity: Number(intensity.toFixed(3)),
+    boltX: Math.round(10 + sample() * 76),
+    boltTop: Math.round(3 + sample() * 16),
+    boltWidth: Math.round(42 + sample() * 48),
+    boltHeight: Math.round(36 + sample() * 24),
+    shape: shapes[Math.floor(sample() * shapes.length)],
+    secondary: sample() < 0.32,
+    overlayOpacity: Number((0.16 + intensity * 0.42).toFixed(3)),
+    boltOpacity: Number((0.54 + intensity * 0.42).toFixed(3)),
+    cloudBrightness: Number((1.28 + intensity * 1.12).toFixed(3))
+  };
+}
+
+function getLightningFlashSequence(profile, random = Math.random) {
+  const sample = () => {
+    const raw = typeof random === 'function' ? Number(random()) : Number(random);
+    return Math.max(0, Math.min(0.9999, Number.isFinite(raw) ? raw : 0.5));
+  };
+  const sequence = [
+    { stage: 'soft', duration: Math.round(34 + sample() * 24) },
+    { stage: 'peak', duration: Math.round(54 + sample() * 44) },
+    { stage: 'fade', duration: Math.round(68 + sample() * 54) },
+    { stage: 'off', duration: Math.round(65 + sample() * 55) }
+  ];
+  if (profile && profile.secondary) {
+    sequence.push(
+      { stage: 'soft', duration: Math.round(30 + sample() * 18) },
+      { stage: 'peak', duration: Math.round(48 + sample() * 34) },
+      { stage: 'fade', duration: Math.round(72 + sample() * 52) },
+      { stage: 'off', duration: Math.round(85 + sample() * 65) }
+    );
+  }
+  return sequence;
+}
+
+function applyLightningFlashStage(lightning, stage, profile) {
+  if (!lightning || !lightning.dataset || !lightning.style) return false;
+  const sky = document.getElementById('sky');
+
+  if (stage === 'off') {
+    lightning.removeAttribute('data-flash');
+    lightning.removeAttribute('data-bolt-shape');
+    lightning.removeAttribute('data-secondary');
+    if (sky && sky.dataset) {
+      delete sky.dataset.stormFlash;
+      if (sky.style && typeof sky.style.removeProperty === 'function') {
+        sky.style.removeProperty('--storm-flash-brightness');
+      }
+    }
+    return true;
+  }
+
+  if (!profile || !['soft', 'peak', 'fade'].includes(stage)) return false;
+  const overlayScale = stage === 'peak' ? 1 : stage === 'soft' ? 0.58 : 0.22;
+  const boltScale = stage === 'peak' ? 1 : stage === 'soft' ? 0.48 : 0.16;
+  const cloudScale = stage === 'peak' ? 1 : stage === 'soft' ? 0.54 : 0.18;
+
+  lightning.dataset.flash = stage;
+  lightning.dataset.boltShape = profile.shape;
+  lightning.dataset.secondary = profile.secondary ? 'true' : 'false';
+  const properties = {
+    '--lightning-overlay-opacity': String(Number((profile.overlayOpacity * overlayScale).toFixed(3))),
+    '--lightning-bolt-opacity': String(Number((profile.boltOpacity * boltScale).toFixed(3))),
+    '--lightning-secondary-opacity': String(Number((profile.boltOpacity * boltScale * 0.62).toFixed(3))),
+    '--lightning-bolt-x': profile.boltX + '%',
+    '--lightning-bolt-top': profile.boltTop + '%',
+    '--lightning-bolt-width': profile.boltWidth + 'px',
+    '--lightning-bolt-height': profile.boltHeight + 'vh'
+  };
+  Object.entries(properties).forEach(([property, value]) => lightning.style.setProperty(property, value));
+  if (sky && sky.dataset) {
+    sky.dataset.stormFlash = stage;
+    if (sky.style && typeof sky.style.setProperty === 'function') {
+      const brightness = 1 + (profile.cloudBrightness - 1) * cloudScale;
+      sky.style.setProperty('--storm-flash-brightness', String(Number(brightness.toFixed(3))));
+    }
+  }
+  return true;
+}
+
+function stopLightningSequence() {
+  if (lightningTimerId !== null) clearTimeout(lightningTimerId);
+  lightningTimerId = null;
+  if (activeLightningElement) applyLightningFlashStage(activeLightningElement, 'off');
+  activeLightningElement = null;
+}
+
+function canRunLightningSequence(lightning) {
+  return Boolean(lightning)
+    && lightning.isConnected !== false
+    && !document.hidden
+    && !prefersReducedMotion();
+}
+
+function scheduleLightningSequence(lightning, delay) {
+  if (!canRunLightningSequence(lightning)) return false;
+  activeLightningElement = lightning;
+  lightningTimerId = setTimeout(() => {
+    lightningTimerId = null;
+    playLightningBurst(lightning);
+  }, Math.max(0, Number(delay) || 0));
+  return true;
+}
+
+function playLightningBurst(lightning) {
+  if (!canRunLightningSequence(lightning)) {
+    stopLightningSequence();
+    return;
+  }
+
+  const profile = getLightningFlashProfile();
+  const sequence = getLightningFlashSequence(profile);
+  let index = 0;
+
+  const advance = () => {
+    if (activeLightningElement !== lightning || !canRunLightningSequence(lightning)) {
+      stopLightningSequence();
+      return;
+    }
+    if (index >= sequence.length) {
+      applyLightningFlashStage(lightning, 'off', profile);
+      scheduleLightningSequence(lightning, getLightningDelay(Math.random, false));
+      return;
+    }
+
+    const step = sequence[index++];
+    applyLightningFlashStage(lightning, step.stage, profile);
+    lightningTimerId = setTimeout(advance, step.duration);
+  };
+
+  advance();
+}
+
+function startLightningSequence(lightning, delay) {
+  if (!canRunLightningSequence(lightning)) return false;
+  if (activeLightningElement === lightning && lightningTimerId !== null) return true;
+  stopLightningSequence();
+  return scheduleLightningSequence(
+    lightning,
+    delay === undefined ? getLightningDelay(Math.random, true) : delay
+  );
+}
+
 function createLightning() {
   const sky = document.getElementById('sky');
-  if (!sky) return;
-  
+  if (!sky) return null;
+
   const lightning = document.createElement('div');
   lightning.id = 'lightning';
+  lightning.setAttribute('aria-hidden', 'true');
   sky.appendChild(lightning);
+  startLightningSequence(lightning);
+  return lightning;
 }
 
 function getFogProfile(
@@ -679,6 +848,7 @@ function prefersReducedMotion() {
 }
 
 function clearWeatherEffects() {
+  stopLightningSequence();
   const sky = document.getElementById('sky');
   if (!sky) return;
 
@@ -948,6 +1118,13 @@ function syncWeatherAnimationVisibility(isVisible = !document.hidden) {
   const sky = document.getElementById('sky');
   if (!sky) return;
   sky.dataset.pageVisible = isVisible ? 'true' : 'false';
+
+  if (!isVisible) {
+    stopLightningSequence();
+    return;
+  }
+  const lightning = typeof sky.querySelector === 'function' ? sky.querySelector('#lightning') : null;
+  if (lightning) startLightningSequence(lightning);
 }
 
 document.addEventListener('visibilitychange', () => {

@@ -433,23 +433,30 @@ body {
     100% { transform: translateX(calc(100vw + 200px)); opacity: 0; }
 }
 
-/* молния */
+/* Irregular storm flashes are driven by the weather scene scheduler, not a fixed loop. */
 #lightning {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     pointer-events: none;
     z-index: 5;
-    animation: lightningFlash 6s ease-in-out infinite;
+    opacity: 0;
+    background: transparent;
+    transition: opacity 42ms linear;
 }
 
-@keyframes lightningFlash {
-    0%, 90%, 92%, 94%, 96%, 100% { background: transparent; }
-    91% { background: var(--lightning-flash-soft, rgba(255, 255, 255, 0.4)); }
-    93% { background: var(--lightning-flash-strong, rgba(255, 255, 255, 0.7)); }
-    95% { background: var(--lightning-flash-fade, rgba(255, 255, 255, 0.2)); }
+#lightning[data-flash="soft"] {
+    opacity: var(--lightning-overlay-opacity, .2);
+    background: var(--lightning-flash-soft, rgba(255,255,255,.36));
+}
+
+#lightning[data-flash="peak"] {
+    opacity: var(--lightning-overlay-opacity, .48);
+    background: var(--lightning-flash-strong, rgba(255,255,255,.64));
+}
+
+#lightning[data-flash="fade"] {
+    opacity: var(--lightning-overlay-opacity, .1);
+    background: var(--lightning-flash-fade, rgba(255,255,255,.22));
 }
 
 /* Three-depth volumetric fog: a distant veil plus two independently drifting banks. */
@@ -500,34 +507,65 @@ body {
     to { transform: translate3d(var(--fog-start-x, -3%), var(--fog-start-y, 1%), 0) scale(.96); }
 }
 
-#lightning::before {
+#lightning::before,
+#lightning::after {
     content: "";
     position: absolute;
-    top: 7%;
-    right: 20%;
-    width: clamp(42px, 7vw, 92px);
-    height: min(54vh, 430px);
-    opacity: 0;
+    left: var(--lightning-bolt-x, 62%);
+    top: var(--lightning-bolt-top, 7%);
+    width: var(--lightning-bolt-width, clamp(42px, 7vw, 92px));
+    height: var(--lightning-bolt-height, min(54vh, 430px));
+    opacity: var(--lightning-bolt-opacity, 0);
     transform: skewX(-8deg);
     transform-origin: top center;
     clip-path: polygon(52% 0, 100% 0, 67% 38%, 91% 38%, 18% 100%, 38% 52%, 8% 52%);
     background: linear-gradient(180deg, rgba(255,255,255,.98), var(--lightning-bolt-mid, rgba(190,211,255,.82)) 42%, rgba(143,176,255,.08));
-    filter: drop-shadow(0 0 12px var(--lightning-bolt-glow, rgba(208, 224, 255, .95))) drop-shadow(0 0 34px var(--lightning-bolt-glow, rgba(155, 183, 255, .72)));
-    animation: lightningBolt 6s steps(1, end) infinite;
+    filter: drop-shadow(0 0 12px var(--lightning-bolt-glow, rgba(208,224,255,.95))) drop-shadow(0 0 34px var(--lightning-bolt-glow, rgba(155,183,255,.72)));
+    transition: opacity 34ms linear;
 }
 
-@keyframes lightningBolt {
-    0%, 90%, 92%, 94%, 96%, 100% { opacity: 0; }
-    91% { opacity: .96; }
-    93% { opacity: .72; }
-    95% { opacity: .28; }
+#lightning[data-bolt-shape="forked"]::before {
+    clip-path: polygon(48% 0, 86% 0, 61% 35%, 100% 36%, 69% 55%, 81% 55%, 20% 100%, 39% 60%, 0 60%);
+}
+
+#lightning[data-bolt-shape="wide"]::before {
+    clip-path: polygon(43% 0, 100% 0, 72% 34%, 92% 39%, 16% 100%, 36% 57%, 4% 52%);
+    transform: skewX(-13deg) scaleX(1.16);
+}
+
+#lightning::after {
+    left: calc(var(--lightning-bolt-x, 62%) + 5%);
+    top: calc(var(--lightning-bolt-top, 7%) + 17%);
+    width: calc(var(--lightning-bolt-width, 72px) * .48);
+    height: calc(var(--lightning-bolt-height, 430px) * .62);
+    opacity: var(--lightning-secondary-opacity, 0);
+    clip-path: polygon(55% 0, 100% 0, 68% 34%, 92% 37%, 12% 100%, 39% 52%, 0 50%);
+    transform: skewX(12deg);
+}
+
+#lightning[data-secondary="false"]::after {
+    opacity: 0;
+}
+
+#sky .weather-cloud-layer[data-weather="storm"]::before {
+    transition: filter 84ms ease, opacity 120ms ease;
+}
+
+#sky[data-storm-flash="soft"] .weather-cloud-layer[data-weather="storm"]::before {
+    filter: blur(7px) brightness(var(--storm-flash-brightness, 1.35));
+}
+
+#sky[data-storm-flash="peak"] .weather-cloud-layer[data-weather="storm"]::before {
+    filter: blur(7px) brightness(var(--storm-flash-brightness, 2.1));
+}
+
+#sky[data-storm-flash="fade"] .weather-cloud-layer[data-weather="storm"]::before {
+    filter: blur(7px) brightness(var(--storm-flash-brightness, 1.2));
 }
 
 @media (prefers-reduced-motion: reduce) {
     #fog::before,
-    #fog::after,
-    #lightning,
-    #lightning::before {
+    #fog::after {
         animation: none !important;
     }
 
@@ -535,22 +573,16 @@ body {
     #fog::after {
         transform: none !important;
     }
-}
 
-/* Storm flashes illuminate cloud volumes in sync with the lightning overlay. */
-#sky .weather-cloud-layer[data-weather="storm"]::before {
-    animation: stormCloudIllumination 6s steps(1, end) infinite;
-}
-@keyframes stormCloudIllumination {
-    0%, 90%, 92%, 94%, 96%, 100% { filter: blur(7px) brightness(1); }
-    91% { filter: blur(7px) brightness(var(--storm-flash-soft, 1.72)); }
-    93% { filter: blur(7px) brightness(var(--storm-flash-peak, 2.15)); }
-    95% { filter: blur(7px) brightness(var(--storm-flash-fade, 1.38)); }
-}
-@media (prefers-reduced-motion: reduce) {
+    #lightning,
+    #lightning::before,
+    #lightning::after,
     #sky .weather-cloud-layer[data-weather="storm"]::before {
-        animation: none !important;
-        filter: blur(7px) brightness(1);
+        transition: none !important;
+    }
+
+    #sky .weather-cloud-layer[data-weather="storm"]::before {
+        filter: blur(7px) brightness(1) !important;
     }
 }
 
