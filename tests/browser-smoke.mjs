@@ -179,8 +179,8 @@ try {
   console.log('axe-core home audit:', JSON.stringify(homeA11y));
   assert.equal(homeA11y.violations.filter(item => ['critical', 'serious'].includes(item.impact)).length, 0, 'Home screen must have no critical or serious WCAG violations');
 
-  // Exercise actual weather scene DOM and CSS at mobile and desktop sizes.
-  // The context uses reduced-motion: clouds must remain visible as a static layer.
+  // Exercise animated weather scenes first, then reduced-motion separately.
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const [name, code, hourTheme] of [
@@ -232,8 +232,7 @@ try {
         assert.ok(state.moonOpacity > 0.85, `Moon visible for ${name}`);
       }
       if (code === 804 || code === 502 || code === 601 || code === 211 || code === 741) {
-        assert.equal(state.cloudCount, 1, `One static cloud layer for ${name}`);
-        assert.ok(state.cloudsStatic, `Cloud layer not animated for ${name}`);
+        assert.ok(state.cloudCount >= 1, `Cloud layer visible for ${name}`);
       }
       assert.equal(state.sunAnimation, 'none', `Sun glow is lightweight for ${name}`);
       if (code >= 700 && code < 800) {
@@ -250,6 +249,22 @@ try {
       }
     }
   }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedClouds = await page.evaluate(() => {
+    updateCloudAtmosphere(804, 8);
+    const layers = [...document.querySelectorAll('#sky .weather-cloud-layer')];
+    return layers.map(layer => ({
+      display: getComputedStyle(layer).display,
+      opacity: Number(getComputedStyle(layer).opacity),
+      animation: getComputedStyle(layer).animationName
+    }));
+  });
+  assert.equal(reducedClouds.filter(layer => layer.display !== 'none' && layer.opacity > 0).length, 1,
+    'Reduced motion keeps one visible atmospheric cloud layer');
+  assert.ok(reducedClouds.filter(layer => layer.display !== 'none').every(layer => layer.animation === 'none'),
+    'Reduced-motion clouds remain static');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+
   // Restore the API-backed city scene before the rest of browser smoke.
   await page.evaluate(() => updateWeatherTheme(800, 0, 2));
 
