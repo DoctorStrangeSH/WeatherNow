@@ -833,7 +833,10 @@ test('fog density follows visibility and weather type while wind changes drift a
     highWind: getFogProfile(741, 250, 20, 225, 'day'),
     northWind: getFogProfile(741, 250, 8, 0, 'day'),
     southWind: getFogProfile(741, 250, 8, 180, 'day'),
+    eastWind: getFogProfile(741, 250, 8, 90, 'day'),
+    westWind: getFogProfile(741, 250, 8, 270, 'day'),
     morning: getFogProfile(741, 250, 2, 225, 'morning'),
+    day: getFogProfile(741, 250, 2, 225, 'day'),
     evening: getFogProfile(741, 250, 2, 225, 'evening'),
     night: getFogProfile(741, 250, 2, 225, 'night'),
     invalid: getFogProfile(800, 250, 2, 225, 'day')
@@ -842,12 +845,22 @@ test('fog density follows visibility and weather type while wind changes drift a
   assert.ok(profiles.dense.density > profiles.medium.density);
   assert.ok(profiles.medium.density > profiles.light.density);
   assert.ok(profiles.dense.density > profiles.mist.density);
-  assert.ok(profiles.highWind.css['--fog-mid-duration'] < profiles.dense.css['--fog-mid-duration']);
+  assert.ok(parseFloat(profiles.highWind.css['--fog-mid-duration']) < parseFloat(profiles.dense.css['--fog-mid-duration']));
   assert.notEqual(profiles.northWind.css['--fog-end-y'], profiles.southWind.css['--fog-end-y']);
-  assert.notEqual(profiles.northWind.css['--fog-end-x'], profiles.southWind.css['--fog-end-x']);
+  assert.notEqual(profiles.eastWind.css['--fog-end-x'], profiles.westWind.css['--fog-end-x']);
   assert.notEqual(profiles.morning.css['--fog-base-color'], profiles.evening.css['--fog-base-color']);
-  assert.notEqual(profiles.day?.css?.['--fog-base-color'], profiles.night.css['--fog-base-color']);
+  assert.notEqual(profiles.day.css['--fog-base-color'], profiles.night.css['--fog-base-color']);
   assert.equal(profiles.invalid, null);
+  const mobileContext = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 390, matchMedia: () => ({ matches: false }) }
+  });
+  const mobileBlur = vm.runInContext(
+    "getFogProfile(741, 900, 8, 225, 'day').css",
+    mobileContext
+  );
+  assert.equal(mobileBlur['--fog-mid-blur'], '20px');
+  assert.equal(mobileBlur['--fog-near-blur'], '27px');
   for (const profile of Object.values(profiles).filter(Boolean)) {
     assert.ok(profile.density >= 0.12 && profile.density <= 0.98);
     assert.ok(Number(profile.css['--fog-mid-opacity']) >= 0 && Number(profile.css['--fog-mid-opacity']) <= 1);

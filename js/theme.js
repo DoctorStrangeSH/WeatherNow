@@ -577,6 +577,7 @@ function getFogProfile(
   const driftY = -Math.cos(windRadians) * driftMagnitude;
   const duration = Math.round(Math.max(28, Math.min(70, 70 - wind * 1.4)));
   const quality = getWeatherEffectScale();
+  const viewportWidth = typeof window !== 'undefined' ? Number(window.innerWidth) : 0;
   const baseOpacity = 0.06 + density * 0.15;
   const glowOpacity = 0.04 + density * 0.17;
   const densityLabel = density < 0.35 ? 'light' : density < 0.65 ? 'moderate' : 'dense';
@@ -602,8 +603,8 @@ function getFogProfile(
       '--fog-end-y': `${driftY.toFixed(1)}%`,
       '--fog-mid-duration': `${duration}s`,
       '--fog-near-duration': `${Math.max(22, Math.round(duration * 0.68))}s`,
-      '--fog-mid-blur': `${Math.round(26 + quality * 12)}px`,
-      '--fog-near-blur': `${Math.round(34 + quality * 14)}px`
+      '--fog-mid-blur': `${viewportWidth > 0 && viewportWidth <= 390 ? 20 : viewportWidth > 0 && viewportWidth <= 767 ? 26 : Math.round(26 + quality * 12)}px`,
+      '--fog-near-blur': `${viewportWidth > 0 && viewportWidth <= 390 ? 27 : viewportWidth > 0 && viewportWidth <= 767 ? 34 : Math.round(34 + quality * 14)}px`
     }
   };
 }
