@@ -198,8 +198,11 @@ try {
         document.body.classList.add('theme-' + hourTheme);
         updateSkyElements(hourTheme);
         applyWeatherEffects(code, hourTheme, 8);
-        // Let the first paint start the 2.2s cloud opacity transition before sampling.
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        // Keep production transitions intact; disable only this test's interpolation
+        // so assertions inspect the final weather state deterministically.
+        document.querySelectorAll('.weather-cloud-layer').forEach(layer => {
+          layer.style.transition = 'none';
+        });
         const sky = document.getElementById('sky');
         const moon = document.getElementById('moon');
         const sun = document.getElementById('sun');
