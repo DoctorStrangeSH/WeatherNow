@@ -240,6 +240,36 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
   }
 }
 
+function getPrecipitationParticleProfile(kind, depth, heavy = false) {
+  const band = Math.max(0, Math.min(3, Math.floor(Number(depth) || 0)));
+  const profiles = {
+    rain: [
+      { lengthMin: 6, lengthRange: 3, widthMin: 0.8, widthRange: 0.2, durationMin: 1.1, durationRange: 0.3, opacityMin: 0.12, opacityRange: 0.08, blur: 0.75, glow: 0.16 },
+      { lengthMin: 10, lengthRange: 3, widthMin: 1, widthRange: 0.25, durationMin: 0.88, durationRange: 0.2, opacityMin: 0.22, opacityRange: 0.1, blur: 0.45, glow: 0.22 },
+      { lengthMin: 14, lengthRange: 4, widthMin: 1.3, widthRange: 0.3, durationMin: 0.66, durationRange: 0.18, opacityMin: 0.36, opacityRange: 0.12, blur: 0.2, glow: 0.3 },
+      { lengthMin: 21, lengthRange: 7, widthMin: 1.7, widthRange: 0.7, durationMin: 0.44, durationRange: 0.18, opacityMin: 0.56, opacityRange: 0.18, blur: 0.05, glow: 0.42 }
+    ],
+    snow: [
+      { sizeMin: 1.4, sizeRange: 0.8, durationMin: 7.5, durationRange: 1.5, opacityMin: 0.2, opacityRange: 0.1, blur: 1.2, driftScale: 0.25, glow: 0 },
+      { sizeMin: 2.4, sizeRange: 0.8, durationMin: 6, durationRange: 1.3, opacityMin: 0.34, opacityRange: 0.12, blur: 0.7, driftScale: 0.42, glow: 0.18 },
+      { sizeMin: 3.5, sizeRange: 0.9, durationMin: 4.8, durationRange: 1, opacityMin: 0.5, opacityRange: 0.14, blur: 0.25, driftScale: 0.68, glow: 0.38 },
+      { sizeMin: 5, sizeRange: 1.5, durationMin: 3.4, durationRange: 1.1, opacityMin: 0.7, opacityRange: 0.16, blur: 0.05, driftScale: 1, glow: 0.68 }
+    ]
+  };
+  const profile = profiles[kind]?.[band];
+  if (!profile) return null;
+
+  const result = { ...profile };
+  if (kind === 'rain' && heavy) {
+    result.lengthMin *= 1.1;
+    result.lengthRange *= 1.1;
+    result.durationMin *= 0.85;
+    result.durationRange *= 0.85;
+    result.opacityMin = Math.min(0.82, result.opacityMin + 0.08);
+  }
+  return result;
+}
+
 function createRain(intensity, heavy = false, wind = getPrecipitationWindProfile(currentWindSpeed)) {
   const sky = document.getElementById('sky');
   if (!sky) return;
@@ -253,15 +283,17 @@ function createRain(intensity, heavy = false, wind = getPrecipitationWindProfile
     const drop = document.createElement('div');
     drop.className = 'raindrop';
     const depth = i % 4;
-    const foreground = depth === 3;
+    const profile = getPrecipitationParticleProfile('rain', depth, heavy);
     drop.dataset.depth = String(depth);
     drop.style.left = Math.random() * 100 + '%';
     drop.style.setProperty('--rain-angle', wind.rainAngle + 'deg');
-    drop.style.animationDuration = (Math.random() * 0.22 + (foreground ? 0.28 : heavy ? 0.42 : 0.58)) + 's';
+    drop.style.setProperty('--rain-blur', profile.blur + 'px');
+    drop.style.setProperty('--rain-glow', `rgba(190, 215, 255, ${profile.glow})`);
+    drop.style.animationDuration = (Math.random() * profile.durationRange + profile.durationMin) + 's';
     drop.style.animationDelay = Math.random() * 1 + 's';
-    drop.style.height = (Math.random() * (foreground ? 12 : 8) + (foreground ? heavy ? 22 : 17 : heavy ? 12 : 8)) + 'px';
-    drop.style.width = (foreground ? heavy ? 2.4 : 1.9 : heavy ? 1.6 : 1.2) + 'px';
-    drop.style.opacity = String(Math.random() * (foreground ? 0.22 : 0.16) + (foreground ? heavy ? 0.68 : 0.48 : heavy ? 0.34 : 0.2));
+    drop.style.height = (Math.random() * profile.lengthRange + profile.lengthMin) + 'px';
+    drop.style.width = (Math.random() * profile.widthRange + profile.widthMin) + 'px';
+    drop.style.opacity = String(Math.min(0.92, Math.random() * profile.opacityRange + profile.opacityMin));
     container.appendChild(drop);
   }
 
@@ -280,22 +312,23 @@ function createSnow(intensity, wind = getPrecipitationWindProfile(currentWindSpe
   for (let i = 0; i < count; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
-    // Four depth bands add scale and drift variation without extra particle layers.
     const depth = i % 4;
-    const foreground = depth === 3;
+    const profile = getPrecipitationParticleProfile('snow', depth);
     flake.dataset.depth = String(depth);
-    const size = foreground ? Math.random() * 2.5 + 4 : Math.random() * (depth === 0 ? 1.2 : 1.8) + (depth === 0 ? 1.2 : 1.7);
+    const size = Math.random() * profile.sizeRange + profile.sizeMin;
     flake.style.width = size + 'px';
     flake.style.height = size + 'px';
     flake.style.left = Math.random() * 100 + '%';
-    const drift = foreground ? wind.snowDrift : Math.round(wind.snowDrift * 0.55);
+    const drift = Math.round(wind.snowDrift * profile.driftScale);
     flake.style.setProperty('--snow-drift', drift + 'px');
     flake.style.setProperty('--snow-drift-q1', Math.round(drift * .25) + 'px');
     flake.style.setProperty('--snow-drift-half', Math.round(drift * .5) + 'px');
     flake.style.setProperty('--snow-drift-q3', Math.round(drift * .75) + 'px');
-    flake.style.animationDuration = (Math.random() * 3 + (foreground ? 3 : 5)) + 's';
+    flake.style.setProperty('--snow-blur', profile.blur + 'px');
+    flake.style.setProperty('--snow-foreground-glow', `rgba(255, 255, 255, ${profile.glow})`);
+    flake.style.animationDuration = (Math.random() * profile.durationRange + profile.durationMin) + 's';
     flake.style.animationDelay = Math.random() * 5 + 's';
-    flake.style.opacity = foreground ? '0.85' : '0.48';
+    flake.style.opacity = String(Math.min(0.9, Math.random() * profile.opacityRange + profile.opacityMin));
     container.appendChild(flake);
   }
 
