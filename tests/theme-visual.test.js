@@ -392,3 +392,12 @@ test('cloud layers build volume from highlight and shadow pseudo-elements withou
   assert.match(volumeStyles, /data-weather="snow"\)::before/);
   assert.match(volumeStyles, /prefers-reduced-motion:\s*reduce/);
 });
+
+
+test('star field uses five depth levels and limits twinkle to a subset', () => {
+  assert.match(themeSource, /const depth = i % 5/);
+  assert.match(themeSource, /star\.dataset\.depth = String\(depth\)/);
+  assert.match(themeSource, /if \(i % 5 === 0\)/);
+  assert.match(themeSource, /star\.style\.animation = 'none'/);
+  assert.match(styleSource, /\.star\[data-depth="4"\]/);
+});
