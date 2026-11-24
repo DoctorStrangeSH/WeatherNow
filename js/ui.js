@@ -122,7 +122,7 @@ function renderCurrentWeather(data, options = {}) {
   document.getElementById('main-icon').innerHTML = getWeatherIconMarkup(data.weather[0].id);
 
   if (typeof updateWeatherTheme === 'function') {
-    updateWeatherTheme(data.weather[0].id, data.timezone, data.wind?.speed);
+    updateWeatherTheme(data.weather[0].id, data.timezone, data.wind?.speed, data.visibility, data.wind?.deg);
   }
 
   if (options.cached === true) {

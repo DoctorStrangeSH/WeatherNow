@@ -1,6 +1,8 @@
 let currentWeatherCode = 800;
 let currentTimezone = 0;
 let currentWindSpeed = 0;
+let currentWindDirection = 0;
+let currentVisibility = 10000;
 let themeRefreshInterval = null;
 let reducedMotionMediaQuery = null;
 let reducedMotionChangeHandler = null;
@@ -148,7 +150,7 @@ function getWeatherSceneKey(weatherCode) {
   return 'cloudy';
 }
 
-function updateWeatherTheme(weatherCode, timezoneOffset, windSpeed) {
+function updateWeatherTheme(weatherCode, timezoneOffset, windSpeed, visibilityMeters, windDirection) {
   const parsedCode = Number(weatherCode);
   currentWeatherCode = Number.isFinite(parsedCode) ? parsedCode : 800;
 
@@ -157,6 +159,15 @@ function updateWeatherTheme(weatherCode, timezoneOffset, windSpeed) {
   currentTimezone = timezoneOffset !== undefined && Number.isFinite(parsedTimezone) ? parsedTimezone : 0;
   const parsedWind = Number(windSpeed);
   currentWindSpeed = windSpeed !== undefined && Number.isFinite(parsedWind) ? Math.max(0, parsedWind) : 0;
+  const parsedVisibility = Number(visibilityMeters);
+  currentVisibility = visibilityMeters !== undefined && visibilityMeters !== null &&
+    visibilityMeters !== '' && Number.isFinite(parsedVisibility)
+    ? Math.max(0, Math.min(10000, parsedVisibility))
+    : 10000;
+  const parsedDirection = Number(windDirection);
+  currentWindDirection = windDirection !== undefined && Number.isFinite(parsedDirection)
+    ? ((parsedDirection % 360) + 360) % 360
+    : 0;
 
   const hero = document.querySelector('.weather-hero');
   if (hero) hero.dataset.weather = getWeatherSceneKey(currentWeatherCode);
@@ -301,6 +312,9 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
       cloud.style.animation = 'none';
       cloud.style.opacity = weatherCode >= 801 ? '0.45' : '0';
     });
+    if (weatherCode >= 700 && weatherCode < 800) {
+      createFog(timeOfDay, windSpeed, currentVisibility, currentWindDirection, weatherCode);
+    }
     return;
   }
   
@@ -340,7 +354,7 @@ function applyWeatherEffects(weatherCode, timeOfDay, windSpeed = currentWindSpee
     createSnow(Math.round(motionProfile.snowCount * effectScale), precipitationWind);
   } else if (weatherCode >= 700 && weatherCode < 800) {
     clouds.forEach(c => c.style.opacity = '0.3');
-    createFog();
+    createFog(timeOfDay, windSpeed, currentVisibility, currentWindDirection, weatherCode);
   } else if (weatherCode === 800) {
     clouds.forEach(c => c.style.opacity = '0');
   } else if (weatherCode === 801) {
@@ -489,13 +503,147 @@ function createLightning() {
   sky.appendChild(lightning);
 }
 
-function createFog() {
+function getFogProfile(
+  weatherCode,
+  visibilityMeters = currentVisibility,
+  windSpeed = currentWindSpeed,
+  windDirection = currentWindDirection,
+  timeOfDay = 'day'
+) {
+  const code = Number(weatherCode);
+  if (!Number.isFinite(code) || code < 700 || code >= 800) return null;
+
+  const codeDensity = ({
+    701: 0.62, // mist
+    711: 0.72, // smoke
+    721: 0.58, // haze
+    731: 0.84, // dust
+    741: 1,    // fog
+    751: 0.9,  // sand
+    761: 0.82, // dust
+    762: 0.94, // volcanic ash
+    771: 0.74, // squalls
+    781: 0.88  // tornado
+  })[code] ?? 0.68;
+  const parsedVisibility = Number(visibilityMeters);
+  const visibility = visibilityMeters !== null && visibilityMeters !== '' && Number.isFinite(parsedVisibility)
+    ? Math.max(0, Math.min(10000, parsedVisibility))
+    : 10000;
+  const parsedWind = Number(windSpeed);
+  const wind = Number.isFinite(parsedWind) ? Math.max(0, Math.min(30, parsedWind)) : 0;
+  const parsedDirection = Number(windDirection);
+  const direction = windDirection !== null && Number.isFinite(parsedDirection)
+    ? ((parsedDirection % 360) + 360) % 360
+    : 0;
+  const period = ['morning', 'day', 'evening', 'night'].includes(timeOfDay) ? timeOfDay : 'day';
+
+  const palettes = {
+    morning: {
+      base: [218, 205, 201],
+      glow: [255, 220, 198],
+      tintA: 'rgba(255, 231, 216, .62)',
+      tintB: 'rgba(226, 222, 224, .48)',
+      tintC: 'rgba(255, 211, 194, .38)'
+    },
+    day: {
+      base: [202, 216, 222],
+      glow: [245, 250, 252],
+      tintA: 'rgba(237, 246, 249, .62)',
+      tintB: 'rgba(216, 230, 235, .48)',
+      tintC: 'rgba(248, 251, 252, .38)'
+    },
+    evening: {
+      base: [205, 190, 204],
+      glow: [255, 205, 193],
+      tintA: 'rgba(255, 221, 213, .58)',
+      tintB: 'rgba(218, 199, 220, .48)',
+      tintC: 'rgba(255, 198, 190, .36)'
+    },
+    night: {
+      base: [116, 139, 166],
+      glow: [160, 190, 226],
+      tintA: 'rgba(184, 207, 238, .46)',
+      tintB: 'rgba(139, 166, 201, .42)',
+      tintC: 'rgba(199, 216, 240, .3)'
+    }
+  };
+  const palette = palettes[period];
+  const visibilityFactor = 0.3 + (1 - visibility / 10000) * 0.7;
+  const windFactor = 1 - Math.min(wind / 60, 0.18);
+  const density = Math.max(0.12, Math.min(0.98, codeDensity * visibilityFactor * windFactor));
+  const windRadians = ((direction + 180) % 360) * Math.PI / 180;
+  const driftMagnitude = Math.min(8, 1.5 + wind * 0.28);
+  const driftX = Math.sin(windRadians) * driftMagnitude;
+  const driftY = -Math.cos(windRadians) * driftMagnitude;
+  const duration = Math.round(Math.max(28, Math.min(70, 70 - wind * 1.4)));
+  const quality = getWeatherEffectScale();
+  const baseOpacity = 0.06 + density * 0.15;
+  const glowOpacity = 0.04 + density * 0.17;
+  const densityLabel = density < 0.35 ? 'light' : density < 0.65 ? 'moderate' : 'dense';
+
+  return {
+    density: Number(density.toFixed(3)),
+    densityLabel,
+    visibility,
+    windSpeed: wind,
+    windDirection: Number(direction.toFixed(1)),
+    timeOfDay: period,
+    css: {
+      '--fog-base-color': `rgba(${palette.base.join(', ')}, ${baseOpacity.toFixed(3)})`,
+      '--fog-glow-color': `rgba(${palette.glow.join(', ')}, ${glowOpacity.toFixed(3)})`,
+      '--fog-tint-a': palette.tintA,
+      '--fog-tint-b': palette.tintB,
+      '--fog-tint-c': palette.tintC,
+      '--fog-mid-opacity': String(Number((0.14 + density * 0.48).toFixed(3))),
+      '--fog-near-opacity': String(Number((0.08 + density * 0.36).toFixed(3))),
+      '--fog-start-x': `${(-driftX).toFixed(1)}%`,
+      '--fog-end-x': `${driftX.toFixed(1)}%`,
+      '--fog-start-y': `${(-driftY).toFixed(1)}%`,
+      '--fog-end-y': `${driftY.toFixed(1)}%`,
+      '--fog-mid-duration': `${duration}s`,
+      '--fog-near-duration': `${Math.max(22, Math.round(duration * 0.68))}s`,
+      '--fog-mid-blur': `${Math.round(26 + quality * 12)}px`,
+      '--fog-near-blur': `${Math.round(34 + quality * 14)}px`
+    }
+  };
+}
+
+function updateFogAtmosphere(
+  weatherCode,
+  windSpeed = currentWindSpeed,
+  visibilityMeters = currentVisibility,
+  windDirection = currentWindDirection,
+  timeOfDay = 'day'
+) {
+  const fog = document.getElementById('fog');
+  if (!fog || !fog.style || typeof fog.style.setProperty !== 'function') return null;
+
+  const profile = getFogProfile(weatherCode, visibilityMeters, windSpeed, windDirection, timeOfDay);
+  if (!profile) return null;
+
+  Object.entries(profile.css).forEach(([property, value]) => fog.style.setProperty(property, value));
+  fog.dataset.density = profile.densityLabel;
+  fog.dataset.timeOfDay = profile.timeOfDay;
+  fog.dataset.windDirection = String(profile.windDirection);
+  return profile;
+}
+
+function createFog(
+  timeOfDay = 'day',
+  windSpeed = currentWindSpeed,
+  visibilityMeters = currentVisibility,
+  windDirection = currentWindDirection,
+  weatherCode = currentWeatherCode
+) {
   const sky = document.getElementById('sky');
-  if (!sky) return;
-  
+  if (!sky) return null;
+
   const fog = document.createElement('div');
   fog.id = 'fog';
+  fog.setAttribute('aria-hidden', 'true');
   sky.appendChild(fog);
+  updateFogAtmosphere(weatherCode, windSpeed, visibilityMeters, windDirection, timeOfDay);
+  return fog;
 }
 
 function getWeatherEffectScale() {

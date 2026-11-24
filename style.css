@@ -452,14 +452,16 @@ body {
     95% { background: var(--lightning-flash-fade, rgba(255, 255, 255, 0.2)); }
 }
 
-/* туман */
+/* Three-depth volumetric fog: a distant veil plus two independently drifting banks. */
 #fog {
     position: absolute;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
     z-index: 2;
-    background: linear-gradient(180deg, rgba(207, 224, 232, .08), rgba(207, 224, 232, .24));
+    background:
+        radial-gradient(ellipse 52% 34% at 52% 28%, var(--fog-glow-color, rgba(245,250,252,.12)), transparent 76%),
+        linear-gradient(180deg, var(--fog-base-color, rgba(202,216,222,.16)) 0%, transparent 84%);
 }
 
 #fog::before,
@@ -468,26 +470,34 @@ body {
     position: absolute;
     inset: -18% -28%;
     border-radius: 50%;
-    filter: blur(34px);
     will-change: transform, opacity;
     background:
-        radial-gradient(ellipse 44% 24% at 18% 48%, rgba(230, 241, 244, .46), transparent 76%),
-        radial-gradient(ellipse 38% 22% at 58% 42%, rgba(218, 233, 238, .34), transparent 78%),
-        radial-gradient(ellipse 42% 26% at 88% 56%, rgba(237, 244, 245, .4), transparent 76%);
-    animation: fogDrift 34s ease-in-out infinite alternate;
+        radial-gradient(ellipse 44% 24% at 18% 48%, var(--fog-tint-a, rgba(237,246,249,.62)), transparent 76%),
+        radial-gradient(ellipse 38% 22% at 58% 42%, var(--fog-tint-b, rgba(216,230,235,.48)), transparent 78%),
+        radial-gradient(ellipse 42% 26% at 88% 56%, var(--fog-tint-c, rgba(248,251,252,.38)), transparent 76%);
+    opacity: var(--fog-mid-opacity, .48);
+    filter: blur(var(--fog-mid-blur, 36px));
+    animation: fogDriftMid var(--fog-mid-duration, 52s) ease-in-out infinite alternate;
 }
 
 #fog::after {
     inset: -8% -34%;
-    opacity: .62;
-    filter: blur(48px);
-    animation-duration: 52s;
-    animation-direction: alternate-reverse;
+    background:
+        radial-gradient(ellipse 34% 20% at 24% 60%, var(--fog-tint-c, rgba(248,251,252,.38)), transparent 78%),
+        radial-gradient(ellipse 46% 25% at 72% 48%, var(--fog-tint-a, rgba(237,246,249,.62)), transparent 78%);
+    opacity: var(--fog-near-opacity, .3);
+    filter: blur(var(--fog-near-blur, 46px));
+    animation: fogDriftNear var(--fog-near-duration, 36s) ease-in-out infinite alternate-reverse;
 }
 
-@keyframes fogDrift {
-    from { transform: translate3d(-3%, 1%, 0) scale(.98); }
-    to { transform: translate3d(3%, -1%, 0) scale(1.04); }
+@keyframes fogDriftMid {
+    from { transform: translate3d(var(--fog-start-x, -3%), var(--fog-start-y, 1%), 0) scale(.98); }
+    to { transform: translate3d(var(--fog-end-x, 3%), var(--fog-end-y, -1%), 0) scale(1.04); }
+}
+
+@keyframes fogDriftNear {
+    from { transform: translate3d(var(--fog-end-x, 3%), var(--fog-end-y, -1%), 0) scale(1.06); }
+    to { transform: translate3d(var(--fog-start-x, -3%), var(--fog-start-y, 1%), 0) scale(.96); }
 }
 
 #lightning::before {
@@ -4060,5 +4070,28 @@ body.theme-night #sky .moon {
     #sky .weather-cloud-layer::before,
     #sky .weather-cloud-layer::after {
         transition: none !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #fog {
+        --fog-mid-blur: 26px;
+        --fog-near-blur: 34px;
+    }
+}
+
+@media (max-width: 390px) {
+    #fog {
+        --fog-mid-blur: 20px;
+        --fog-near-blur: 27px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #fog::before,
+    #fog::after {
+        animation: none !important;
+        transform: none !important;
+        will-change: auto;
     }
 }

@@ -222,7 +222,19 @@ try {
           viewport: document.documentElement.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
           effectLayerIds: [...sky.querySelectorAll('#rain-container, #snow-container, #wind-lines, #lightning, #fog')].map(layer => layer.id).sort(),
-          fogLayer: sky.querySelector('#fog') ? getComputedStyle(sky.querySelector('#fog'), '::before').backgroundImage : '',
+          fogLayer: (() => {
+            const fog = sky.querySelector('#fog');
+            if (!fog) return null;
+            return {
+              background: getComputedStyle(fog).backgroundImage,
+              density: fog.dataset.density,
+              midOpacity: fog.style.getPropertyValue('--fog-mid-opacity'),
+              nearOpacity: fog.style.getPropertyValue('--fog-near-opacity'),
+              driftX: fog.style.getPropertyValue('--fog-end-x'),
+              driftY: fog.style.getPropertyValue('--fog-end-y'),
+              tint: fog.style.getPropertyValue('--fog-tint-a')
+            };
+          })(),
           lightningBolt: sky.querySelector('#lightning') ? getComputedStyle(sky.querySelector('#lightning'), '::before').clipPath : '',
           stormCloudAnimation: sky.querySelector('.weather-cloud-layer[data-weather="storm"]') ? getComputedStyle(sky.querySelector('.weather-cloud-layer[data-weather="storm"]'), '::before').animationName : '',
           rainAngle: sky.querySelector('.raindrop')?.style.getPropertyValue('--rain-angle') || '',
@@ -265,7 +277,11 @@ try {
       }
       assert.equal(state.sunAnimation, 'none', `Sun glow is lightweight for ${name}`);
       if (code >= 700 && code < 800) {
-        assert.match(state.fogLayer, /radial-gradient/i, 'Fog uses layered atmospheric gradients');
+        assert.match(state.fogLayer.background, /radial-gradient/i, 'Fog uses a distant atmospheric veil');
+        assert.equal(state.fogLayer.density, 'dense', 'Visibility controls the fog density class');
+        assert.ok(Number(state.fogLayer.midOpacity) > Number(state.fogLayer.nearOpacity) * 0.8);
+        assert.ok(state.fogLayer.driftX && state.fogLayer.driftY, 'Wind direction moves fog banks across both axes');
+        assert.match(state.fogLayer.tint, /rgba/i, 'Fog tint follows the local time-of-day palette');
       }
       if (code >= 600 && code < 700) {
         assert.ok(state.snowDepthCount > 0 && state.snowDepthBands === 4, 'Snow has four depth bands');
@@ -318,6 +334,8 @@ try {
         document.body.classList.add('theme-' + period);
         currentWeatherCode = scene.code;
         currentWindSpeed = 8;
+        currentVisibility = scene.code === 741 ? 900 : 10000;
+        currentWindDirection = 225;
         updateSkyElements(period);
         applyWeatherEffects(scene.code, period, 8);
 
@@ -335,8 +353,8 @@ try {
           childCountWithoutEffects,
           documentWidth: document.documentElement.scrollWidth,
           viewportWidth: document.documentElement.clientWidth,
-          sunOpacity: Number(getComputedStyle(document.getElementById('sun')).opacity),
-          moonOpacity: Number(getComputedStyle(document.getElementById('moon')).opacity),
+          sunOpacity: Number(document.getElementById('sun').style.opacity),
+          moonOpacity: Number(document.getElementById('moon').style.opacity),
           cloudLayerCount: sky.querySelectorAll('.weather-cloud-layers').length,
           visibleCloudCount: [...sky.querySelectorAll('.weather-cloud-layer')]
             .filter(layer => getComputedStyle(layer).display !== 'none' &&
@@ -610,6 +628,36 @@ try {
     assert.ok(profile.lightOpacity >= 0 && profile.lightOpacity <= 1);
     assert.ok(profile.shadowOpacity >= 0 && profile.shadowOpacity <= 1);
   }
+
+  const fogProfileMatrix = await page.evaluate(() => {
+    const visibilityLevels = [250, 1500, 4000, 8000, 10000];
+    const visibility = visibilityLevels.map(meters => {
+      const profile = getFogProfile(741, meters, 6, 225, 'day');
+      return { meters, density: profile.density };
+    });
+    const calm = getFogProfile(741, 900, 0, 0, 'morning');
+    const windy = getFogProfile(741, 900, 20, 225, 'morning');
+    const night = getFogProfile(741, 900, 20, 225, 'night');
+    return {
+      visibility,
+      calmDuration: calm.css['--fog-mid-duration'],
+      windyDuration: windy.css['--fog-mid-duration'],
+      morningTint: calm.css['--fog-base-color'],
+      nightTint: night.css['--fog-base-color'],
+      driftX: windy.css['--fog-end-x'],
+      driftY: windy.css['--fog-end-y']
+    };
+  });
+  for (let index = 1; index < fogProfileMatrix.visibility.length; index++) {
+    assert.ok(fogProfileMatrix.visibility[index - 1].density > fogProfileMatrix.visibility[index].density,
+      'Fog density decreases as visibility improves');
+  }
+  assert.ok(parseFloat(fogProfileMatrix.windyDuration) < parseFloat(fogProfileMatrix.calmDuration),
+    'Stronger wind accelerates fog movement');
+  assert.notEqual(fogProfileMatrix.morningTint, fogProfileMatrix.nightTint,
+    'Fog scattering color follows the local time of day');
+  assert.ok(fogProfileMatrix.driftX && fogProfileMatrix.driftY,
+    'Wind direction produces two-axis fog drift');
 
   const scenePaletteMatrix = await page.evaluate(() => {
     const sky = document.getElementById('sky');

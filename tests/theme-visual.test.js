@@ -818,3 +818,72 @@ test('cloud rim lighting fades smoothly and respects reduced motion', () => {
   assert.match(styles, /prefers-reduced-motion:\s*reduce/);
   assert.match(styles, /transition:\s*none !important/);
 });
+
+
+test('fog density follows visibility and weather type while wind changes drift and speed', () => {
+  const context = loadInBrowserContext(themeSource, {
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 1280, matchMedia: () => ({ matches: false }) }
+  });
+  const profiles = vm.runInContext(`({
+    dense: getFogProfile(741, 250, 2, 225, 'day'),
+    medium: getFogProfile(741, 3500, 2, 225, 'day'),
+    light: getFogProfile(741, 9000, 2, 225, 'day'),
+    mist: getFogProfile(701, 250, 2, 225, 'day'),
+    highWind: getFogProfile(741, 250, 20, 225, 'day'),
+    northWind: getFogProfile(741, 250, 8, 0, 'day'),
+    southWind: getFogProfile(741, 250, 8, 180, 'day'),
+    morning: getFogProfile(741, 250, 2, 225, 'morning'),
+    evening: getFogProfile(741, 250, 2, 225, 'evening'),
+    night: getFogProfile(741, 250, 2, 225, 'night'),
+    invalid: getFogProfile(800, 250, 2, 225, 'day')
+  })`, context);
+
+  assert.ok(profiles.dense.density > profiles.medium.density);
+  assert.ok(profiles.medium.density > profiles.light.density);
+  assert.ok(profiles.dense.density > profiles.mist.density);
+  assert.ok(profiles.highWind.css['--fog-mid-duration'] < profiles.dense.css['--fog-mid-duration']);
+  assert.notEqual(profiles.northWind.css['--fog-end-y'], profiles.southWind.css['--fog-end-y']);
+  assert.notEqual(profiles.northWind.css['--fog-end-x'], profiles.southWind.css['--fog-end-x']);
+  assert.notEqual(profiles.morning.css['--fog-base-color'], profiles.evening.css['--fog-base-color']);
+  assert.notEqual(profiles.day?.css?.['--fog-base-color'], profiles.night.css['--fog-base-color']);
+  assert.equal(profiles.invalid, null);
+  for (const profile of Object.values(profiles).filter(Boolean)) {
+    assert.ok(profile.density >= 0.12 && profile.density <= 0.98);
+    assert.ok(Number(profile.css['--fog-mid-opacity']) >= 0 && Number(profile.css['--fog-mid-opacity']) <= 1);
+    assert.ok(Number(profile.css['--fog-near-opacity']) >= 0 && Number(profile.css['--fog-near-opacity']) <= 1);
+  }
+});
+
+test('fog atmosphere applies its depth, lighting and wind profile to the active fog layer', () => {
+  const values = {};
+  const fog = { dataset: {}, style: { setProperty(name, value) { values[name] = value; } } };
+  const context = loadInBrowserContext(themeSource, {
+    document: { getElementById(id) { return id === 'fog' ? fog : null; } },
+    navigator: { deviceMemory: 8, hardwareConcurrency: 8 },
+    window: { innerWidth: 1280, matchMedia: () => ({ matches: false }) }
+  });
+  const profile = vm.runInContext('updateFogAtmosphere(741, 8, 450, 225, "evening")', context);
+
+  assert.equal(fog.dataset.density, 'dense');
+  assert.equal(fog.dataset.timeOfDay, 'evening');
+  assert.equal(fog.dataset.windDirection, '225');
+  assert.equal(values['--fog-mid-duration'], profile.css['--fog-mid-duration']);
+  assert.equal(values['--fog-tint-a'], profile.css['--fog-tint-a']);
+  assert.ok(values['--fog-start-x']);
+  assert.ok(values['--fog-end-y']);
+});
+
+test('volumetric fog uses three visual depth planes and remains lightweight on mobile/reduced motion', () => {
+  const fogStart = styleSource.indexOf('/* Three-depth volumetric fog');
+  const fogEnd = styleSource.indexOf('#lightning::before', fogStart);
+  const fogStyles = styleSource.slice(fogStart, fogEnd);
+  assert.match(fogStyles, /#fog\s*\{[^}]*var\(--fog-base-color/s);
+  assert.match(fogStyles, /#fog::before[\s\S]*--fog-mid-opacity/);
+  assert.match(fogStyles, /#fog::after[\s\S]*--fog-near-opacity/);
+  assert.match(fogStyles, /@keyframes fogDriftMid/);
+  assert.match(fogStyles, /@keyframes fogDriftNear/);
+  assert.match(styleSource, /@media \(max-width: 767\.98px\)[\s\S]*#fog/);
+  assert.match(styleSource, /@media \(max-width: 390px\)[\s\S]*#fog/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*#fog::before/);
+});

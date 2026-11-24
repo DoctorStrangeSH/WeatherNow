@@ -778,21 +778,25 @@ test('cloud layers render in front of sun and moon while remaining behind app UI
   assert.match(css, /\.app-container\s*\{[^}]*z-index:\s*2/s);
 });
 
-test('switching cities resets missing timezone and wind instead of reusing previous city values', () => {
+test('switching cities resets missing timezone, wind and fog inputs instead of reusing previous city values', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/theme.js'), 'utf8');
   const hero = { dataset: {} };
   const context = vm.createContext({ document: { addEventListener() {}, querySelector: () => hero } });
   vm.runInContext(source, context);
   const appliedTimezones = [];
   context.applyTimeTheme = timezone => appliedTimezones.push(timezone);
-  context.updateWeatherTheme(500, 7200, 14);
+  context.updateWeatherTheme(500, 7200, 14, 450, 225);
   assert.equal(vm.runInContext('currentWeatherCode', context), 500);
   assert.equal(vm.runInContext('currentTimezone', context), 7200);
   assert.equal(vm.runInContext('currentWindSpeed', context), 14);
+  assert.equal(vm.runInContext('currentVisibility', context), 450);
+  assert.equal(vm.runInContext('currentWindDirection', context), 225);
   context.updateWeatherTheme(801, undefined, undefined);
   assert.equal(vm.runInContext('currentWeatherCode', context), 801);
   assert.equal(vm.runInContext('currentTimezone', context), 0);
   assert.equal(vm.runInContext('currentWindSpeed', context), 0);
+  assert.equal(vm.runInContext('currentVisibility', context), 10000);
+  assert.equal(vm.runInContext('currentWindDirection', context), 0);
   assert.deepEqual(appliedTimezones, [7200, 0]);
   assert.equal(hero.dataset.weather, 'partly-cloudy');
 });
